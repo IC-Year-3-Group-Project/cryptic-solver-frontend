@@ -3,6 +3,22 @@ import React, { useState } from "react";
 import Layout from "../components/_Layout";
 import styles from "../styles/Home.module.css";
 import TextField from "@mui/material/TextField";
+import axios from "axios";
+import { decode } from "html-entities";
+
+const http = axios.create();
+
+/** Gets and parses the data for a crossword at the given url. */
+async function getEveryman(url: string): Promise<any> {
+  // TODO: fix inevitable cors error (proxy this request through backend, 
+  // makes sense when fetching from other sources anyway).
+  const response = await http.get<string>(url);
+  const match = /data\-crossword\-data="(.*)"/g.exec(response.data);
+  if (match && match.length > 1) {
+    return JSON.parse(decode(match[1]));
+  }
+  return undefined;
+}
 
 const Home: NextPage = () => {
 
@@ -14,11 +30,13 @@ const Home: NextPage = () => {
     setCrosswordLink(e.target.value);
   };
 
-  const handleCrosswordLinkEntry = (e: any) => {
+  const handleCrosswordLinkEntry = async (e: any) => {
     if (e.keyCode == KEYCODE_ENTER) {
       // parse website and go to crossword page
-      console.log("Parsing...")
-      setCrosswordLink("")
+      console.log("Parsing...");
+      const crossword = await getEveryman(crosswordLink);
+      // TODO: show grid with this crossword data.
+      setCrosswordLink("");
     }
   }
 
