@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import React, { useState } from "react";
-import Layout from "../components/_Layout";
-import styles from "../styles/Home.module.css";
+import Layout from "@/components/_Layout";
+import styles from "@/styles/Home.module.css";
 import TextField from "@mui/material/TextField";
 import axios from "axios";
 import { decode } from "html-entities";
@@ -21,8 +21,7 @@ async function getEveryman(url: string): Promise<any> {
 }
 
 const Home: NextPage = () => {
-
-  const KEYCODE_ENTER = 13;  
+  const KEYCODE_ENTER = 13;
 
   const [crosswordLink, setCrosswordLink] = useState("");
 
@@ -33,12 +32,16 @@ const Home: NextPage = () => {
   const handleCrosswordLinkEntry = async (e: any) => {
     if (e.keyCode == KEYCODE_ENTER) {
       // parse website and go to crossword page
-      console.log("Parsing...");
+      console.log(`Parsing ${crosswordLink}`);
       const crossword = await getEveryman(crosswordLink);
       // TODO: show grid with this crossword data.
       setCrosswordLink("");
     }
-  }
+  };
+
+  const Grid = () => {
+    return <div>hello</div>;
+  };
 
   return (
     <Layout>
@@ -57,6 +60,7 @@ const Home: NextPage = () => {
           onChange={handleCrosswordLinkInput}
           onKeyDown={handleCrosswordLinkEntry}
         />
+        <Grid />
       </>
     </Layout>
   );
