@@ -39,10 +39,6 @@ const Home: NextPage = () => {
     }
   };
 
-  const Grid = () => {
-    return <div>hello</div>;
-  };
-
   return (
     <Layout>
       <>
@@ -60,7 +56,6 @@ const Home: NextPage = () => {
           onChange={handleCrosswordLinkInput}
           onKeyDown={handleCrosswordLinkEntry}
         />
-        <Grid />
       </>
     </Layout>
   );
