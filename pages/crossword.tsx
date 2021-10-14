@@ -4,12 +4,21 @@ import { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 
-const DynamicCrossword = dynamic(() => import("@guardian/react-crossword"), { ssr: false });
+// Dynamic component needs to know about the crossword component's props.
+interface CrosswordProps {
+  data: any;
+};
+const DynamicCrossword = dynamic<CrosswordProps>(() => import("@guardian/react-crossword"), {
+  ssr: false,
+  loading: () => <p>Loading crossword...</p>
+});
+
+// TODO: move this and all api stuff into its own place.
 const apiUrl = "http://localhost:8000";
 
 /** Gets and parses the data for a crossword at the given url. */
 async function getCrossword(url: string): Promise<any> {
-    //TODO: 
+    //TODO: move this into an api client class or something.
     const response = await fetch(`${apiUrl}/fetch-crossword`, {
         method: 'POST',
         headers: {
@@ -45,6 +54,7 @@ const Crossword: NextPage = () => {
     setClientRender(true);
   }, []);
 
+  // @ts-ignore trust me bro.
   return (
     <Layout>
       {clientRender && crosswordData && <DynamicCrossword data={crosswordData}/>}
