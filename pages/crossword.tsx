@@ -13,22 +13,21 @@ const DynamicCrossword = dynamic<CrosswordProps>(() => import("@guardian/react-c
   loading: () => <p>Loading crossword...</p>
 });
 
-// TODO: move this and all api stuff into its own place.
-const apiUrl = "http://localhost:8000";
+const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
 /** Gets and parses the data for a crossword at the given url. */
 async function getCrossword(url: string): Promise<any> {
-    //TODO: move this into an api client class or something.
-    const response = await fetch(`${apiUrl}/fetch-crossword`, {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ url })
-    });
+  //TODO: move this into an api client class or something.
+  const response = await fetch(`${apiUrl}/fetch-crossword`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ url })
+  });
 
-    return await response.json();
+  return await response.json();
 }
 
 const Crossword: NextPage = () => {
@@ -40,7 +39,9 @@ const Crossword: NextPage = () => {
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
-      const data = await getCrossword(router.query.url as string);
+      const data =
+        await getCrossword(router.query.url as string).catch((error) =>
+          console.log("There was an error trying to fetch the crossword", error))
       setCrosswordData(data);
     }
 
@@ -57,7 +58,7 @@ const Crossword: NextPage = () => {
   // @ts-ignore trust me bro.
   return (
     <Layout>
-      {clientRender && crosswordData && <DynamicCrossword data={crosswordData}/>}
+      {clientRender && crosswordData && <DynamicCrossword data={crosswordData} />}
     </Layout>
   );
 };
