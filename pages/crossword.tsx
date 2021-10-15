@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic'
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
+import Link from 'next/link';
 
 // Dynamic component needs to know about the crossword component's props.
 interface CrosswordProps {
@@ -34,14 +35,17 @@ const Crossword: NextPage = () => {
   const router = useRouter();
 
   const [clientRender, setClientRender] = useState(false);
+  const [fetchError, setFetchError] = useState(false)
   const [crosswordData, setCrosswordData] = useState<any>();
 
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
       const data =
-        await getCrossword(router.query.url as string).catch((error) =>
-          console.log("There was an error trying to fetch the crossword", error))
+        await getCrossword(router.query.url as string).catch((error) => {
+          console.log("There was an error trying to fetch the crossword", error)
+          setFetchError(true)
+        })
       setCrosswordData(data);
     }
 
@@ -59,6 +63,13 @@ const Crossword: NextPage = () => {
   return (
     <Layout>
       {clientRender && crosswordData && <DynamicCrossword data={crosswordData} />}
+      {
+        fetchError &&
+        <div>
+          <h1>Sorry your crossword could not be found</h1>
+          <Link href="/"><a>Try Again</a></Link>
+        </div>
+      }
     </Layout>
   );
 };
