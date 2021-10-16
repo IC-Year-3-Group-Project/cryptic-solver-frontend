@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "jest",
     "watchTest": "jest --watch",
-    "updateSnapshot": "jest --updateSnapshot"
+    "updateSnapshot": "jest --updateSnapshot",
+    "cypress": "cypress run"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
@@ -32,6 +33,7 @@
     "cypress": "^8.6.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "11.1.2",
+    "start-server-and-test": "^1.14.0",
     "typescript": "4.4.3"
   }
 }
