@@ -27,6 +27,11 @@ jobs:
         yarn -i
         yarn build
 
-    - name: Test
+    - name: Unit Test
       run: |
         yarn test
+
+    - name: Integration Test
+      run: |
+        yarn cypress
+
