@@ -27,6 +27,13 @@ jobs:
         yarn -i
         yarn build
 
-    - name: Test
+    - name: Unit Test
       run: |
         yarn test
+
+    - name: Integration Test
+      uses: cypress-io/github-action@v2
+      with:
+        build: yarn build
+        start: yarn start
+

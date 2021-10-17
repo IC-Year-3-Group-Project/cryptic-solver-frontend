@@ -26,7 +26,9 @@ const Home: NextPage = () => {
   return (
     <Layout>
       <>
-        <h1 className={styles.title}>Cryptic Crossword Solver</h1>
+        <h1 className={styles.title} data-cy="title">
+          Cryptic Crossword Solver
+        </h1>
 
         <p className={styles.description}>
           Enter a link to an Everyman Guardian crossword:
@@ -37,6 +39,7 @@ const Home: NextPage = () => {
           fullWidth
           variant="standard"
           value={crosswordLink}
+          data-cy="link-input"
           onChange={handleCrosswordLinkInput}
           onKeyDown={handleCrosswordLinkEntry}
         />

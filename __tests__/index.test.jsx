@@ -12,7 +12,7 @@ describe("Home", () => {
 
     expect(heading).toBeInTheDocument();
   });
-  it("renders a input box", () => {
+  it("renders an input box", () => {
     render(<Home />);
 
     const inputBox = screen.getByRole("textbox", {
