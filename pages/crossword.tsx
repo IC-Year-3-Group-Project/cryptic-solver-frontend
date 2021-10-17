@@ -76,9 +76,9 @@ const Crossword: NextPage = () => {
       )}
       {fetchError && (
         <div>
-          <h1>Sorry your crossword could not be found</h1>
+          <h1 data-cy="sorry">Sorry your crossword could not be found</h1>
           <Link href="/">
-            <a>Try Again</a>
+            <a data-cy="try-again">Try Again</a>
           </Link>
         </div>
       )}
