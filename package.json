@@ -11,7 +11,7 @@
     "watchTest": "jest --watch",
     "updateSnapshot": "jest --updateSnapshot",
     "cypress": "cypress run",
-    "ci": "yarn build && yarn test && start-server-and-test start http://localhost:3000 cypress"
+    "ci": "yarn build && start-server-and-test start http://localhost:3000 cypress"
   },
   "dependencies": {
     "@emotion/react": "^11.4.1",
