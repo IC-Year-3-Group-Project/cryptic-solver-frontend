@@ -154,3 +154,11 @@ describe("Fetching crossword success", () => {
     cy.get("[data-cy=found-solutions]").contains("Found solutions:");
   });
 });
+
+describe("homepage should have a list of everyman crosswords", () => {
+  it("has links to crosswords", () => {
+    cy.intercept("GET", "/fetch-everyman", { urls: ["c1", "c2"] });
+    cy.visit("/");
+    cy.get("[data-cy=crossword-link]").should("exist");
+  });
+});
