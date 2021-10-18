@@ -88,7 +88,7 @@ const Home: NextPage = () => {
                 <Grid item>
                   <Card variant="outlined">
                     <CardContent>
-                      <Link href={{ apiUrl } + "/crossword?url=" + url}>
+                      <Link href={apiUr + "/crossword?url=" + url}>
                         <a data-cy="crossword-link">
                           #
                           {url.replace(
