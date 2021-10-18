@@ -11,6 +11,7 @@ import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
 
 // Dynamic component needs to know about the crossword component's props.
@@ -66,6 +67,7 @@ const Crossword: NextPage = () => {
   const router = useRouter();
 
   const [clientRender, setClientRender] = useState(false);
+  const [loadingCrossword, setLoadingCrossword] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [fetchSolutionError, setFetchSolutionError] = useState(false);
   const [crosswordData, setCrosswordData] = useState<any>();
@@ -76,17 +78,22 @@ const Crossword: NextPage = () => {
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
-      const data = await getCrossword(router.query.url as string).catch(
-        (error) => {
+      setLoadingCrossword(true);
+      await getCrossword(router.query.url as string)
+        .catch((error) => {
           console.log(
             "There was an error trying to fetch the crossword",
             error
           );
           setFetchError(true);
-        }
-      );
-      setCrosswordData(data);
-      setClueSelected(data?.entries?.[0].clue);
+        })
+        .then((data) => {
+          setCrosswordData(data);
+          setClueSelected(data?.entries?.[0].clue);
+        })
+        .finally(() => {
+          setLoadingCrossword(false);
+        });
     }
 
     if (router.query.url) {
@@ -139,7 +146,7 @@ const Crossword: NextPage = () => {
   // @ts-ignore trust me bro.
   return (
     <Layout>
-      {clientRender && crosswordData && !fetchError && (
+      {clientRender && crosswordData && !fetchError && !loadingCrossword && (
         <>
           <DynamicCrossword data={crosswordData} />
           <div>
@@ -210,7 +217,8 @@ const Crossword: NextPage = () => {
           </div>
         </>
       )}
-      {fetchError && (
+      {loadingCrossword && <CircularProgress />}
+      {fetchError && !loadingCrossword && (
         <div>
           <h1 data-cy="sorry">Sorry your crossword could not be found</h1>
           <Link href="/">
