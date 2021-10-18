@@ -1,11 +1,7 @@
-describe("Fetching crossword fails should bring up sorry message", () => {
+describe("Fetching crossword failure", () => {
   before(() => {
     // Mock return value to initiate error handling response from the page
-    cy.intercept(
-      "POST",
-      "https://cryptic-solver-backend.herokuapp.com/fetch-crossword",
-      {}
-    );
+    cy.intercept("POST", "/fetch-crossword", {});
 
     // runs once before all tests in the block
     cy.visit("/");
@@ -35,9 +31,9 @@ describe("Fetching crossword fails should bring up sorry message", () => {
   });
 });
 
-describe("Fetching crossword successes should display crossword", () => {
+describe("Fetching crossword success", () => {
   before(() => {
-    // Mock return value to initiate error handling response from the page
+    // Mock return value for a valid crossword
     cy.intercept("POST", "/fetch-crossword", {
       id: "simple/1",
       number: 1,
@@ -138,5 +134,23 @@ describe("Fetching crossword successes should display crossword", () => {
 
   it("should have crossword component", () => {
     cy.get("rect").should("exist");
+  });
+
+  it("empty solutions display no solutions found", () => {
+    // Mock return value for empty clue
+    cy.intercept("POST", "/solve-clue", [""]);
+
+    cy.get("[data-cy=find-solutions]").click({ force: true });
+
+    cy.get("[data-cy=no-solutions]").contains("No solutions found");
+  });
+
+  it("solutions display if found", () => {
+    // Mock return value for returned solution
+    cy.intercept("POST", "/solve-clue", ["ibsen"]);
+
+    cy.get("[data-cy=find-solutions]").click({ force: true });
+
+    cy.get("[data-cy=found-solutions]").contains("Found solutions:");
   });
 });
