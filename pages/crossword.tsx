@@ -13,10 +13,12 @@ import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
+import { Box } from "@mui/system";
 
 // Dynamic component needs to know about the crossword component's props.
 interface CrosswordProps {
   data: any;
+  loadGrid: any;
 }
 
 const DynamicCrossword = dynamic<CrosswordProps>(
@@ -148,7 +150,7 @@ const Crossword: NextPage = () => {
     <Layout>
       {clientRender && crosswordData && !fetchError && !loadingCrossword && (
         <>
-          <DynamicCrossword data={crosswordData} />
+          <DynamicCrossword data={crosswordData} loadGrid={() => {}} />
           <div>
             <Typography variant="body1" gutterBottom>
               Select a clue and ask our solver to find possible solutions!
@@ -219,12 +221,14 @@ const Crossword: NextPage = () => {
       )}
       {loadingCrossword && <CircularProgress />}
       {fetchError && !loadingCrossword && (
-        <div>
-          <h1 data-cy="sorry">Sorry your crossword could not be found</h1>
+        <Box>
+          <Typography variant="h4" data-cy="sorry">
+            Sorry your crossword could not be found
+          </Typography>
           <Link href="/">
             <a data-cy="try-again">Try Again</a>
           </Link>
-        </div>
+        </Box>
       )}
     </Layout>
   );
