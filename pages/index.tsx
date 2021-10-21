@@ -26,12 +26,14 @@ const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
 
   const router = useRouter();
+  const [loadingEveryman, setLoadingEveryman] = useState(true);
   const [crosswordLink, setCrosswordLink] = useState<String>("");
   const [everymanUrls, setEverymanUrls] = useState<Array<String>>([]);
 
   useEffect(() => {
     const fetchEveryman = async (): Promise<any> => {
       setEverymanUrls(await getEveryman());
+      setLoadingEveryman(false);
     };
 
     fetchEveryman();
@@ -83,25 +85,36 @@ const Home: NextPage = () => {
               <Typography variant="h6">Crosswords to try:</Typography>
             </Grid>
 
-            {everymanUrls.slice(0, 5).map((url: String) => {
-              return (
-                <Grid item>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Link href={"/crossword?url=" + url}>
-                        <a data-cy="crossword-link">
-                          #
-                          {url.replace(
-                            "https://www.theguardian.com/crosswords/everyman/",
-                            ""
-                          )}
-                        </a>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
+            {loadingEveryman && (
+              <Grid item>
+                <Card variant="outlined">
+                  <CardContent>
+                    <Typography>Loading...</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
+            {!loadingEveryman &&
+              everymanUrls.slice(0, 5).map((url: String) => {
+                return (
+                  <Grid item>
+                    <Card variant="outlined">
+                      <CardContent>
+                        <Link href={"/crossword?url=" + url}>
+                          <a data-cy="crossword-link">
+                            #
+                            {url.replace(
+                              "https://www.theguardian.com/crosswords/everyman/",
+                              ""
+                            )}
+                          </a>
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                );
+              })}
           </Grid>
         </Box>
       </>
