@@ -10,6 +10,8 @@ import Card from "@mui/material/Card";
 import { CardContent, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { Box } from "@mui/system";
+import { Button, ButtonGroup } from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
@@ -74,7 +76,6 @@ const Home: NextPage = () => {
 
         <Box mt={5}>
           <Grid
-            item
             container
             direction="row"
             justifyContent="center"
@@ -87,11 +88,7 @@ const Home: NextPage = () => {
 
             {loadingEveryman && (
               <Grid item>
-                <Card variant="outlined">
-                  <CardContent>
-                    <Typography>Loading...</Typography>
-                  </CardContent>
-                </Card>
+                <CircularProgress size={20} />
               </Grid>
             )}
 
@@ -99,19 +96,13 @@ const Home: NextPage = () => {
               everymanUrls.slice(0, 5).map((url: String) => {
                 return (
                   <Grid item>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Link href={"/crossword?url=" + url}>
-                          <a data-cy="crossword-link">
-                            #
-                            {url.replace(
-                              "https://www.theguardian.com/crosswords/everyman/",
-                              ""
-                            )}
-                          </a>
-                        </Link>
-                      </CardContent>
-                    </Card>
+                    <Button variant="outlined" href={"/crossword?url=" + url}>
+                      #
+                      {url.replace(
+                        "https://www.theguardian.com/crosswords/everyman/",
+                        ""
+                      )}
+                    </Button>
                   </Grid>
                 );
               })}
