@@ -96,7 +96,11 @@ const Home: NextPage = () => {
               everymanUrls.slice(0, 5).map((url: String) => {
                 return (
                   <Grid item>
-                    <Button variant="outlined" href={"/crossword?url=" + url}>
+                    <Button
+                      variant="outlined"
+                      href={"/crossword?url=" + url}
+                      data-cy="crossword-link"
+                    >
                       #
                       {url.replace(
                         "https://www.theguardian.com/crosswords/everyman/",
