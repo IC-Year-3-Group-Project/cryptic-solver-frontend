@@ -10,6 +10,8 @@ import Card from "@mui/material/Card";
 import { CardContent, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { Box } from "@mui/system";
+import { Button, ButtonGroup } from "@material-ui/core";
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
@@ -26,12 +28,14 @@ const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
 
   const router = useRouter();
+  const [loadingEveryman, setLoadingEveryman] = useState(true);
   const [crosswordLink, setCrosswordLink] = useState<String>("");
   const [everymanUrls, setEverymanUrls] = useState<Array<String>>([]);
 
   useEffect(() => {
     const fetchEveryman = async (): Promise<any> => {
       setEverymanUrls(await getEveryman());
+      setLoadingEveryman(false);
     };
 
     fetchEveryman();
@@ -72,7 +76,6 @@ const Home: NextPage = () => {
 
         <Box mt={5}>
           <Grid
-            item
             container
             direction="row"
             justifyContent="center"
@@ -83,25 +86,30 @@ const Home: NextPage = () => {
               <Typography variant="h6">Crosswords to try:</Typography>
             </Grid>
 
-            {everymanUrls.slice(0, 5).map((url: String) => {
-              return (
-                <Grid item>
-                  <Card variant="outlined">
-                    <CardContent>
-                      <Link href={"/crossword?url=" + url}>
-                        <a data-cy="crossword-link">
-                          #
-                          {url.replace(
-                            "https://www.theguardian.com/crosswords/everyman/",
-                            ""
-                          )}
-                        </a>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              );
-            })}
+            {loadingEveryman && (
+              <Grid item>
+                <CircularProgress size={20} />
+              </Grid>
+            )}
+
+            {!loadingEveryman &&
+              everymanUrls.slice(0, 5).map((url, i) => {
+                return (
+                  <Grid item key={i}>
+                    <Button
+                      variant="outlined"
+                      href={"/crossword?url=" + url}
+                      data-cy="crossword-link"
+                    >
+                      #
+                      {url.replace(
+                        "https://www.theguardian.com/crosswords/everyman/",
+                        ""
+                      )}
+                    </Button>
+                  </Grid>
+                );
+              })}
           </Grid>
         </Box>
       </>
