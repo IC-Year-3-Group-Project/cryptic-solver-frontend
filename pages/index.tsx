@@ -93,9 +93,9 @@ const Home: NextPage = () => {
             )}
 
             {!loadingEveryman &&
-              everymanUrls.slice(0, 5).map((url: String) => {
+              everymanUrls.slice(0, 5).map((url, i) => {
                 return (
-                  <Grid item key={url}>
+                  <Grid item key={i}>
                     <Button
                       variant="outlined"
                       href={"/crossword?url=" + url}
