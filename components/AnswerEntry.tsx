@@ -104,8 +104,8 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
         </Stack>
-        {explanations?.length > 0 && (
-          <Typography style={{ marginTop: 8 }}>
+        {!setExplanationCallback && explanations?.length > 0 && (
+          <Typography style={{ marginTop: 8 }} data-cy="explanation">
             Explanation for {searchedAnswer}: {explanations}
           </Typography>
         )}

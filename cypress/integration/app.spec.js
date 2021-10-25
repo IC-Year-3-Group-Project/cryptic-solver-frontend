@@ -169,21 +169,23 @@ describe("Homepage should support answer entry", () => {
   });
 
   it("enter in entry box should sent api request", () => {
-    cy.intercept("POST", "/TODO", { explanations: ["c1", "c2"] }).as(
+    cy.intercept("POST", "/TODO", { explanations: ["test"] }).as(
       "getExplanation"
     );
 
-    cy.get("[data-cy=answer-input]").type("something{enter}");
+    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
 
     cy.wait("@getExplanation")
       .its("request.body")
-      .should("include", { answer: "something" });
+      .should("include", { answer: "ibsen" });
+
+    cy.get("[data-cy=explanation]").contains("Explanation for ibsen: test");
   });
 
   it("error requests show error message", () => {
     cy.intercept("POST", "/TODO", { statusCode: 404 });
 
-    cy.get("[data-cy=answer-input]").type("something{enter}");
+    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
 
     cy.get("[data-cy=answer-input]").contains("Sorry, an error has occurred");
   });
