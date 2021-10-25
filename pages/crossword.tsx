@@ -12,6 +12,8 @@ import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
 import Link from "next/link";
+import NewCrossword, { convertEveryman } from "@/components/Crossword/Crossword";
+import { Puzzle } from "@/components/Crossword/model/Puzzle";
 
 // Dynamic component needs to know about the crossword component's props.
 interface CrosswordProps {
@@ -73,6 +75,8 @@ const Crossword: NextPage = () => {
   const [loadingSolutions, setLoadingSolutions] = useState(false);
   const [solutionData, setSolutionData] = useState<Array<string>>([]);
 
+  const [puzzle, setPuzzle] = useState<Puzzle>();
+
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
@@ -86,6 +90,7 @@ const Crossword: NextPage = () => {
         }
       );
       setCrosswordData(data);
+      setPuzzle(convertEveryman(data));
       setClueSelected(data?.entries?.[0].clue);
     }
 
@@ -139,7 +144,8 @@ const Crossword: NextPage = () => {
   // @ts-ignore trust me bro.
   return (
     <Layout>
-      {clientRender && crosswordData && !fetchError && (
+      {puzzle && <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32}></NewCrossword>}
+      {clientRender && crosswordData && !fetchError && false && (
         <>
           <DynamicCrossword data={crosswordData} />
           <div>
