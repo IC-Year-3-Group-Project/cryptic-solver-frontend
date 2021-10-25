@@ -11,13 +11,21 @@ import Select from "@mui/material/Select";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
+<<<<<<< HEAD
 import NewCrossword, { convertEveryman } from "@/components/Crossword/Crossword";
 import { Puzzle } from "@/components/Crossword/model/Puzzle";
+=======
+import { Box } from "@mui/system";
+import AnswerEntry from "@/components/AnswerEntry";
+import Grid from "@mui/material/Grid";
+>>>>>>> main
 
 // Dynamic component needs to know about the crossword component's props.
 interface CrosswordProps {
   data: any;
+  loadGrid: any;
 }
 
 const DynamicCrossword = dynamic<CrosswordProps>(
@@ -68,6 +76,7 @@ const Crossword: NextPage = () => {
   const router = useRouter();
 
   const [clientRender, setClientRender] = useState(false);
+  const [loadingCrossword, setLoadingCrossword] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [fetchSolutionError, setFetchSolutionError] = useState(false);
   const [crosswordData, setCrosswordData] = useState<any>();
@@ -80,18 +89,22 @@ const Crossword: NextPage = () => {
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
-      const data = await getCrossword(router.query.url as string).catch(
-        (error) => {
+      setLoadingCrossword(true);
+      await getCrossword(router.query.url as string)
+        .catch((error) => {
           console.log(
             "There was an error trying to fetch the crossword",
             error
           );
           setFetchError(true);
-        }
-      );
-      setCrosswordData(data);
-      setPuzzle(convertEveryman(data));
-      setClueSelected(data?.entries?.[0].clue);
+        })
+        .then((data) => {
+          setCrosswordData(data);
+          setClueSelected(data?.entries?.[0].clue);
+        })
+        .finally(() => {
+          setLoadingCrossword(false);
+        });
     }
 
     if (router.query.url) {
@@ -125,20 +138,17 @@ const Crossword: NextPage = () => {
     console.log(clue, wordLengths);
 
     // get possible solutions
-    async function fetchSolutions() {
-      const data = await getSolutions(clue, wordLengths)
-        .catch((error) => {
-          console.log("There was an error trying to fetch solutions", error);
-          setFetchSolutionError(true);
-        })
-        .then((res) => {
-          setSolutionData(res);
-        })
-        .finally(() => {
-          setLoadingSolutions(false);
-        });
-    }
-    await fetchSolutions();
+    await getSolutions(clue, wordLengths)
+      .catch((error) => {
+        console.log("There was an error trying to fetch solutions", error);
+        setFetchSolutionError(true);
+      })
+      .then((res) => {
+        setSolutionData(res);
+      })
+      .finally(() => {
+        setLoadingSolutions(false);
+      });
   };
 
   // @ts-ignore trust me bro.
@@ -147,7 +157,7 @@ const Crossword: NextPage = () => {
       {puzzle && <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32}></NewCrossword>}
       {clientRender && crosswordData && !fetchError && false && (
         <>
-          <DynamicCrossword data={crosswordData} />
+          <DynamicCrossword data={crosswordData} loadGrid={() => {}} />
           <div>
             <Typography variant="body1" gutterBottom>
               Select a clue and ask our solver to find possible solutions!
@@ -213,16 +223,22 @@ const Crossword: NextPage = () => {
                   <div data-cy="no-solutions">No solutions found</div>
                 )}
             </Stack>
+            <Box mt={5}>
+              <AnswerEntry />
+            </Box>
           </div>
         </>
       )}
-      {fetchError && (
-        <div>
-          <h1 data-cy="sorry">Sorry your crossword could not be found</h1>
+      {loadingCrossword && <CircularProgress />}
+      {fetchError && !loadingCrossword && (
+        <Box>
+          <Typography variant="h4" data-cy="sorry">
+            Sorry your crossword could not be found
+          </Typography>
           <Link href="/">
             <a data-cy="try-again">Try Again</a>
           </Link>
-        </div>
+        </Box>
       )}
     </Layout>
   );
