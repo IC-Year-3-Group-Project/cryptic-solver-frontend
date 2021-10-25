@@ -13,7 +13,6 @@ import NewCrossword from "@/components/Crossword/Crossword";
 const Crossword: NextPage = () => {
   const router = useRouter();
 
-  const [clientRender, setClientRender] = useState(false);
   const [loadingCrossword, setLoadingCrossword] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
@@ -41,15 +40,8 @@ const Crossword: NextPage = () => {
 
     if (router.query.url) {
       fetchCrossword();
-    } else if (clientRender) {
-      setFetchError(true);
     }
   }, [router.query.url]);
-
-  // Set client render.
-  useEffect(() => {
-    setClientRender(true);
-  }, []);
 
   return (
     <Layout>

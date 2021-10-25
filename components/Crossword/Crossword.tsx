@@ -301,7 +301,7 @@ export default function Crossword(props: CrosswordProps) {
                         cell.y * cellHeight,
                       ];
                       return (
-                        <g key={index} onClick={() => onCellClick(cell)}>
+                        <g key={index} onClick={() => onCellClick(cell)} data-cy={`grid-cell-${cell.x}-${cell.y}`}>
                           <rect
                             x={xPos + 1}
                             y={yPos + 1}
@@ -364,6 +364,7 @@ export default function Crossword(props: CrosswordProps) {
                       onKeyUp={onCellKeyUp}
                       value={currentCell.content ?? ""}
                       ref={(ref) => ref && setInput(ref)}
+                      data-cy="grid-input"
                     ></input>
                   </div>
                 )}
@@ -391,6 +392,7 @@ export default function Crossword(props: CrosswordProps) {
                     className="me-2"
                     disabled={loadingSolution}
                     onClick={async () => solveClue(selectedClue)}
+                    data-cy="solve-cell"
                   >
                     {loadingSolution
                       ? "Solving..."
@@ -411,7 +413,7 @@ export default function Crossword(props: CrosswordProps) {
                     placement="top"
                   >
                     {(props) => (
-                      <Tooltip {...props}>{solveOverlayText}</Tooltip>
+                      <Tooltip {...props} data-cy="no-solutions">{solveOverlayText}</Tooltip>
                     )}
                   </Overlay>
                 </>

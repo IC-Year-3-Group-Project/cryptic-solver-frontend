@@ -98,7 +98,7 @@ describe("Fetching crossword success", () => {
           id: "4-down",
           number: 4,
           humanNumber: "4",
-          clue: "See 3 down",
+          clue: "See 3 down (4)",
           direction: "down",
           length: 4,
           group: ["3-down", "4-down"],
@@ -140,18 +140,23 @@ describe("Fetching crossword success", () => {
     // Mock return value for empty clue
     cy.intercept("POST", "/solve-clue", [""]);
 
-    cy.get("[data-cy=find-solutions]").click({ force: true });
+    cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
+    cy.get("[data-cy=solve-cell").click({ force: true });
 
     cy.get("[data-cy=no-solutions]").contains("No solutions found");
   });
 
   it("solutions display if found", () => {
     // Mock return value for returned solution
-    cy.intercept("POST", "/solve-clue", ["ibsen"]);
+    const mockSolution = "Yellow";
+    cy.intercept("POST", "/solve-clue", [mockSolution]);
 
-    cy.get("[data-cy=find-solutions]").click({ force: true });
+    cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
+    cy.get("[data-cy=solve-cell]").click({ force: true });
 
-    cy.get("[data-cy=found-solutions]").contains("Found solutions:");
+    for (let i = 1; i < mockSolution.length; i++) {
+      cy.get(`[data-cy=grid-cell-0-${i}]`).contains(mockSolution[i].toUpperCase());
+    }
   });
 });
 
