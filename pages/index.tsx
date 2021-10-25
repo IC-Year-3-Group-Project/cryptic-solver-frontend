@@ -113,8 +113,10 @@ const Home: NextPage = () => {
               })}
           </Grid>
         </Box>
-        
-        <AnswerEntry />
+
+        <Box mt={5}>
+          <AnswerEntry />
+        </Box>
       </>
     </Layout>
   );

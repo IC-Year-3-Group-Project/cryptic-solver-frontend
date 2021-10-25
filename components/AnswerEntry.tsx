@@ -5,10 +5,11 @@ import TextField from "@mui/material/TextField";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
+import { resolve } from "cypress/types/bluebird";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
-async function getExplanation(answer: string): Promise<String[]> {
+async function getExplanation(answer: string): Promise<any> {
   const response = await fetch(`${apiUrl}/TODO`, {
     method: "POST",
     headers: {
@@ -19,6 +20,10 @@ async function getExplanation(answer: string): Promise<String[]> {
   });
 
   return await response.json();
+
+  // return new Promise((resolve, reject) => {
+  //   resolve({ explanations: ["test"] });
+  // });
 }
 
 interface Props {
@@ -29,6 +34,8 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
   const KEYCODE_ENTER = 13;
 
   const [answer, setAnswer] = useState<string>("");
+  const [searchedAnswer, setSearchedAnswer] = useState<string>("");
+  const [explanations, setExplanations] = useState<Array<string>>([]);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
   const [loadingError, setLoadingError] = useState(false);
 
@@ -39,13 +46,14 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
 
   const handleAnswerEntry = async (e: any) => {
     if (e.keyCode == KEYCODE_ENTER) {
-      await fetchAnswer();
+      await fetchExplanations();
     }
   };
 
-  const fetchAnswer = async () => {
+  const fetchExplanations = async () => {
     setLoadingExplanation(true);
     setLoadingError(false);
+    setExplanations([]);
 
     await getExplanation(answer)
       .catch((error) => {
@@ -55,6 +63,11 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
       .then((res) => {
         if (setExplanationCallback) {
           setExplanationCallback(res);
+        } else {
+          if (res?.explanations) {
+            setExplanations(res.explanations);
+            setSearchedAnswer(answer);
+          }
         }
       })
       .finally(() => {
@@ -86,11 +99,16 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
           <LoadingButton
             loading={loadingExplanation}
             variant="contained"
-            onClick={fetchAnswer}
+            onClick={fetchExplanations}
           >
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
         </Stack>
+        {explanations?.length > 0 && (
+          <Typography style={{ marginTop: 8 }}>
+            Explanation for {searchedAnswer}: {explanations}
+          </Typography>
+        )}
       </Grid>
     </Box>
   );
