@@ -1,0 +1,63 @@
+.crossword-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-basis: auto;
+  flex-grow: 1;
+  width: 105%;
+}
+
+.crossword-svg-container {
+  clear: both;
+  position: relative;
+}
+
+.crossword-input {
+  width: 100%;
+  height: 100%;
+  text-anchor: middle;
+  text-align: center;
+  font-weight: bold;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+}
+
+.crossword-cell-selected {
+  fill: transparent;
+  stroke-width: 2;
+  stroke: #ffe500;
+}
+
+.clue-list {
+  display: flex;
+  flex: 0 0 35%;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+
+.clue-list-title {
+  padding-left: 1rem;
+  padding-bottom: 0.5rem;
+  margin-left: 2rem;
+  margin-top: 0;
+  margin-bottom: 0;
+  border-bottom: 1px dotted black;
+}
+
+.clue-item {
+  line-height: 2rem;
+}
+
+.clue-item-selected {
+  line-height: 2rem;
+  background-color: #ffe500;
+  font-weight: bold;
+}
+
+.clue-number {
+  font-weight: bold;
+  width: 20px;
+  margin-right: 10px;
+}
