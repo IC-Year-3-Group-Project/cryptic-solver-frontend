@@ -155,10 +155,38 @@ describe("Fetching crossword success", () => {
   });
 });
 
-describe("homepage should have a list of everyman crosswords", () => {
+describe("Homepage should have a list of everyman crosswords", () => {
   it("has links to crosswords", () => {
     cy.intercept("GET", "/fetch-everyman", { urls: ["c1", "c2"] });
     cy.visit("/");
     cy.get("[data-cy=crossword-link]").should("exist");
+  });
+});
+
+describe("Homepage should support answer entry", () => {
+  before(() => {
+    cy.visit("/");
+  });
+
+  it("enter in entry box should sent api request", () => {
+    cy.intercept("POST", "/TODO", { explanations: ["test"] }).as(
+      "getExplanation"
+    );
+
+    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
+
+    cy.wait("@getExplanation")
+      .its("request.body")
+      .should("include", { answer: "ibsen" });
+
+    cy.get("[data-cy=explanation]").contains("Explanation for ibsen: test");
+  });
+
+  it("error requests show error message", () => {
+    cy.intercept("POST", "/TODO", { statusCode: 404 });
+
+    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
+
+    cy.get("[data-cy=answer-input]").contains("Sorry, an error has occurred");
   });
 });

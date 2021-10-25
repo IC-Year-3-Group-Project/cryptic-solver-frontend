@@ -14,6 +14,8 @@ import Stack from "@mui/material/Stack";
 import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
 import { Box } from "@mui/system";
+import AnswerEntry from "@/components/AnswerEntry";
+import Grid from "@mui/material/Grid";
 
 // Dynamic component needs to know about the crossword component's props.
 interface CrosswordProps {
@@ -129,20 +131,17 @@ const Crossword: NextPage = () => {
     console.log(clue, wordLengths);
 
     // get possible solutions
-    async function fetchSolutions() {
-      const data = await getSolutions(clue, wordLengths)
-        .catch((error) => {
-          console.log("There was an error trying to fetch solutions", error);
-          setFetchSolutionError(true);
-        })
-        .then((res) => {
-          setSolutionData(res);
-        })
-        .finally(() => {
-          setLoadingSolutions(false);
-        });
-    }
-    await fetchSolutions();
+    await getSolutions(clue, wordLengths)
+      .catch((error) => {
+        console.log("There was an error trying to fetch solutions", error);
+        setFetchSolutionError(true);
+      })
+      .then((res) => {
+        setSolutionData(res);
+      })
+      .finally(() => {
+        setLoadingSolutions(false);
+      });
   };
 
   // @ts-ignore trust me bro.
@@ -216,6 +215,9 @@ const Crossword: NextPage = () => {
                   <div data-cy="no-solutions">No solutions found</div>
                 )}
             </Stack>
+            <Box mt={5}>
+              <AnswerEntry />
+            </Box>
           </div>
         </>
       )}
