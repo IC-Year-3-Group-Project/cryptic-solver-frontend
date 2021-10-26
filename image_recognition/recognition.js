@@ -109,10 +109,15 @@ function getGridFromImage(img) {
   //   }
   // }
 
-  grid = fillClueNumbers(grid)
+  fillClueNumbers(grid)
+  fillClueLengths(grid)
+
+  gridAsJson = getGridAsJson(grid)
+
+  return gridAsJson
 }
 
-// A function to initialize the grid as an array containing the 
+// Initialize the grid as an array containing the 
 // location and sizes of the cells
 function createGrid(xBounds, yBounds) {
   xBoundsLen = xBounds.length
@@ -164,10 +169,83 @@ function fillClueNumbers(grid) {
 
       canGoTo = grid[j][k]['canGoTo']
       if (!("top" in canGoTo) && "bottom" in canGoTo || !("left" in canGoTo) && "right" in canGoTo) {
-        grid[j][k] = clueNumber++
+        grid[j][k]['clueNumber'] = clueNumber++
       }
     }
   }
+}
 
-  return grid
+// Fill the lengths of the clues according to 
+// whether it they are going down or accross
+function fillClueLengths(grid) {
+
+  for (let j = grid.length - 1; j >= 0; j--) {
+    for (let k = grid[0].length - 1; k >= 0; k--) {
+
+      if (grid[j][k] == null) {
+        continue
+      } 
+
+      let down = 1
+      let right = 1
+      
+      if (j+1 < grid.length - 1) {
+        if (grid[j+1][k] != null) {
+          down += grid[j+1][k]["down"]
+        } 
+      } 
+
+      if (k+1 < grid[0].length - 1) {
+        if (grid[j][k+1] != null) {
+          right += grid[j][k+1]["right"]
+        } 
+      } 
+      grid[j][k]["down"] = down
+      grid[j][k]["right"] = right
+    }
+  }
+}
+
+// Create a JSON object from the grid
+function getGridAsJson(grid) {
+  let clues = []
+
+  for (let j = 0; j < grid.length; j++) {
+    for (let k = 0; k < grid[0].length; k++) {
+      if (grid[j][k] == null) {
+        continue
+      }
+
+      if (grid[j][k]["down"] > 1) {
+        writeClue(grid, clues, j, k, "down")
+      } 
+      if (grid[j][k]["right"] > 1) {
+        writeClue(grid, clues, j, k, "right")
+      }    
+    }
+  }
+
+  let gridAsJson = {
+    "clues": clues
+  }
+
+  return gridAsJson
+}
+
+// Add a new clue to the clues array
+function writeClue(grid, clues, j, k, direction) {
+  let directionNumber = (direction == "down") ? 1 : 0
+
+  if ("clueNumber" in grid[j][k]) {
+    clues.push({            
+      "number": grid[j][k]["clueNumber"],
+      "direction": directionNumber,
+      "text": "TODO",
+      "totalLength": grid[j][k][direction],
+      "lengths": [grid[j][k][
+        direction
+      ]],
+    "x": grid[j][k]["x"],
+    "y": grid[j][k]["y"]})
+  }
 }
