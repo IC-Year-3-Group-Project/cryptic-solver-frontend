@@ -1,45 +1,54 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="utf-8">
+  <head>
+    <meta charset="utf-8" />
 
-<script src="image_recognition/opencv.js"></script>    
-<script src="image_recognition/recognition.js"></script>
+    <script src="image_recognition/opencv.js"></script>
+    <script src="image_recognition/recognition.js"></script>
 
+    <title>Image testing</title>
+  </head>
 
-<title>Image testing</title>
-</head>
+  <body>
+    <img id="crossword" src="image.png" width="300" height="227" />
+  </body>
 
-<body>
-
-</body>
-
-<script>
+  <script>
     function init(event) {
-        function drawCanvas() {
+      function drawCanvas() {
+        let canvas = document.createElement("canvas");
+        let context = canvas.getContext("2d");
 
-            let canvas = document.createElement("canvas");
-            let context = canvas.getContext("2d");
+        canvas.width = image.width;
+        canvas.height = image.height;
 
-            canvas.width = image.width;
-            canvas.height = image.height;
+        context.drawImage(image, 0, 0);
+        let imgData = context.getImageData(
+          0,
+          0,
+          canvas.width - 1,
+          canvas.height - 1
+        );
 
-            context.drawImage(image, 0, 0);
-            let imgData = context.getImageData(0, 0, canvas.width-1, canvas.height-1);
+        grid = getGridFromImage(imgData);
+      }
 
-            grid = getGridFromImage(imgData)
-            console.log(grid)
-        }
-
-        var image = new Image()
-        // image.crossOrigin = "anonymous"
-        image.src = "image.png"
-        drawCanvas()
-
-
+      var image = new Image();
+      // image.crossOrigin = "anonymous"
+      image.src = "image.png";
+      drawCanvas();
     }
 
-    window.addEventListener('load', init, false);
-</script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const image = document.getElementById("crossword");
 
-</html> 
+    image.addEventListener("load", (e) => {
+      ctx.drawImage(image, 33, 71, 104, 124, 21, 20, 87, 104);
+    });
+
+    image.addEventListener("load", (e) => {
+      ctx.drawImage(image, 33, 71, 104, 124, 21, 20, 87, 104);
+    });
+  </script>
+</html>
