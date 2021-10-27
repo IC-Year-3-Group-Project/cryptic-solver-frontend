@@ -1,16 +1,18 @@
-import * as cv from opencv.js
-
 // Define constants
 let squareFactor = 1.15
-let minArea = 5.5
+let minArea = 1
 let areaFactor = 2.0 / 3.0
 let epsilon = 0.0005
 
-function getGridFromImage(img) {
+function getGridFromImage(imgData) {
 
   // Read image into a matrix
-  let imageMatrix = cv.imread(image)
-  let m = cv.Mat()
+  let imageMatrix = cv.matFromImageData(imgData);
+
+  console.log(imgData.data)
+
+
+  let m = new cv.Mat()
 
   // Convert RGB to grayscale
   cv.cvtColor(imageMatrix, m, cv.COLOR_BGR2GRAY, 0)
@@ -22,11 +24,11 @@ function getGridFromImage(img) {
   let hierarchy = new cv.Mat()
 
   // Get contours from the image
-  cv.findCountours(m, contours, hierarchy, cv, RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
+  cv.findContours(m, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE)
 
   let contourList = []
 
-  for (let i = 0; i < contours.size(); i++) {
+  for (let i = 0; i < contours.size; i++) {
 
     let contour = contours.get(i)
     let bounds = cv.boundingRect(contour)
@@ -46,8 +48,8 @@ function getGridFromImage(img) {
     contourList.push(contour)
   }
 
-  let medianArea = contourList.map(c => cv.countourArea(c)).sort((a, b) => a - b)[Math.floor(contourList.size() / 2)]
-  let medianPerimeter = contourList.map(c => cv.arcLength(c, true)).sort((a, b) => a - b)[Math.floor(contourList.size() / 2)]
+  let medianArea = contourList.map(c => cv.countourArea(c)).sort((a, b) => a - b)[Math.floor(contourList.size / 2)]
+  let medianPerimeter = contourList.map(c => cv.arcLength(c, true)).sort((a, b) => a - b)[Math.floor(contourList.size / 2)]
 
   temp = []
   for (let c of contourList) {
@@ -63,8 +65,8 @@ function getGridFromImage(img) {
 
   let averageSideLength = medianPerimeter / 4
 
-  let xs = contoursRects.map(c => c.x).sort((a, b) => a - b)
-  let ys = contoursRects.map(c => c.y).sort((a, b) => a - b)
+  let xs = contourList.map(c => c.x).sort((a, b) => a - b)
+  let ys = contourList.map(c => c.y).sort((a, b) => a - b)
 
   let xBounds = []
   let yBounds = []
@@ -85,7 +87,9 @@ function getGridFromImage(img) {
     prevY = y
   }
 
-  let grid = createGrid(xBounds, yBounds)
+  let rectangles = contourList.map(c => cv.boundingRect(c))
+
+  let grid = createGrid(xBounds, yBounds, rectangles)
 
   // Can be used for better accuracy later
   // let numAdjacent = 0
@@ -119,7 +123,7 @@ function getGridFromImage(img) {
 
 // Initialize the grid as an array containing the 
 // location and sizes of the cells
-function createGrid(xBounds, yBounds) {
+function createGrid(xBounds, yBounds, rectangles) {
   xBoundsLen = xBounds.length
   yBoundsLen = yBounds.length
   let grid = [...Array(yBoundsLen)].map(e => Array(xBoundsLen).fill(null))
