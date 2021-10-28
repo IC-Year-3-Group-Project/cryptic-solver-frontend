@@ -42,10 +42,10 @@ onmessage = function (e) {
   }
 };
 
-let squareFactor = 2/3.3
+let squareFactor = 2.0 / 3.0
 let minArea = 5.5
 let areaFactor = 2.0 / 3.0
-let epsilon = 0.001
+let epsilon = 0.0005
 
 function getGridFromImage({ msg, payload }) {
 
@@ -80,7 +80,7 @@ function getGridFromImage({ msg, payload }) {
 
     // Make sure contours are of a certain area
     let contourArea = cv.contourArea(contour)
-    if (contourArea < minArea && contourArea < areaFactor * bounds.width * bounds.height) {
+    if (contourArea < minArea || contourArea < areaFactor * bounds.width * bounds.height) {
       continue
     }
 
@@ -93,10 +93,10 @@ function getGridFromImage({ msg, payload }) {
 
   temp = []
   for (let c of contourList) {
-    if (Math.abs(cv.contourArea(c) - medianArea) <= medianArea / 2.0) {
+    if (Math.abs(cv.contourArea(c) - medianArea) > medianArea / 2.0 && Math.abs(cv.arcLength(c, true) - medianPerimeter) < medianPerimeter / 2.0) {
       continue
     }
-    if (Math.abs(cv.arcLength(c, true) - medianPerimeter) < medianPerimeter / 2.0) {
+    if (Math.abs(cv.arcLength(c, true) - medianPerimeter) >= medianPerimeter / 2.0) {
       continue
     }
     temp.push(c)
@@ -113,7 +113,8 @@ function getGridFromImage({ msg, payload }) {
   let xBounds = []
   let yBounds = []
 
-  let prevX, prevY = -10000000
+  let prevX = -10000
+  let prevY = -10000
 
   for (let x of xs) {
     if (x - prevX > averageSideLength / 2) {
@@ -130,7 +131,6 @@ function getGridFromImage({ msg, payload }) {
   }
 
   let grid = createGrid(xBounds, yBounds, rectangles)
-  console.log(grid.length, grid[0].length)
 
   // Can be used for better accuracy later
   // let numAdjacent = 0
