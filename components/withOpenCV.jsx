@@ -1,11 +1,17 @@
 /* eslint-disable no-console */
-import React, { Fragment } from 'react';
+import React, { Fragment } from "react";
 
+import injectScript from "../image_recognition/injectScript";
+const OPENCV_URL = "http://127.0.0.1:8000/public/js/opencv.js";
 
-import injectScript from '../image_recognition/injectScript';
-const OPENCV_URL = 'http://127.0.0.1:8000/static/opencv/opencv.js';
-
-export default function withOpenCV( videoPlayer, setupVideo, processVideo, teardownVideo, options, playerEventHandler, ) {
+export default function withOpenCV(
+  videoPlayer,
+  setupVideo,
+  processVideo,
+  teardownVideo,
+  options,
+  playerEventHandler
+) {
   class OpenCV extends React.Component {
     constructor(props) {
       super(props);
@@ -13,16 +19,14 @@ export default function withOpenCV( videoPlayer, setupVideo, processVideo, teard
       this.loadOpenCv();
     }
 
-
     loadOpenCv = () => {
-      
-      const promise = injectScript('opencv-injected-js', OPENCV_URL);
+      const promise = injectScript("opencv-injected-js", OPENCV_URL);
       promise
         .then(() => {
           console.log(`success to load ${OPENCV_URL}`);
           // eslint-disable-next-line no-undef
           console.log(cv.getBuildInformation());
-          this.playerRef.trigger('opencvReady');
+          this.playerRef.trigger("opencvReady");
         })
         .catch(() => {
           // eslint-disable-next-line no-console
@@ -30,13 +34,11 @@ export default function withOpenCV( videoPlayer, setupVideo, processVideo, teard
         });
     };
 
-
     playerEventHandler(type, e) {
       if (playerEventHandler != null) {
         playerEventHandler(type, e);
       }
     }
-
 
     render = () => {
       const Player = videoPlayer;

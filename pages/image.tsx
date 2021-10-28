@@ -10,7 +10,7 @@ import { Box } from "@mui/system";
 import { Button, ButtonGroup } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
-// import "../image_recognition/opencv.js";
+import cv from "../services/cv";
 // import { getGridFromImage } from "../image_recognition/recognition.js";
 // import Image from "next/image";
 
@@ -21,15 +21,18 @@ const ImagePage: NextPage = () => {
   const canvasRef = useRef(null);
 
   //@ts-ignore
-  useEffect(() => {
+  useEffect(async () => {
+    console.log("loading");
+    await cv.load();
     //@ts-ignore
     const ctx = canvasRef.current.getContext("2d");
     //@ts-ignore
-    const image = new Image();
     console.log(canvasRef);
     console.log(ctx);
+
+    const image = new Image();
     image.src = "./image.png";
-    image.onload = () => {
+    image.onload = async () => {
       ctx.drawImage(image, 0, 0);
       let imgData = ctx.getImageData(0, 0, 640, 425);
       console.log(imgData);
@@ -38,22 +41,14 @@ const ImagePage: NextPage = () => {
         count += data;
       });
       console.log(count);
-    //   getGridFromImage(imgData);
+      let x = await cv.getGridFromImage(imgData).then((res) => {
+        console.log("Completed Promise");
+        console.log(res);
+      });
+      console.log("Complete");
+      console.log(x);
     };
   }, []);
-
-  //   useEffect(() => {
-  //     //@ts-ignore
-  //     const ctx = canvasRef.current.getContext("2d");
-  //     //@ts-ignore
-  //     let imgData = ctx.getImageData(0, 0, 640, 425);
-  //     console.log(imgData);
-  //     let count = 0;
-  //     imgData.data.map((data) => {
-  //       count += data;
-  //     });
-  //     console.log(count);
-  //   }, [canvasRef]);
 
   return (
     <Layout>
