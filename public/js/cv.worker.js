@@ -213,8 +213,22 @@ function fillClueNumbers(grid) {
       }
 
       canGoTo = grid[j][k]['canGoTo']
-      if (!("top" in canGoTo) && "bottom" in canGoTo || !("left" in canGoTo) && "right" in canGoTo) {
-        grid[j][k]['clueNumber'] = clueNumber++
+
+      let isClue = false
+      if (!canGoTo.includes("top") && canGoTo.includes("bottom")) {
+        grid[j][k]['isDown'] = true
+        grid[j][k]['clueNumber'] = clueNumber
+        isClue = true
+      }
+
+      if (!canGoTo.includes("left") && canGoTo.includes("right")) {
+        grid[j][k]['isAcross'] = true
+        grid[j][k]['clueNumber'] = clueNumber
+        isClue = true
+      }
+
+      if(isClue){
+        clueNumber++
       }
     }
   }
@@ -261,10 +275,11 @@ function getGridAsJson(grid) {
         continue
       }
 
-      if (grid[j][k]["down"] > 1) {
+      if (grid[j][k]["down"] > 1 && grid[j][k]["isDown"]) {
         writeClue(grid, clues, j, k, "down")
       } 
-      if (grid[j][k]["right"] > 1) {
+      
+      if (grid[j][k]["right"] > 1 && grid[j][k]["isAcross"]) {
         writeClue(grid, clues, j, k, "right")
       }    
     }
