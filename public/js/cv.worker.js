@@ -132,28 +132,6 @@ function getGridFromImage({ msg, payload }) {
 
   let grid = createGrid(xBounds, yBounds, rectangles)
 
-  // Can be used for better accuracy later
-  // let numAdjacent = 0
-  // let totalError = 0
-
-  // for (let j = 0; j < grid.length; j++) {
-  //   for (let k = 0; k < grid[0].length; k++) {
-  //     if (grid[j][k] == null) {
-  //       continue
-  //     }
-
-  //     if (j + 1 < grid.length && grid[j + 1][k] != null) {
-  //       numAdjacent++
-  //       totalError += grid[j + 1][k].y - grid[j][k].y - grid[j][k].height
-  //     }
-
-  //     if (k + 1 < grid[0].length && grid[j][k + 1] != null) {
-  //       numAdjacent++
-  //       totalError += grid[j][k + 1].x - grid[j][k].x - grid[j][k].width
-  //     }
-  //   }
-  // }
-
   fillClueNumbers(grid)
   fillClueLengths(grid)
 
@@ -182,10 +160,6 @@ function createGrid(xBounds, yBounds, rectangles) {
     }
 
     grid[j][k] = {
-      x: rectangles[i]['x'],
-      y: rectangles[i]['y'],
-      w: rectangles[i]['width'],
-      h: rectangles[i]['height'],
       canGoTo: []
     }
   }
@@ -259,6 +233,7 @@ function fillClueLengths(grid) {
           right += grid[j][k + 1]["right"]
         }
       }
+      
       grid[j][k]["down"] = down
       grid[j][k]["right"] = right
     }
