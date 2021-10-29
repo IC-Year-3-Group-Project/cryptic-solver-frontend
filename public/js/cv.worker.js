@@ -19,9 +19,9 @@ function waitForOpencv(callbackFn, waitTimeMs = 30000, stepTimeMs = 100) {
 }
 
 /**
- * This exists to capture all the events that are thrown out of the worker
- * into the worker. Without this, there would be no communication possible
- * with the project.
+ *  This exists to capture all the events that are thrown out of the worker
+ *  into the worker. Without this, there would be no communication possible
+ *  with the project.
  */
 onmessage = function (e) {
   switch (e.data.msg) {
@@ -140,8 +140,10 @@ function getGridFromImage({ msg, payload }) {
   postMessage({ msg, payload: gridAsJson });
 }
 
-// Initialize the grid as an array containing the 
-// location and sizes of the cells
+/**
+ *  Initialize the grid as an array containing the 
+ *  location and sizes of the cells
+ */
 function createGrid(xBounds, yBounds, rectangles) {
   xBoundsLen = xBounds.length
   yBoundsLen = yBounds.length
@@ -151,11 +153,11 @@ function createGrid(xBounds, yBounds, rectangles) {
     let j = 0
     let k = 0
 
-    while (yBounds[j + 1] <= rectangles[i]['y'] + epsilon && j < yBoundsLen) {
+    while (yBounds[j + 1] <= rectangles[i]["y"] + epsilon && j < yBoundsLen) {
       j++
     }
 
-    while (xBounds[k + 1] <= rectangles[i]['x'] + epsilon && k < xBoundsLen) {
+    while (xBounds[k + 1] <= rectangles[i]["x"] + epsilon && k < xBoundsLen) {
       k++
     }
 
@@ -166,8 +168,10 @@ function createGrid(xBounds, yBounds, rectangles) {
   return grid
 }
 
-// A function that uses the canGoTo attribute of the grid to assign
-// numbers to the cells from which you can only go down or right
+/**
+ *  A function that uses the canGoTo attribute of the grid to assign
+ *  numbers to the cells from which you can only go down or right
+ */
 function fillClueNumbers(grid) {
   clueNumber = 1
   for (let j = 0; j < grid.length; j++) {
@@ -186,18 +190,18 @@ function fillClueNumbers(grid) {
         grid[j][k].canGoTo.push("right")
       }
 
-      canGoTo = grid[j][k]['canGoTo']
+      canGoTo = grid[j][k]["canGoTo"]
 
       let isClue = false
       if (!canGoTo.includes("top") && canGoTo.includes("bottom")) {
-        grid[j][k]['isDown'] = true
-        grid[j][k]['clueNumber'] = clueNumber
+        grid[j][k]["isDown"] = true
+        grid[j][k]["clueNumber"] = clueNumber
         isClue = true
       }
 
       if (!canGoTo.includes("left") && canGoTo.includes("right")) {
-        grid[j][k]['isAcross'] = true
-        grid[j][k]['clueNumber'] = clueNumber
+        grid[j][k]["isAcross"] = true
+        grid[j][k]["clueNumber"] = clueNumber
         isClue = true
       }
 
@@ -208,8 +212,10 @@ function fillClueNumbers(grid) {
   }
 }
 
-// Fill the lengths of the clues according to 
-// whether it they are going down or accross
+/**
+ *  Fill the lengths of the clues according to 
+ *  whether it they are going down or accross
+ */ 
 function fillClueLengths(grid) {
 
   for (let j = grid.length - 1; j >= 0; j--) {
@@ -233,7 +239,7 @@ function fillClueLengths(grid) {
           right += grid[j][k + 1]["right"]
         }
       }
-      
+
       grid[j][k]["down"] = down
       grid[j][k]["right"] = right
     }
@@ -269,7 +275,9 @@ function getGridAsJson(grid) {
   return gridAsJson
 }
 
-// Add a new clue to the clues array
+/**
+ *  Add a new clue to the clues array
+ */
 function writeClue(grid, clues, j, k, direction) {
   let directionNumber = (direction == "down") ? 1 : 0
 
