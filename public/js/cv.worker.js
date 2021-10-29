@@ -286,7 +286,9 @@ function getGridAsJson(grid) {
   }
 
   let gridAsJson = {
-    "clues": clues
+    "clues": clues,
+    "rows": grid.length,
+    "columns": grid[0].length
   }
 
   return gridAsJson
@@ -305,8 +307,8 @@ function writeClue(grid, clues, j, k, direction) {
       "lengths": [grid[j][k][
         direction
       ]],
-      "x": grid[j][k]["x"],
-      "y": grid[j][k]["y"]
+      "x": j,
+      "y": k
     })
   }
 }
