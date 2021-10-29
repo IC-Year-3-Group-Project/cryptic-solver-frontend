@@ -227,7 +227,7 @@ function fillClueNumbers(grid) {
         isClue = true
       }
 
-      if(isClue){
+      if (isClue) {
         clueNumber++
       }
     }
@@ -243,22 +243,22 @@ function fillClueLengths(grid) {
 
       if (grid[j][k] == null) {
         continue
-      } 
+      }
 
       let down = 1
       let right = 1
-      
-      if (j+1 < grid.length - 1) {
-        if (grid[j+1][k] != null) {
-          down += grid[j+1][k]["down"]
-        } 
-      } 
 
-      if (k+1 < grid[0].length - 1) {
-        if (grid[j][k+1] != null) {
-          right += grid[j][k+1]["right"]
-        } 
-      } 
+      if (j + 1 < grid.length) {
+        if (grid[j + 1][k] != null) {
+          down += grid[j + 1][k]["down"]
+        }
+      }
+
+      if (k + 1 < grid[0].length) {
+        if (grid[j][k + 1] != null) {
+          right += grid[j][k + 1]["right"]
+        }
+      }
       grid[j][k]["down"] = down
       grid[j][k]["right"] = right
     }
@@ -277,11 +277,11 @@ function getGridAsJson(grid) {
 
       if (grid[j][k]["down"] > 1 && grid[j][k]["isDown"]) {
         writeClue(grid, clues, j, k, "down")
-      } 
-      
+      }
+
       if (grid[j][k]["right"] > 1 && grid[j][k]["isAcross"]) {
         writeClue(grid, clues, j, k, "right")
-      }    
+      }
     }
   }
 
@@ -297,7 +297,7 @@ function writeClue(grid, clues, j, k, direction) {
   let directionNumber = (direction == "down") ? 1 : 0
 
   if ("clueNumber" in grid[j][k]) {
-    clues.push({            
+    clues.push({
       "number": grid[j][k]["clueNumber"],
       "direction": directionNumber,
       "text": "TODO",
@@ -305,7 +305,8 @@ function writeClue(grid, clues, j, k, direction) {
       "lengths": [grid[j][k][
         direction
       ]],
-    "x": grid[j][k]["x"],
-    "y": grid[j][k]["y"]})
+      "x": grid[j][k]["x"],
+      "y": grid[j][k]["y"]
+    })
   }
 }
