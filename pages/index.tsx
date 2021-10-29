@@ -13,7 +13,6 @@ import { Box } from "@mui/system";
 import { Button, ButtonGroup } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
-import { getGridFromImage } from "./image_recognition/recognition";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
