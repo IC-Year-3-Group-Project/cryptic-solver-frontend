@@ -56,68 +56,72 @@ const Home: NextPage = () => {
 
   return (
     <Layout>
-      <>
-        <h1 className={styles.title} data-cy="title">
-          Cryptic Crossword Solver
-        </h1>
+      <h1 className={styles.title} data-cy="title">
+        Cryptic Crossword Solver
+      </h1>
 
-        <p className={styles.description}>
-          Enter a link to an Everyman Guardian crossword:
-        </p>
+      <p className={styles.description}>
+        Enter a link to an Everyman Guardian crossword:
+      </p>
 
-        <TextField
-          label="Everyman link"
-          fullWidth
-          variant="standard"
-          value={crosswordLink}
-          data-cy="link-input"
-          onChange={handleCrosswordLinkInput}
-          onKeyDown={handleCrosswordLinkEntry}
-        />
+      <TextField
+        label="Everyman link"
+        fullWidth
+        variant="standard"
+        value={crosswordLink}
+        data-cy="link-input"
+        onChange={handleCrosswordLinkInput}
+        onKeyDown={handleCrosswordLinkEntry}
+      />
 
-        <Box mt={5}>
-          <Grid
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-            spacing={2}
-          >
-            <Grid item>
-              <Typography variant="h6">Crosswords to try:</Typography>
-            </Grid>
-
-            {loadingEveryman && (
-              <Grid item>
-                <CircularProgress size={20} />
-              </Grid>
-            )}
-
-            {!loadingEveryman &&
-              everymanUrls.slice(0, 5).map((url, i) => {
-                return (
-                  <Grid item key={i}>
-                    <Button
-                      variant="outlined"
-                      href={"/crossword?url=" + url}
-                      data-cy="crossword-link"
-                    >
-                      #
-                      {url.replace(
-                        "https://www.theguardian.com/crosswords/everyman/",
-                        ""
-                      )}
-                    </Button>
-                  </Grid>
-                );
-              })}
+      <Box mt={5}>
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          spacing={2}
+        >
+          <Grid item>
+            <Typography variant="h6">Crosswords to try:</Typography>
           </Grid>
-        </Box>
 
-        <Box mt={5}>
-          <AnswerEntry />
-        </Box>
-      </>
+          {loadingEveryman && (
+            <Grid item>
+              <CircularProgress size={20} />
+            </Grid>
+          )}
+
+          {!loadingEveryman &&
+            everymanUrls.slice(0, 5).map((url, i) => {
+              return (
+                <Grid item key={i}>
+                  <Button
+                    variant="outlined"
+                    href={"/crossword?url=" + url}
+                    data-cy="crossword-link"
+                  >
+                    #
+                    {url.replace(
+                      "https://www.theguardian.com/crosswords/everyman/",
+                      ""
+                    )}
+                  </Button>
+                </Grid>
+              );
+            })}
+        </Grid>
+      </Box>
+
+      <Box mt={5}>
+        <AnswerEntry />
+      </Box>
+
+      <Box mt={5}>
+        <Button variant="contained" href="/upload">
+          Click to upload a crossword from an image
+        </Button>
+      </Box>
     </Layout>
   );
 };
