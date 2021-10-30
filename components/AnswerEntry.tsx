@@ -7,7 +7,7 @@ import Grid from "@material-ui/core/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { resolve } from "cypress/types/bluebird";
 
-const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
+const apiUrl = "http://localhost:3001";
 
 async function getExplanation(answer: object): Promise<any> {
   const response = await fetch(`${apiUrl}/explain_answer`, {
@@ -116,14 +116,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
 
     setLoadingExplanation(true);
     await getExplanation(explanationSearch)
-      .catch((error) => {
-        console.log("There was an error trying to fetch explanations", error);
-        setLoadingExplanationError({
-          answer: true,
-          clue: true,
-          word_length: true,
-        });
-      })
       .then((res) => {
         if (setExplanationCallback) {
           setExplanationCallback(res);
@@ -139,6 +131,14 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
           }
         }
       })
+      .catch((error) => {
+        console.log("There was an error trying to fetch explanations", error);
+        setLoadingExplanationError({
+          answer: true,
+          clue: true,
+          word_length: true,
+        });
+      })
       .finally(() => {
         setLoadingExplanation(false);
       });
@@ -152,7 +152,7 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
         Enter your answer and clue here:
       </Typography>
       <Grid container direction="column">
-        <Stack spacing={2} direction="row">
+        <Stack spacing={2} direction="row" style={{ marginBottom: 16 }}>
           <TextField
             label="Answer"
             fullWidth
@@ -166,22 +166,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             helperText={
               loadingExplanationError.answer &&
               (loadingExplanationErrorMessages.answer ||
-                "Sorry, an error has occurred")
-            }
-          />
-          <TextField
-            label="Clue"
-            fullWidth
-            variant="standard"
-            value={explanationSearch.clue}
-            data-cy="clue-input"
-            onChange={handleExplanationSearchInput}
-            onKeyDown={handleExplanationSearchEntry}
-            name="clue"
-            error={loadingExplanationError.clue}
-            helperText={
-              loadingExplanationError.clue &&
-              (loadingExplanationErrorMessages.clue ||
                 "Sorry, an error has occurred")
             }
           />
@@ -210,6 +194,24 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
         </Stack>
+        <TextField
+          label="Clue"
+          fullWidth
+          multiline
+          maxRows={4}
+          variant="standard"
+          value={explanationSearch.clue}
+          data-cy="clue-input"
+          onChange={handleExplanationSearchInput}
+          onKeyDown={handleExplanationSearchEntry}
+          name="clue"
+          error={loadingExplanationError.clue}
+          helperText={
+            loadingExplanationError.clue &&
+            (loadingExplanationErrorMessages.clue ||
+              "Sorry, an error has occurred")
+          }
+        />
         {!setExplanationCallback &&
           searchedExplanation &&
           Object.keys(searchedExplanation).length > 0 && (
