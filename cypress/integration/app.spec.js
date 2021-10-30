@@ -155,7 +155,9 @@ describe("Fetching crossword success", () => {
     cy.get("[data-cy=solve-cell]").click({ force: true });
 
     for (let i = 1; i < mockSolution.length; i++) {
-      cy.get(`[data-cy=grid-cell-0-${i}]`).contains(mockSolution[i].toUpperCase());
+      cy.get(`[data-cy=grid-cell-0-${i}]`).contains(
+        mockSolution[i].toUpperCase()
+      );
     }
   });
 });
@@ -169,29 +171,62 @@ describe("Homepage should have a list of everyman crosswords", () => {
 });
 
 describe("Homepage should support answer entry", () => {
-  before(() => {
+  it("find button should send api request", () => {
+    const [answer, clue, explanation] = [
+      "Parsnip",
+      "Attaches blame when returning veg",
+      "veg -> PARSNIP(reversal[when returning] PINSRAP(PINS=attaches + RAP=blame))",
+    ];
+
     cy.visit("/");
-  });
+    cy.intercept("POST", "/explain_answer", [explanation]).as("getExplanation");
 
-  it("enter in entry box should sent api request", () => {
-    cy.intercept("POST", "/TODO", { explanations: ["test"] }).as(
-      "getExplanation"
-    );
+    cy.get("[data-cy=answer-input]").type(answer);
+    cy.get("[data-cy=clue-input]").type(clue);
+    cy.get("[data-cy=find-explanation-button").click();
 
-    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
+    cy.wait("@getExplanation").its("request.body").should("include", {
+      answer: answer.toLowerCase(),
+      clue: clue.toLowerCase(),
+      word_length: answer.length,
+    });
 
-    cy.wait("@getExplanation")
-      .its("request.body")
-      .should("include", { answer: "ibsen" });
-
-    cy.get("[data-cy=explanation]").contains("Explanation for ibsen: test");
+    cy.get("[data-cy=explanation-description]").contains(clue);
+    cy.get("[data-cy=explanation]").contains(explanation);
   });
 
   it("error requests show error message", () => {
-    cy.intercept("POST", "/TODO", { statusCode: 404 });
+    cy.visit("/");
+    cy.intercept("POST", "/explain_answer", { statusCode: 404 });
 
-    cy.get("[data-cy=answer-input]").type("ibsen{enter}");
+    cy.get("[data-cy=answer-input]").type("ibsen");
+    cy.get("[data-cy=clue-input]").type("ibsen");
+    cy.get("[data-cy=find-explanation-button").click();
 
     cy.get("[data-cy=answer-input]").contains("Sorry, an error has occurred");
+  });
+
+  it("validates clue", () => {
+    cy.visit("/");
+    cy.get("[data-cy=answer-input]").type("ibsen");
+    cy.get("[data-cy=find-explanation-button").click();
+
+    cy.get("[data-cy=clue-input]").contains("Clue mustn't be empty");
+  });
+
+  it("validates answer", () => {
+    cy.visit("/");
+    cy.get("[data-cy=clue-input]").type("ibsen");
+    cy.get("[data-cy=find-explanation-button").click();
+
+    cy.get("[data-cy=answer-input]").contains("Answer mustn't be empty");
+  });
+
+  it("validates all", () => {
+    cy.visit("/");
+    cy.get("[data-cy=find-explanation-button").click();
+
+    cy.get("[data-cy=clue-input]").contains("Clue mustn't be empty");
+    cy.get("[data-cy=answer-input]").contains("Answer mustn't be empty");
   });
 });

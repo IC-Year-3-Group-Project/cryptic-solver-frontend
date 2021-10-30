@@ -5,25 +5,34 @@ import TextField from "@mui/material/TextField";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { resolve } from "cypress/types/bluebird";
 
 const apiUrl = "http://localhost:3001";
 
-async function getExplanation(answer: object): Promise<any> {
+async function getExplanation(explanationSearch: {
+  [key: string]: any;
+}): Promise<any> {
+  const lowerCaseExplanationSearch = Object.keys(explanationSearch).reduce(
+    (
+      loweredCase: {
+        [key: string]: any;
+      },
+      key: any
+    ) => (
+      (loweredCase[key] = explanationSearch[key].toLowerCase()), loweredCase
+    ),
+    {}
+  );
+  lowerCaseExplanationSearch["word_length"] = explanationSearch.answer.length;
   const response = await fetch(`${apiUrl}/explain_answer`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(answer),
+    body: JSON.stringify(lowerCaseExplanationSearch),
   });
 
   return await response.json();
-
-  // return new Promise((resolve, reject) => {
-  //   resolve({ explanations: "test"]});
-  // });
 }
 
 interface Props {
@@ -31,8 +40,6 @@ interface Props {
 }
 
 export default function AnswerEntry({ setExplanationCallback }: Props) {
-  const KEYCODE_ENTER = 13;
-
   const validators: {
     [key: string]: any;
   } = {
@@ -48,12 +55,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
       }
       return [true, "Clue mustn't be empty"];
     },
-    word_length: (value: number) => {
-      if (value > 0) {
-        return [false, ""];
-      }
-      return [true, "Length must be positive"];
-    },
   };
 
   const [explanationSearch, setExplanationSearch] = useReducer<
@@ -61,14 +62,12 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
   >((state: object, newState: object) => ({ ...state, ...newState }), {
     answer: "",
     clue: "",
-    word_length: "",
   });
   const [loadingExplanationError, setLoadingExplanationError] = useReducer<
     Reducer<any, any>
   >((state: object, newState: object) => ({ ...state, ...newState }), {
     answer: false,
     clue: false,
-    word_length: false,
   });
   const [loadingExplanationErrorMessages, setLoadingExplanationErrorMessages] =
     useReducer<Reducer<any, any>>(
@@ -76,7 +75,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
       {
         answer: "",
         clue: "",
-        word_length: false,
       }
     );
   const [searchedExplanation, setSearchedExplanation] = useState<any>({});
@@ -88,12 +86,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
     const [error, errorMessage] = validators[e.target.name](e.target.value);
     setLoadingExplanationError({ [e.target.name]: error });
     setLoadingExplanationErrorMessages({ [e.target.name]: errorMessage });
-  };
-
-  const handleExplanationSearchEntry = async (e: any) => {
-    if (e.keyCode == KEYCODE_ENTER) {
-      await fetchExplanation();
-    }
   };
 
   const validateSearch = () => {
@@ -121,12 +113,11 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
           setExplanationCallback(res);
         } else {
           setSearchedExplanation(explanationSearch);
-          setExplanation(res.explanations);
-          if (res?.explanations) {
+          setExplanation(res);
+          if (res) {
             setExplanationSearch({
               answer: "",
               clue: "",
-              word_length: 0,
             });
           }
         }
@@ -136,7 +127,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
         setLoadingExplanationError({
           answer: true,
           clue: true,
-          word_length: true,
         });
       })
       .finally(() => {
@@ -160,7 +150,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             value={explanationSearch.answer}
             data-cy="answer-input"
             onChange={handleExplanationSearchInput}
-            onKeyDown={handleExplanationSearchEntry}
             name="answer"
             error={loadingExplanationError.answer}
             helperText={
@@ -169,27 +158,11 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
                 "Sorry, an error has occurred")
             }
           />
-          <TextField
-            label="Length"
-            type="number"
-            fullWidth
-            variant="standard"
-            value={explanationSearch.word_length}
-            data-cy="length-input"
-            onChange={handleExplanationSearchInput}
-            onKeyDown={handleExplanationSearchEntry}
-            name="word_length"
-            error={loadingExplanationError.word_length}
-            helperText={
-              loadingExplanationError.word_length &&
-              (loadingExplanationErrorMessages.word_length ||
-                "Sorry, an error has occurred")
-            }
-          />
           <LoadingButton
             loading={loadingExplanation}
             variant="contained"
             onClick={fetchExplanation}
+            data-cy="find-explanation-button"
           >
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
@@ -203,7 +176,6 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
           value={explanationSearch.clue}
           data-cy="clue-input"
           onChange={handleExplanationSearchInput}
-          onKeyDown={handleExplanationSearchEntry}
           name="clue"
           error={loadingExplanationError.clue}
           helperText={
@@ -215,10 +187,20 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
         {!setExplanationCallback &&
           searchedExplanation &&
           Object.keys(searchedExplanation).length > 0 && (
-            <Typography style={{ marginTop: 8 }} data-cy="explanation">
-              {explanation
-                ? `Explanation for ${searchedExplanation.clue}: ${explanation}`
-                : `No explanation found for: ${searchedExplanation.clue}`}
+            <Typography
+              style={{ marginTop: 24 }}
+              data-cy="explanation-description"
+            >
+              {explanation ? (
+                <>
+                  {`Explanation for ${searchedExplanation.clue}:`}
+                  <Typography style={{ marginTop: 12 }} data-cy="explanation">
+                    {`${explanation}`}
+                  </Typography>
+                </>
+              ) : (
+                `No explanation found for: ${searchedExplanation.clue}`
+              )}
             </Typography>
           )}
       </Grid>
