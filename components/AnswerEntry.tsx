@@ -33,6 +33,29 @@ interface Props {
 export default function AnswerEntry({ setExplanationCallback }: Props) {
   const KEYCODE_ENTER = 13;
 
+  const validators: {
+    [key: string]: any;
+  } = {
+    answer: (value: string) => {
+      if (value?.length > 0) {
+        return [false, ""];
+      }
+      return [true, "Answer mustn't be empty"];
+    },
+    clue: (value: string) => {
+      if (value?.length > 0) {
+        return [false, ""];
+      }
+      return [true, "Clue mustn't be empty"];
+    },
+    word_length: (value: number) => {
+      if (value > 0) {
+        return [false, ""];
+      }
+      return [true, "Length must be positive"];
+    },
+  };
+
   const [explanationSearch, setExplanationSearch] = useReducer<
     Reducer<any, any>
   >((state: object, newState: object) => ({ ...state, ...newState }), {
@@ -47,13 +70,24 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
     clue: false,
     word_length: false,
   });
+  const [loadingExplanationErrorMessages, setLoadingExplanationErrorMessages] =
+    useReducer<Reducer<any, any>>(
+      (state: object, newState: object) => ({ ...state, ...newState }),
+      {
+        answer: "",
+        clue: "",
+        word_length: false,
+      }
+    );
   const [searchedExplanation, setSearchedExplanation] = useState<any>({});
   const [explanation, setExplanation] = useState<string>("");
   const [loadingExplanation, setLoadingExplanation] = useState(false);
 
   const handleExplanationSearchInput = (e: any) => {
     setExplanationSearch({ [e.target.name]: e.target.value });
-    setLoadingExplanationError({ [e.target.name]: false });
+    const [error, errorMessage] = validators[e.target.name](e.target.value);
+    setLoadingExplanationError({ [e.target.name]: error });
+    setLoadingExplanationErrorMessages({ [e.target.name]: errorMessage });
   };
 
   const handleExplanationSearchEntry = async (e: any) => {
@@ -63,18 +97,24 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
   };
 
   const validateSearch = () => {
-    console.log("asd");
+    let hasError = false;
+    for (const key in validators) {
+      const [error, errorMessage] = validators[key](explanationSearch[key]);
+      setLoadingExplanationError({ [key]: error });
+      setLoadingExplanationErrorMessages({ [key]: errorMessage });
+      hasError ||= error;
+    }
+    return !hasError;
   };
 
   const fetchExplanation = async () => {
-    setLoadingExplanation(true);
-    setLoadingExplanationError({
-      answer: false,
-      clue: false,
-      word_length: false,
-    });
+    setSearchedExplanation({});
     setExplanation("");
+    if (!validateSearch()) {
+      return;
+    }
 
+    setLoadingExplanation(true);
     await getExplanation(explanationSearch)
       .catch((error) => {
         console.log("There was an error trying to fetch explanations", error);
@@ -124,7 +164,9 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             name="answer"
             error={loadingExplanationError.answer}
             helperText={
-              loadingExplanationError.answer && "Sorry, an error has occurred"
+              loadingExplanationError.answer &&
+              (loadingExplanationErrorMessages.answer ||
+                "Sorry, an error has occurred")
             }
           />
           <TextField
@@ -137,6 +179,11 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             onKeyDown={handleExplanationSearchEntry}
             name="clue"
             error={loadingExplanationError.clue}
+            helperText={
+              loadingExplanationError.clue &&
+              (loadingExplanationErrorMessages.clue ||
+                "Sorry, an error has occurred")
+            }
           />
           <TextField
             label="Length"
@@ -149,6 +196,11 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             onKeyDown={handleExplanationSearchEntry}
             name="word_length"
             error={loadingExplanationError.word_length}
+            helperText={
+              loadingExplanationError.word_length &&
+              (loadingExplanationErrorMessages.word_length ||
+                "Sorry, an error has occurred")
+            }
           />
           <LoadingButton
             loading={loadingExplanation}
@@ -164,7 +216,7 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             <Typography style={{ marginTop: 8 }} data-cy="explanation">
               {explanation
                 ? `Explanation for ${searchedExplanation.clue}: ${explanation}`
-                : "No explanation found."}
+                : `No explanation found for: ${searchedExplanation.clue}`}
             </Typography>
           )}
       </Grid>
