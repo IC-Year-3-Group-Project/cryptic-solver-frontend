@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from "react";
 import Layout from "@/components/_Layout";
 import styles from "@/styles/Home.module.css";
 import { createWorker } from "tesseract.js";
+import { split } from "cypress/types/lodash";
 
 //@ts-ignore
 const ImagePage: NextPage = () => {
@@ -12,8 +13,49 @@ const ImagePage: NextPage = () => {
     logger: (m) => console.log(m),
   });
 
-  // this function doesn't really work yet, I think it has an infinite loop
   const extract_clues = (text: string) => {
+    let parts = text.split("\n\n");
+    let clues = [];
+
+    for (let part of parts) {
+      let part_new = part.replace(/\n/g, " ");
+      let front = part_new;
+      let lengths: string[] = [];
+
+      if (part.includes("(")) {
+        let splittedPart = part_new.split("(");
+        front = splittedPart[0];
+        let lengthsWithComma = splittedPart[1].substring(0, splittedPart[1].length - 1);
+
+        if (lengthsWithComma.includes(",")) {
+          lengths = lengthsWithComma.split(",");
+        } else {
+          lengths = [lengthsWithComma];
+        }
+      }
+
+      let i = 0;
+      while (front[i] != " ") {
+        i++;
+      } 
+
+      let number = front.substring(0, i);
+      let clue = front.substring(i + 1, );
+
+      clues.push({
+        clueNumber: number,
+        clue: clue,
+        lengths: lengths
+      });
+    }
+    return clues;
+
+  }
+
+  // this function doesn't really work yet, I think it has an infinite loop
+  // we might want to use something similar because of the bugs that 
+  // tesseract causes and thus problems with splitting
+  const extract_clues_old = (text: string) => {
     text = text.substring(6,)
     let inClue = false
     let inBrackets = false
