@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useReducer, Reducer } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -9,20 +9,20 @@ import { resolve } from "cypress/types/bluebird";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
-async function getExplanation(answer: string): Promise<any> {
-  const response = await fetch(`${apiUrl}/TODO`, {
+async function getExplanation(answer: object): Promise<any> {
+  const response = await fetch(`${apiUrl}/explain_answer`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ answer }),
+    body: JSON.stringify(answer),
   });
 
   return await response.json();
 
   // return new Promise((resolve, reject) => {
-  //   resolve({ explanations: ["test"] });
+  //   resolve({ explanations: "test"]});
   // });
 }
 
@@ -33,55 +33,83 @@ interface Props {
 export default function AnswerEntry({ setExplanationCallback }: Props) {
   const KEYCODE_ENTER = 13;
 
-  const [answer, setAnswer] = useState<string>("");
-  const [searchedAnswer, setSearchedAnswer] = useState<string>("");
-  const [explanations, setExplanations] = useState<Array<string>>([]);
+  const [explanationSearch, setExplanationSearch] = useReducer<
+    Reducer<any, any>
+  >((state: object, newState: object) => ({ ...state, ...newState }), {
+    answer: "",
+    clue: "",
+    word_length: "",
+  });
+  const [loadingExplanationError, setLoadingExplanationError] = useReducer<
+    Reducer<any, any>
+  >((state: object, newState: object) => ({ ...state, ...newState }), {
+    answer: false,
+    clue: false,
+    word_length: false,
+  });
+  const [searchedExplanation, setSearchedExplanation] = useState<any>({});
+  const [explanation, setExplanation] = useState<string>("");
   const [loadingExplanation, setLoadingExplanation] = useState(false);
-  const [loadingError, setLoadingError] = useState(false);
 
-  const handleAnswerInput = (e: any) => {
-    setAnswer(e.target.value);
-    setLoadingError(false);
+  const handleExplanationSearchInput = (e: any) => {
+    setExplanationSearch({ [e.target.name]: e.target.value });
+    setLoadingExplanationError({ [e.target.name]: false });
   };
 
-  const handleAnswerEntry = async (e: any) => {
+  const handleExplanationSearchEntry = async (e: any) => {
     if (e.keyCode == KEYCODE_ENTER) {
-      await fetchExplanations();
+      await fetchExplanation();
     }
   };
 
-  const fetchExplanations = async () => {
-    setLoadingExplanation(true);
-    setLoadingError(false);
-    setExplanations([]);
+  const validateSearch = () => {
+    console.log("asd");
+  };
 
-    await getExplanation(answer)
+  const fetchExplanation = async () => {
+    setLoadingExplanation(true);
+    setLoadingExplanationError({
+      answer: false,
+      clue: false,
+      word_length: false,
+    });
+    setExplanation("");
+
+    await getExplanation(explanationSearch)
       .catch((error) => {
         console.log("There was an error trying to fetch explanations", error);
-        setLoadingError(true);
+        setLoadingExplanationError({
+          answer: true,
+          clue: true,
+          word_length: true,
+        });
       })
       .then((res) => {
         if (setExplanationCallback) {
           setExplanationCallback(res);
         } else {
+          setSearchedExplanation(explanationSearch);
+          setExplanation(res.explanations);
           if (res?.explanations) {
-            setExplanations(res.explanations);
-            setSearchedAnswer(answer);
+            setExplanationSearch({
+              answer: "",
+              clue: "",
+              word_length: 0,
+            });
           }
         }
       })
       .finally(() => {
         setLoadingExplanation(false);
-        setAnswer("");
       });
   };
 
   return (
     <Box maxWidth={400} style={{ margin: 16 }}>
-      <Typography>
+      <Typography style={{ marginBottom: 16 }}>
         Want to find an explanation for an answer?
         <br />
-        Enter your answer here:
+        Enter your answer and clue here:
       </Typography>
       <Grid container direction="column">
         <Stack spacing={2} direction="row">
@@ -89,26 +117,56 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             label="Answer"
             fullWidth
             variant="standard"
-            value={answer}
+            value={explanationSearch.answer}
             data-cy="answer-input"
-            onChange={handleAnswerInput}
-            onKeyDown={handleAnswerEntry}
-            error={loadingError}
-            helperText={loadingError && "Sorry, an error has occurred"}
+            onChange={handleExplanationSearchInput}
+            onKeyDown={handleExplanationSearchEntry}
+            name="answer"
+            error={loadingExplanationError.answer}
+            helperText={
+              loadingExplanationError.answer && "Sorry, an error has occurred"
+            }
+          />
+          <TextField
+            label="Clue"
+            fullWidth
+            variant="standard"
+            value={explanationSearch.clue}
+            data-cy="clue-input"
+            onChange={handleExplanationSearchInput}
+            onKeyDown={handleExplanationSearchEntry}
+            name="clue"
+            error={loadingExplanationError.clue}
+          />
+          <TextField
+            label="Length"
+            type="number"
+            fullWidth
+            variant="standard"
+            value={explanationSearch.word_length}
+            data-cy="length-input"
+            onChange={handleExplanationSearchInput}
+            onKeyDown={handleExplanationSearchEntry}
+            name="word_length"
+            error={loadingExplanationError.word_length}
           />
           <LoadingButton
             loading={loadingExplanation}
             variant="contained"
-            onClick={fetchExplanations}
+            onClick={fetchExplanation}
           >
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
         </Stack>
-        {!setExplanationCallback && explanations?.length > 0 && (
-          <Typography style={{ marginTop: 8 }} data-cy="explanation">
-            Explanation for {searchedAnswer}: {explanations}
-          </Typography>
-        )}
+        {!setExplanationCallback &&
+          searchedExplanation &&
+          Object.keys(searchedExplanation).length > 0 && (
+            <Typography style={{ marginTop: 8 }} data-cy="explanation">
+              {explanation
+                ? `Explanation for ${searchedExplanation.clue}: ${explanation}`
+                : "No explanation found."}
+            </Typography>
+          )}
       </Grid>
     </Box>
   );
