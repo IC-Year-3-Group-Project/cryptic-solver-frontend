@@ -6,7 +6,7 @@ import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
 
-const apiUrl = "http://localhost:3001";
+const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
 async function getExplanation(explanationSearch: {
   [key: string]: any;
