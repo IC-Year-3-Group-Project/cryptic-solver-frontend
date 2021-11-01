@@ -162,11 +162,36 @@ describe("Fetching crossword success", () => {
   });
 });
 
-describe("Homepage should have a list of everyman crosswords", () => {
-  it("has links to crosswords", () => {
+describe("Homepage should allow crossword link and number entry", () => {
+  it("has list of everyman crossword links to crosswords", () => {
     cy.intercept("GET", "/fetch-everyman", { urls: ["c1", "c2"] });
     cy.visit("/");
     cy.get("[data-cy=crossword-link]").should("exist");
+  });
+
+  it("can allow entry of crossword number", () => {
+    cy.visit("/");
+
+    cy.get("[data-cy=link-input]").type("3907{enter}");
+
+    // The new url should reach crossword page
+    cy.url().should(
+      "eq",
+      `${
+        Cypress.config().baseUrl
+      }/crossword?url=https://www.theguardian.com/crosswords/everyman/3907`
+    );
+  });
+
+  it("can allow entry of crossword number", () => {
+    cy.visit("/");
+
+    // Input invalid URL into text box
+    cy.get("[data-cy=link-input]").type("some-url");
+    cy.get("[data-cy=fetch-crossword-button]").click();
+
+    // The new url should reach crossword page
+    cy.url().should("eq", `${Cypress.config().baseUrl}/crossword?url=some-url`);
   });
 });
 

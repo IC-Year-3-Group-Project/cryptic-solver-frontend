@@ -13,6 +13,7 @@ import { Box } from "@mui/system";
 import { Button, ButtonGroup } from "@material-ui/core";
 import CircularProgress from "@material-ui/core/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
@@ -27,6 +28,7 @@ async function getEveryman(): Promise<String[]> {
 
 const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
+  const EVERYMAN_URL = "https://www.theguardian.com/crosswords/everyman/";
 
   const router = useRouter();
   const [loadingEveryman, setLoadingEveryman] = useState(true);
@@ -48,10 +50,18 @@ const Home: NextPage = () => {
 
   const handleCrosswordLinkEntry = async (e: any) => {
     if (e.keyCode == KEYCODE_ENTER) {
-      // Navigate to crossword page.
-      router.push(`/crossword?url=${crosswordLink}`);
-      setCrosswordLink("");
+      fetchCrossword();
     }
+  };
+
+  const fetchCrossword = async () => {
+    // Navigate to crossword page.
+    if ("0" <= crosswordLink.charAt(0) && crosswordLink.charAt(0) <= "9") {
+      router.push(`/crossword?url=${EVERYMAN_URL}${crosswordLink}`);
+    } else {
+      router.push(`/crossword?url=${crosswordLink}`);
+    }
+    setCrosswordLink("");
   };
 
   return (
@@ -66,14 +76,22 @@ const Home: NextPage = () => {
         </p>
 
         <TextField
-          label="Everyman link"
+          label="Everyman link or Crossword Number"
           fullWidth
+          style={{ marginBottom: 16 }}
           variant="standard"
           value={crosswordLink}
           data-cy="link-input"
           onChange={handleCrosswordLinkInput}
           onKeyDown={handleCrosswordLinkEntry}
         />
+        <LoadingButton
+          variant="contained"
+          onClick={fetchCrossword}
+          data-cy="fetch-crossword-button"
+        >
+          Fetch!
+        </LoadingButton>
 
         <Box mt={5}>
           <Grid
