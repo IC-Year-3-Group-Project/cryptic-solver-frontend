@@ -9,7 +9,9 @@ import { split } from "cypress/types/lodash";
 //@ts-ignore
 const ImagePage: NextPage = () => {
   const canvasGridRef = useRef(null);
-  const canvasCluesRef = useRef(null);
+  const canvasDownCluesRef = useRef(null);
+  const canvasAccrossCluesRef = useRef(null);
+
 
   const worker = createWorker({
     logger: (m: any) => console.log(m),
@@ -46,6 +48,9 @@ const ImagePage: NextPage = () => {
 
   const extract_clues = (text: string) => {
     text = preprocess(text);
+
+    console.log("Preprocessed text: " + text);
+
 
     let parts = text.split("\n\n");
     let clues = [];
@@ -87,6 +92,30 @@ const ImagePage: NextPage = () => {
     return clues;
   };
 
+  const fill_clues = (accross_clues: array, down_clues: array, grid: object) => {
+    let grid_clues = grid.payload.clues
+
+    down_clues.forEach(clue => {
+      grid_clues.forEach(grid_clue => {
+        if (grid_clue.direction == 1 && grid_clue.number == parseInt(clue.clueNumber)) {
+          grid_clue.text = clue.clue
+          grid_clue.lengths = clue.lengths.map(l => parseInt(l))
+        }
+      });
+    });
+
+    accross_clues.forEach(clue => {
+      grid_clues.forEach(grid_clue => {
+        if (grid_clue.direction == 0 && grid_clue.number == parseInt(clue.clueNumber)) {
+          grid_clue.text = clue.clue
+          grid_clue.lengths = clue.lengths.map(l => parseInt(l))
+        }
+      });
+    });
+
+    return grid
+  }
+
   //@ts-ignore
   useEffect(async () => {
     console.log("loading...");
@@ -97,8 +126,13 @@ const ImagePage: NextPage = () => {
     //@ts-ignore
     const ctxGrid = canvasGridRef.current.getContext("2d");
     const imageGrid = new Image();
-    imageGrid.src = "./image.png";
+    imageGrid.src = "./grid_image.png";
+
+    let result = {}
+
     imageGrid.onload = async () => {
+
+
       ctxGrid.drawImage(imageGrid, 0, 0);
       let imgData = ctxGrid.getImageData(0, 0, 640, 425);
       console.log(imgData);
@@ -107,28 +141,41 @@ const ImagePage: NextPage = () => {
           return sum + val;
         }, 0)
       );
+
+
       await cv
         .getGridFromImage(imgData)
         .then((res) => {
           console.log("Completed Promise");
           console.log(res);
+          result = res
         })
         .catch((err) => {
           console.log("Error occurred trying to process image");
           console.log(err);
         });
     };
+
     //@ts-ignore
-    const ctxClues = canvasCluesRef.current.getContext("2d");
-    const imageClues = new Image();
-    imageClues.src = "./text1.png";
-    imageClues.onload = async () => {
-      ctxClues.drawImage(imageClues, 0, 0);
+    const ctxClues = canvasDownCluesRef.current.getContext("2d");
+    const downClues = new Image();
+    downClues.src = "./down_clues.png";
+    downClues.onload = async () => {
+      ctxClues.drawImage(downClues, 0, 0);
       const {
         data: { text },
-      } = await worker.recognize(imageClues);
+      } = await worker.recognize(downClues);
       console.log(`Text: ${text}`);
-      console.log(extract_clues(text));
+
+      // DEBUG
+      let clues = extract_clues(text)
+      console.log("Down clues:");
+      console.log(clues)
+
+      console.log("Grid data:")
+      console.log(fill_clues([], clues, result.data));
+
+
     };
   }, []);
 
@@ -137,7 +184,8 @@ const ImagePage: NextPage = () => {
       <>
         <div>
           <canvas ref={canvasGridRef} width={640} height={425} />
-          <canvas ref={canvasCluesRef} width={640} height={425} />
+          <canvas ref={canvasDownCluesRef} width={640} height={425} />
+          <canvas ref={canvasAccrossCluesRef} width={640} height={425} />
         </div>
       </>
     </Layout>
