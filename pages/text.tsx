@@ -13,12 +13,39 @@ const ImagePage: NextPage = () => {
     logger: (m) => console.log(m),
   });
 
+  const preprocess = (text: string) => {
+    // Preprocess weird characters
+    let character_replacements = new Map([
+      ["©","(5)"],
+      ["|", "I"],
+      ["®", "(5"]
+    ]);
+
+    character_replacements.forEach((replacement, key) => {
+      text = text.replace(key, replacement)
+    });
+
+    // Take care of cases where the lengths of a two-word clue have been stuck together
+    for (let i = 0; i < text.length - 2; i++) {
+      if (text.charAt(i) == '(' && text.charAt(i + 1) > '1' && text.charAt(i + 1) <= '9'
+          && text.charAt(i + 2) >= '1' && text.charAt(i + 2) <= '9') {
+        text = text.substring(0, i + 2) + "," + text.substring(i + 2, text.length)
+      }
+
+    }
+
+    return text
+  }
+
   const extract_clues = (text: string) => {
+
+    text = preprocess(text)
+
     let parts = text.split("\n\n");
     let clues = [];
 
     for (let part of parts) {
-      let part_new = part.replace(/\n/g, " ");
+      let part_new = part.replace(/\n/g, "");
       let front = part_new;
       let lengths: string[] = [];
 
@@ -37,7 +64,7 @@ const ImagePage: NextPage = () => {
       let i = 0;
       while (front[i] != " ") {
         i++;
-      } 
+      }
 
       let number = front.substring(0, i);
       let clue = front.substring(i + 1, );
@@ -53,7 +80,7 @@ const ImagePage: NextPage = () => {
   }
 
   // this function doesn't really work yet, I think it has an infinite loop
-  // we might want to use something similar because of the bugs that 
+  // we might want to use something similar because of the bugs that
   // tesseract causes and thus problems with splitting
   const extract_clues_old = (text: string) => {
     text = text.substring(6,)
@@ -74,7 +101,7 @@ const ImagePage: NextPage = () => {
         i++;
         if (character == ")"){
           inBrackets = false;
-          clues.push({clueNumber: clueNumber, 
+          clues.push({clueNumber: clueNumber,
                       clue: clue,
                       lenghts: lengths,
                       direction: 0});
