@@ -10,8 +10,6 @@ import { split } from "cypress/types/lodash";
 const ImagePage: NextPage = () => {
   const canvasGridRef = useRef(null);
   const canvasDownCluesRef = useRef(null);
-  const canvasAccrossCluesRef = useRef(null);
-
 
   const worker = createWorker({
     logger: (m: any) => console.log(m),
@@ -185,7 +183,6 @@ const ImagePage: NextPage = () => {
         <div>
           <canvas ref={canvasGridRef} width={640} height={425} />
           <canvas ref={canvasDownCluesRef} width={640} height={425} />
-          <canvas ref={canvasAccrossCluesRef} width={640} height={425} />
         </div>
       </>
     </Layout>
