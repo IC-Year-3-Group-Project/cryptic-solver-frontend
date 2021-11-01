@@ -7,6 +7,12 @@ import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
 import { getSolutions } from "./utils";
+import Dialog from "@material-ui/core/Dialog";
+import { DialogTitle } from "@mui/material";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import TextField from "@material-ui/core/TextField";
+import MaterialButton from "@material-ui/core/Button";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -49,6 +55,15 @@ export default function Crossword(props: CrosswordProps) {
   const [solutions, setSolutions] = useState<Array<string>>([]);
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const solveOverlayTarget = useRef(null);
+
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editClueText, setEditClueText] = useState("");
+  const [editClueError, setEditClueError] = useState<string>();
+
+  const [solveCancelToken, setSolveCancelToken] = useState(
+    new AbortController()
+  );
+  const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
 
   useEffect(() => {
     if (puzzle) {
@@ -120,8 +135,21 @@ export default function Crossword(props: CrosswordProps) {
   ): GridEntry | undefined {
     const xy = [fromX, fromY];
     xy[direction] += delta;
-    const index = toIndex(puzzle, xy[0], xy[1]);
-    return index >= 0 && index < entries.length ? entries[index] : undefined;
+    const [x, y] = xy;
+    return x < 0 || x >= puzzle.columns || y < 0 || y >= puzzle.rows
+      ? undefined
+      : entries[toIndex(puzzle, x, y)];
+  }
+
+  function onCellKeyDown(event: KeyboardEvent) {
+    if (
+      currentCell &&
+      selectedClue &&
+      AllowedCharacters.includes(event.key) &&
+      currentCell.content
+    ) {
+      updateGrid(currentCell, { content: "" });
+    }
   }
 
   // Handles a cell key up event. This is used for keyboard navigation/backspace handling.
@@ -233,31 +261,47 @@ export default function Crossword(props: CrosswordProps) {
     setSolveOverlayText(undefined);
   }
 
+  function setClueText(clue: Clue, text: string) {
+    let k = 0;
+    clue
+      .generateVertices()
+      .forEach((xy) => updateGrid(xy, { content: text[k++]?.toUpperCase() }));
+  }
+
+  function clearClueText(clue: Clue) {
+    setClueText(clue, "");
+  }
+
+  // Cancels the current clue solve request.
+  function cancelSolveClue() {
+    solveCancelToken.abort();
+    setSolveCancelToken(new AbortController());
+    setLoadingSolution(false);
+  }
+
   // Calls the solver and fills in the given clue on the grid.
   async function solveClue(clue: Clue) {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
       // Strip html tags and word length brackets from clue.
-      const strippedClue = clue.text
-        .replace(/<[^>]*>?/gm, "")
-        .replace(/\(.*\)$/g, "")
-        .trim();
-      const solutions = await getSolutions(strippedClue, clue.totalLength);
+      const strippedClue = clue.getRawText().replace(/\(.*\)$/g, "");
+      const solutions = await getSolutions(
+        strippedClue,
+        clue.totalLength,
+        solveCancelToken.signal
+      );
       // TODO: Handle multiple solutions (give user choice maybe).
       if (solutions.length > 0 && solutions[0].length == clue.totalLength) {
-        let k = 0;
-        clue
-          .generateVertices()
-          .forEach((xy) =>
-            updateGrid(xy, { content: solutions[0][k++].toUpperCase() })
-          );
+        setClueText(clue, solutions[0]);
       } else {
         setSolveOverlayText("No solutions found.");
       }
-    } catch (ex) {
-      console.log("Error loading solutions", ex);
-      setSolveOverlayText("Error fetching solutions.");
+    } catch (ex: any) {
+      if (!ex.message?.includes("aborted")) {
+        console.log("Error loading solutions", ex);
+        setSolveOverlayText("Error fetching solutions.");
+      }
     }
 
     setLoadingSolution(false);
@@ -265,13 +309,28 @@ export default function Crossword(props: CrosswordProps) {
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
   async function trySolveAll() {
+    setCancelSolveGrid(false);
     setCurrentCell(undefined);
     for (const clue of puzzle.clues) {
+      if (cancelSolveGrid) {
+        break;
+      }
+
       setSelectedClue(clue);
       await solveClue(clue);
     }
 
     setSolveOverlayText(undefined);
+  }
+
+  function saveClueEdits() {
+    const trimmed = editClueText.trim();
+    if (trimmed.length == 0) {
+      setEditClueError("Please enter a clue.");
+    } else if (selectedClue) {
+      selectedClue.text = trimmed;
+      setShowEditDialog(false);
+    }
   }
 
   const svgWidth = cellWidth * puzzle.columns;
@@ -301,7 +360,11 @@ export default function Crossword(props: CrosswordProps) {
                         cell.y * cellHeight,
                       ];
                       return (
-                        <g key={index} onClick={() => onCellClick(cell)} data-cy={`grid-cell-${cell.x}-${cell.y}`}>
+                        <g
+                          key={index}
+                          onClick={() => onCellClick(cell)}
+                          data-cy={`grid-cell-${cell.x}-${cell.y}`}
+                        >
                           <rect
                             x={xPos + 1}
                             y={yPos + 1}
@@ -361,6 +424,7 @@ export default function Crossword(props: CrosswordProps) {
                       className="crossword-input"
                       onClick={() => onCellClick(currentCell)}
                       onChange={(e) => onCellValueEntered(e.target.value)}
+                      onKeyDown={onCellKeyDown}
                       onKeyUp={onCellKeyUp}
                       value={currentCell.content ?? ""}
                       ref={(ref) => ref && setInput(ref)}
@@ -385,27 +449,78 @@ export default function Crossword(props: CrosswordProps) {
               >
                 Solve Grid
               </Button>
+              <Button
+                size="sm"
+                className="me-2"
+                onClick={() => puzzle.clues.forEach(clearClueText)}
+              >
+                Clear Grid
+              </Button>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                paddingTop: "1rem",
+              }}
+            >
               {selectedClue && (
                 <>
                   <Button
                     size="sm"
                     className="me-2"
-                    disabled={loadingSolution}
-                    onClick={async () => solveClue(selectedClue)}
+                    onClick={async () => {
+                      if (loadingSolution) {
+                        setCancelSolveGrid(true);
+                        cancelSolveClue();
+                      } else {
+                        await solveClue(selectedClue);
+                      }
+                    }}
                     data-cy="solve-cell"
                   >
                     {loadingSolution
-                      ? "Solving..."
+                      ? "Cancel"
                       : `Solve ${selectedClue.number} ${
                           ClueDirection[selectedClue.direction]
                         }`}
                   </Button>
-                  <Button size="sm" disabled={loadingExplaination}>
+                  <Button
+                    size="sm"
+                    className="me-2"
+                    disabled={loadingExplaination}
+                  >
                     {loadingExplaination
                       ? "Explaining..."
                       : `Explain ${selectedClue.number} ${
                           ClueDirection[selectedClue.direction]
                         }`}
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="me-2"
+                    onClick={() => {
+                      setEditClueError(undefined);
+                      setEditClueText(selectedClue.getRawText());
+                      setShowEditDialog(true);
+                    }}
+                  >
+                    Edit Clue
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="me-2"
+                    onClick={() => {
+                      clearClueText(selectedClue);
+                      onCellClick(
+                        entries[
+                          toIndex(puzzle, selectedClue.x, selectedClue.y)
+                        ],
+                        true
+                      );
+                    }}
+                  >
+                    Clear Clue
                   </Button>
                   <Overlay
                     target={solveOverlayTarget.current}
@@ -413,7 +528,9 @@ export default function Crossword(props: CrosswordProps) {
                     placement="top"
                   >
                     {(props) => (
-                      <Tooltip {...props} data-cy="no-solutions">{solveOverlayText}</Tooltip>
+                      <Tooltip {...props} data-cy="no-solutions">
+                        {solveOverlayText}
+                      </Tooltip>
                     )}
                   </Overlay>
                 </>
@@ -436,6 +553,25 @@ export default function Crossword(props: CrosswordProps) {
             onClueClicked={onClueSelectedFromList}
             selectedClue={selectedClue}
           />
+          <Dialog open={showEditDialog} fullWidth maxWidth="sm">
+            <DialogTitle>Edit Clue</DialogTitle>
+            <DialogContent>
+              <TextField
+                onChange={(e) => setEditClueText(e.target.value)}
+                value={editClueText}
+                error={editClueError != undefined}
+                helperText={editClueError}
+                fullWidth
+                multiline
+              />
+            </DialogContent>
+            <DialogActions>
+              <MaterialButton onClick={() => setShowEditDialog(false)}>
+                Cancel
+              </MaterialButton>
+              <MaterialButton onClick={saveClueEdits}>Save</MaterialButton>
+            </DialogActions>
+          </Dialog>
         </>
       )}
     </div>
