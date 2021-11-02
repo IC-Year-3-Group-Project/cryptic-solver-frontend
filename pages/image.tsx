@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Layout from "@/components/_Layout";
 import styles from "@/styles/Home.module.css";
 import cv from "../services/cv";
@@ -10,6 +10,13 @@ import { split } from "cypress/types/lodash";
 const ImagePage: NextPage = () => {
   const canvasGridRef = useRef(null);
   const canvasDownCluesRef = useRef(null);
+  const canvasAcrossCluesRef = useRef(null);
+  const [gridWidth, setGridWidth] = useState(0)
+  const [gridHeight, setGridHeight] = useState(0)
+  const [downWidth, setDownWidth] = useState(0)
+  const [downHeight, setDownHeight] = useState(0)
+  const [acrossWidth, setAcrossWidth] = useState(0)
+  const [acrossHeight, setAcrossHeight] = useState(0)
 
   const worker = createWorker({
     logger: (m: any) => console.log(m),
@@ -129,10 +136,12 @@ const ImagePage: NextPage = () => {
     let result = {}
 
     imageGrid.onload = async () => {
-
-
+      ctxGrid.width = imageGrid.width
+      ctxGrid.height = imageGrid.height
+      setGridWidth(imageGrid.width)
+      setGridHeight(imageGrid.height)
       ctxGrid.drawImage(imageGrid, 0, 0);
-      let imgData = ctxGrid.getImageData(0, 0, 640, 425);
+      let imgData = ctxGrid.getImageData(0, 0, imageGrid.width, imageGrid.height);
       console.log(imgData);
       console.log(
         imgData.data.reduce((sum: number, val: number) => {
@@ -159,6 +168,10 @@ const ImagePage: NextPage = () => {
     const downClues = new Image();
     downClues.src = "./down_clues.png";
     downClues.onload = async () => {
+      ctxClues.width = downClues.width
+      ctxClues.height = downClues.height
+      setDownWidth(downClues.width)
+      setDownHeight(downClues.height)
       ctxClues.drawImage(downClues, 0, 0);
       const {
         data: { text },
@@ -181,8 +194,9 @@ const ImagePage: NextPage = () => {
     <Layout>
       <>
         <div>
-          <canvas ref={canvasGridRef} width={640} height={425} />
-          <canvas ref={canvasDownCluesRef} width={640} height={425} />
+          <canvas ref={canvasGridRef} width={gridWidth} height={gridHeight} />
+          <canvas ref={canvasDownCluesRef} width={downWidth} height={downHeight} />
+          <canvas ref={canvasAcrossCluesRef} width={acrossWidth} height={acrossHeight} />
         </div>
       </>
     </Layout>
@@ -190,3 +204,4 @@ const ImagePage: NextPage = () => {
 };
 
 export default ImagePage;
+
