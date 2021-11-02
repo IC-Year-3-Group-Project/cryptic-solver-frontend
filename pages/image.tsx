@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Layout from "@/components/_Layout";
 import styles from "@/styles/Home.module.css";
 import cv from "../services/cv";
-import { createworker } from "tesseract.js";
+import { createWorker } from "tesseract.js";
 import { split } from "cypress/types/lodash";
 
 //@ts-ignore
@@ -24,11 +24,11 @@ const ImagePage: NextPage = () => {
   const [downClues, setDownClues] = useState([])
   const [grid, setGrid] = useState({})
 
-  const workerAcross = createworker({
+  const workerAcross = createWorker({
     logger: (m: any) => console.log(m),
   });
 
-  const workerDown = createworker({
+  const workerDown = createWorker({
     logger: (m: any) => console.log(m),
   });
 
