@@ -30,7 +30,8 @@
     "react": "17.0.2",
     "react-bootstrap": "^2.0.0",
     "react-dom": "17.0.2",
-    "react-test-renderer": "^17.0.2"
+    "react-test-renderer": "^17.0.2",
+    "tesseract.js": "^2.1.5"
   },
   "devDependencies": {
     "@types/react": "17.0.27",

@@ -1,29 +1,38 @@
-import React, { useState } from "react";
+import React, { useState, useReducer, Reducer } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
-import { resolve } from "cypress/types/bluebird";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
-async function getExplanation(answer: string): Promise<any> {
-  const response = await fetch(`${apiUrl}/TODO`, {
+async function getExplanation(explanationSearch: {
+  [key: string]: any;
+}): Promise<any> {
+  const lowerCaseExplanationSearch = Object.keys(explanationSearch).reduce(
+    (
+      loweredCase: {
+        [key: string]: any;
+      },
+      key: any
+    ) => (
+      (loweredCase[key] = explanationSearch[key].toLowerCase()), loweredCase
+    ),
+    {}
+  );
+  lowerCaseExplanationSearch["word_length"] = explanationSearch.answer.length;
+  const response = await fetch(`${apiUrl}/explain_answer`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ answer }),
+    body: JSON.stringify(lowerCaseExplanationSearch),
   });
 
   return await response.json();
-
-  // return new Promise((resolve, reject) => {
-  //   resolve({ explanations: ["test"] });
-  // });
 }
 
 interface Props {
@@ -31,84 +40,169 @@ interface Props {
 }
 
 export default function AnswerEntry({ setExplanationCallback }: Props) {
-  const KEYCODE_ENTER = 13;
+  const validators: {
+    [key: string]: any;
+  } = {
+    answer: (value: string) => {
+      if (value?.length > 0) {
+        return [false, ""];
+      }
+      return [true, "Answer mustn't be empty"];
+    },
+    clue: (value: string) => {
+      if (value?.length > 0) {
+        return [false, ""];
+      }
+      return [true, "Clue mustn't be empty"];
+    },
+  };
 
-  const [answer, setAnswer] = useState<string>("");
-  const [searchedAnswer, setSearchedAnswer] = useState<string>("");
-  const [explanations, setExplanations] = useState<Array<string>>([]);
+  const [explanationSearch, setExplanationSearch] = useReducer<
+    Reducer<any, any>
+  >((state: object, newState: object) => ({ ...state, ...newState }), {
+    answer: "",
+    clue: "",
+  });
+  const [loadingExplanationError, setLoadingExplanationError] = useReducer<
+    Reducer<any, any>
+  >((state: object, newState: object) => ({ ...state, ...newState }), {
+    answer: false,
+    clue: false,
+  });
+  const [loadingExplanationErrorMessages, setLoadingExplanationErrorMessages] =
+    useReducer<Reducer<any, any>>(
+      (state: object, newState: object) => ({ ...state, ...newState }),
+      {
+        answer: "",
+        clue: "",
+      }
+    );
+  const [searchedExplanation, setSearchedExplanation] = useState<any>({});
+  const [explanation, setExplanation] = useState<string>("");
   const [loadingExplanation, setLoadingExplanation] = useState(false);
-  const [loadingError, setLoadingError] = useState(false);
 
-  const handleAnswerInput = (e: any) => {
-    setAnswer(e.target.value);
-    setLoadingError(false);
+  const handleExplanationSearchInput = (e: any) => {
+    setExplanationSearch({ [e.target.name]: e.target.value });
+    const [error, errorMessage] = validators[e.target.name](e.target.value);
+    setLoadingExplanationError({ [e.target.name]: error });
+    setLoadingExplanationErrorMessages({ [e.target.name]: errorMessage });
   };
 
-  const handleAnswerEntry = async (e: any) => {
-    if (e.keyCode == KEYCODE_ENTER) {
-      await fetchExplanations();
+  const validateSearch = () => {
+    let hasError = false;
+    for (const key in validators) {
+      const [error, errorMessage] = validators[key](explanationSearch[key]);
+      setLoadingExplanationError({ [key]: error });
+      setLoadingExplanationErrorMessages({ [key]: errorMessage });
+      hasError ||= error;
     }
+    return !hasError;
   };
 
-  const fetchExplanations = async () => {
-    setLoadingExplanation(true);
-    setLoadingError(false);
-    setExplanations([]);
+  const fetchExplanation = async () => {
+    setSearchedExplanation({});
+    setExplanation("");
+    if (!validateSearch()) {
+      return;
+    }
 
-    await getExplanation(answer)
-      .catch((error) => {
-        console.log("There was an error trying to fetch explanations", error);
-        setLoadingError(true);
-      })
+    setLoadingExplanation(true);
+    await getExplanation(explanationSearch)
       .then((res) => {
         if (setExplanationCallback) {
           setExplanationCallback(res);
         } else {
-          if (res?.explanations) {
-            setExplanations(res.explanations);
-            setSearchedAnswer(answer);
+          setSearchedExplanation(explanationSearch);
+          setExplanation(res);
+          if (res) {
+            setExplanationSearch({
+              answer: "",
+              clue: "",
+            });
           }
         }
       })
+      .catch((error) => {
+        console.log("There was an error trying to fetch explanations", error);
+        setLoadingExplanationError({
+          answer: true,
+          clue: true,
+        });
+      })
       .finally(() => {
         setLoadingExplanation(false);
-        setAnswer("");
       });
   };
 
   return (
     <Box maxWidth={400} style={{ margin: 16 }}>
-      <Typography>
+      <Typography style={{ marginBottom: 16 }}>
         Want to find an explanation for an answer?
         <br />
-        Enter your answer here:
+        Enter your answer and clue here:
       </Typography>
       <Grid container direction="column">
-        <Stack spacing={2} direction="row">
+        <Stack spacing={2} direction="row" style={{ marginBottom: 16 }}>
           <TextField
             label="Answer"
             fullWidth
             variant="standard"
-            value={answer}
+            value={explanationSearch.answer}
             data-cy="answer-input"
-            onChange={handleAnswerInput}
-            onKeyDown={handleAnswerEntry}
-            error={loadingError}
-            helperText={loadingError && "Sorry, an error has occurred"}
+            onChange={handleExplanationSearchInput}
+            name="answer"
+            error={loadingExplanationError.answer}
+            helperText={
+              loadingExplanationError.answer &&
+              (loadingExplanationErrorMessages.answer ||
+                "Sorry, an error has occurred")
+            }
           />
           <LoadingButton
             loading={loadingExplanation}
             variant="contained"
-            onClick={fetchExplanations}
+            onClick={fetchExplanation}
+            data-cy="find-explanation-button"
           >
             {loadingExplanation ? "" : "Find!"}
           </LoadingButton>
         </Stack>
-        {!setExplanationCallback && explanations?.length > 0 && (
-          <Typography style={{ marginTop: 8 }} data-cy="explanation">
-            Explanation for {searchedAnswer}: {explanations}
-          </Typography>
-        )}
+        <TextField
+          label="Clue"
+          fullWidth
+          multiline
+          maxRows={4}
+          variant="standard"
+          value={explanationSearch.clue}
+          data-cy="clue-input"
+          onChange={handleExplanationSearchInput}
+          name="clue"
+          error={loadingExplanationError.clue}
+          helperText={
+            loadingExplanationError.clue &&
+            (loadingExplanationErrorMessages.clue ||
+              "Sorry, an error has occurred")
+          }
+        />
+        {!setExplanationCallback &&
+          searchedExplanation &&
+          Object.keys(searchedExplanation).length > 0 && (
+            <Typography
+              style={{ marginTop: 24 }}
+              data-cy="explanation-description"
+            >
+              {explanation ? (
+                <>
+                  {`Explanation for ${searchedExplanation.clue}:`}
+                  <Typography style={{ marginTop: 12 }} data-cy="explanation">
+                    {`${explanation}`}
+                  </Typography>
+                </>
+              ) : (
+                `No explanation found for: ${searchedExplanation.clue}`
+              )}
+            </Typography>
+          )}
       </Grid>
     </Box>
   );
