@@ -66,7 +66,6 @@ const Home: NextPage = () => {
 
   return (
     <Layout>
-      <>
         <h1 className={styles.title} data-cy="title">
           Cryptic Crossword Solver
         </h1>
@@ -129,13 +128,18 @@ const Home: NextPage = () => {
                   </Grid>
                 );
               })}
-          </Grid>
-        </Box>
+        </Grid>
+      </Box>
 
-        <Box mt={5}>
-          <AnswerEntry />
-        </Box>
-      </>
+      <Box mt={5}>
+        <AnswerEntry />
+      </Box>
+
+      <Box mt={5}>
+        <Button variant="contained" href="/upload">
+          Click to upload a crossword from an image
+        </Button>
+      </Box>
     </Layout>
   );
 };
