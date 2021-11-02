@@ -42,8 +42,17 @@ export default function Upload() {
         </Grid>
       </Grid>
       <Box mt={5}>
-        {//TODO: make this button call image recognition function}
-        <Button variant="contained">Process Images</Button>
+        {
+          //TODO: make this button call image recognition function
+        }
+        <Button
+          variant="contained"
+          onClick={() => {
+            console.log("process images");
+          }}
+        >
+          Process Images
+        </Button>
       </Box>
     </Layout>
   );
