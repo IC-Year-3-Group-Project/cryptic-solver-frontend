@@ -50,16 +50,19 @@ export class Clue {
       .trim();
   }
 
+  getBreakLengths(): number[] {
+    let accum = 0;
+    const breaks = this.lengths.map((l) => (accum += l));
+    breaks.pop();
+    return breaks;
+  }
+
   isHorizontalWordBreak(x: number, y: number): boolean {
-    return this.lengths
-      .filter((_, i) => i != this.lengths.length - 1)
-      .some((l) => l == x - this.x + 1);
+    return this.getBreakLengths().some((l) => l == x - this.x + 1);
   }
 
   isVerticalWordBreak(x: number, y: number): boolean {
-    return this.lengths
-      .filter((_, i) => i != this.lengths.length - 1)
-      .some((l) => l == y - this.y + 1);
+    return this.getBreakLengths().some((l) => l == y - this.y + 1);
   }
 }
 

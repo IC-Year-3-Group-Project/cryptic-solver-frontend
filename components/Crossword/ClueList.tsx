@@ -3,7 +3,7 @@ import { Clue } from "./model/Clue";
 import IconButton from "@mui/material/IconButton";
 import Edit from "@mui/icons-material/Edit";
 import Dialog from "@material-ui/core/Dialog";
-import { DialogTitle } from "@mui/material";
+import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import TextField from "@material-ui/core/TextField";
