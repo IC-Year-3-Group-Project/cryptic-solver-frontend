@@ -73,9 +73,9 @@ export function extract_clues(text: string) {
 }
 
 export function fill_clues(
-  across_clues: Array<object>,
-  down_clues: Array<object>,
-  grid: object
+  across_clues: { [key: string]: any },
+  down_clues: { [key: string]: any },
+  grid: { [key: string]: any }
 ) {
   let grid_clues = grid.payload.clues;
 

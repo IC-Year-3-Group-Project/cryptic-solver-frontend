@@ -25,9 +25,9 @@ const ImagePage: NextPage = () => {
   const [acrossLoaded, setAcrossLoaded] = useState(false);
   const [downLoaded, setDownLoaded] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [acrossClues, setAcrossClues] = useState([]);
-  const [downClues, setDownClues] = useState([]);
-  const [grid, setGrid] = useState({});
+  const [acrossClues, setAcrossClues] = useState<any>({});
+  const [downClues, setDownClues] = useState<any>({});
+  const [grid, setGrid] = useState<any>({});
 
   const workerAcross = createWorker({
     logger: (m: any) => console.log(m),
