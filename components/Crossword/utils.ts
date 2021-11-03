@@ -4,7 +4,11 @@ import { Puzzle } from "./model/Puzzle";
 export const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
 
 /** Performs a post request sending the given data as json to the given endpoint. */
-async function post<T>(endpoint: string, data: any): Promise<T> {
+async function post<T>(
+  endpoint: string,
+  data: any,
+  cancellation?: AbortSignal
+): Promise<T> {
   const response = await fetch(`${apiUrl}${endpoint}`, {
     method: "POST",
     headers: {
@@ -12,6 +16,7 @@ async function post<T>(endpoint: string, data: any): Promise<T> {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
+    signal: cancellation,
   });
 
   const json = await response.json();
@@ -26,17 +31,23 @@ export async function getCrossword(url: string): Promise<any> {
 /** Gets possible solutions returns from the solver given a clue. */
 export async function getSolutions(
   clue: string,
-  word_length: number
+  word_length: number,
+  cancellation?: AbortSignal
 ): Promise<any> {
-  return post("/solve-clue", { clue, word_length });
+  return post("/solve-clue", { clue, word_length }, cancellation);
 }
 
 /** Gets explanations linking a clue and its solution. */
-export async function getExplanations(
+export async function getExplanation(
   clue: string,
-  answer: string
-): Promise<any> {
-  return post("/explain", { clue, answer });
+  answer: string,
+  cancellation?: AbortSignal
+): Promise<string> {
+  return post(
+    "/explain_answer",
+    { clue, answer, word_length: answer.length },
+    cancellation
+  );
 }
 
 export function convertEveryman(crossword: any): Puzzle {

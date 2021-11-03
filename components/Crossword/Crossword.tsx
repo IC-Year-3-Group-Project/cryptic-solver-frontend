@@ -1,12 +1,19 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
-import Button from "react-bootstrap/Button";
 import Tooltip from "react-bootstrap/Tooltip";
 import Overlay from "react-bootstrap/Overlay";
 import ClueList from "./ClueList";
 import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
-import { getSolutions } from "./utils";
+import { getExplanation, getSolutions } from "./utils";
+import Button from "@material-ui/core/Button";
+import SplitButton from "../SplitButton";
+import Hide from "../Hide";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import { SolutionMenu } from "./SolutionMenu";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -44,11 +51,19 @@ export default function Crossword(props: CrosswordProps) {
   const [input, setInput] = useState<HTMLInputElement>();
 
   const [loadingSolution, setLoadingSolution] = useState(false);
-  // TODO: Add explanation loading and multiple-solution handling.
-  const [loadingExplaination, setLoadingExplanation] = useState(false);
-  const [solutions, setSolutions] = useState<Array<string>>([]);
+  // TODO: Add multiple-solution handling.
+  const [solveWithGrid, setSolveWithGrid] = useState(true);
+  const [solutions, setSolutions] = useState<Array<string>>();
+  const [explanation, setExplanation] = useState<string>();
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const solveOverlayTarget = useRef(null);
+  const solutionMenuTarget = useRef(null);
+
+  const [solveCancelToken, setSolveCancelToken] = useState(
+    new AbortController()
+  );
+  const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
+  const [gridContinuation, setGridContinuation] = useState<number>();
 
   useEffect(() => {
     if (puzzle) {
@@ -120,8 +135,21 @@ export default function Crossword(props: CrosswordProps) {
   ): GridEntry | undefined {
     const xy = [fromX, fromY];
     xy[direction] += delta;
-    const index = toIndex(puzzle, xy[0], xy[1]);
-    return index >= 0 && index < entries.length ? entries[index] : undefined;
+    const [x, y] = xy;
+    return x < 0 || x >= puzzle.columns || y < 0 || y >= puzzle.rows
+      ? undefined
+      : entries[toIndex(puzzle, x, y)];
+  }
+
+  function onCellKeyDown(event: KeyboardEvent) {
+    if (
+      currentCell &&
+      selectedClue &&
+      AllowedCharacters.includes(event.key) &&
+      currentCell.content
+    ) {
+      updateGrid(currentCell, { content: "" });
+    }
   }
 
   // Handles a cell key up event. This is used for keyboard navigation/backspace handling.
@@ -233,142 +261,272 @@ export default function Crossword(props: CrosswordProps) {
     setSolveOverlayText(undefined);
   }
 
+  function getClueText(clue: Clue): string {
+    return clue
+      .generateVertices()
+      .map((v) => entries[toIndex(puzzle, v.x, v.y)].content || "_")
+      .join("");
+  }
+
+  function setClueText(clue: Clue, text: string) {
+    let k = 0;
+    clue
+      .generateVertices()
+      .forEach((xy) => updateGrid(xy, { content: text[k++]?.toUpperCase() }));
+  }
+
+  function clearClueText(clue: Clue) {
+    setClueText(clue, "");
+  }
+
+  // Cancels the current clue solve request.
+  function cancelSolveClue() {
+    solveCancelToken.abort();
+    setSolveCancelToken(new AbortController());
+    setLoadingSolution(false);
+  }
+
   // Calls the solver and fills in the given clue on the grid.
-  async function solveClue(clue: Clue) {
+  async function solveClue(clue: Clue): Promise<boolean> {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
       // Strip html tags and word length brackets from clue.
-      const strippedClue = clue.text
-        .replace(/<[^>]*>?/gm, "")
-        .replace(/\(.*\)$/g, "")
-        .trim();
-      const solutions = await getSolutions(strippedClue, clue.totalLength);
-      // TODO: Handle multiple solutions (give user choice maybe).
+      const strippedClue = clue.getClueText();
+      const solutions = await getSolutions(
+        strippedClue,
+        clue.totalLength,
+        solveCancelToken.signal
+      );
       if (solutions.length > 0 && solutions[0].length == clue.totalLength) {
-        let k = 0;
-        clue
-          .generateVertices()
-          .forEach((xy) =>
-            updateGrid(xy, { content: solutions[0][k++].toUpperCase() })
-          );
+        if (solutions.length > 1) {
+          setSolutions(solutions);
+          setLoadingSolution(false);
+          return true;
+        } else {
+          setClueText(clue, solutions[0]);
+        }
       } else {
         setSolveOverlayText("No solutions found.");
       }
-    } catch (ex) {
-      console.log("Error loading solutions", ex);
-      setSolveOverlayText("Error fetching solutions.");
+    } catch (ex: any) {
+      if (!ex.message?.includes("aborted")) {
+        console.log("Error loading solutions", ex);
+        setSolveOverlayText("Error fetching solutions.");
+      }
+    }
+
+    setLoadingSolution(false);
+    return false;
+  }
+
+  async function explainAnswer(clue: Clue) {
+    const answer = getClueText(clue).toLowerCase();
+    if (answer.includes("_")) {
+      setSolveOverlayText("Cannot explain incomplete solution.");
+      return;
+    }
+
+    setSolveOverlayText(undefined);
+    setLoadingSolution(true);
+
+    try {
+      const strippedClue = clue.getClueText();
+      const explanation = await getExplanation(
+        strippedClue,
+        answer,
+        solveCancelToken.signal
+      );
+      if (explanation.length == 0) {
+        setSolveOverlayText("Could not explain solution.");
+      } else {
+        setExplanation(explanation);
+      }
+    } catch (ex: any) {
+      if (!ex.message?.includes("aborted")) {
+        console.log("Error loading explanation", ex);
+        setSolveOverlayText("Error fetching explaination.");
+      }
     }
 
     setLoadingSolution(false);
   }
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
-  async function trySolveAll() {
+  async function solveAllClues(startIndex: number = 0) {
+    setGridContinuation(undefined);
+    setCancelSolveGrid(false);
     setCurrentCell(undefined);
-    for (const clue of puzzle.clues) {
+    for (let i = startIndex; i < puzzle.clues.length; i++) {
+      if (cancelSolveGrid) {
+        break;
+      }
+
+      const clue = puzzle.clues[i];
       setSelectedClue(clue);
-      await solveClue(clue);
+      const multiSolutions = await solveClue(clue);
+      if (multiSolutions) {
+        setGridContinuation(startIndex + 1);
+        break;
+      }
     }
 
+    setGridContinuation(undefined);
     setSolveOverlayText(undefined);
+  }
+
+  async function onSolutionSelected(solution: string) {
+    setSolutions(undefined);
+
+    if (selectedClue) {
+      setClueText(selectedClue, solution);
+
+      if (gridContinuation) {
+        await solveAllClues(gridContinuation);
+      }
+    }
   }
 
   const svgWidth = cellWidth * puzzle.columns;
   const svgHeight = cellHeight * puzzle.rows;
+  const verticalWordBreaks = new Array<GridEntry>();
+  const horizontalWordBreaks = new Array<GridEntry>();
+  const wordBreakWidth = cellWidth / 8;
+  const wordBreakHeight = cellHeight / 8;
   return (
     <div className="crossword-container">
       {puzzle && (
         <>
-          <div className="d-flex flex-column">
+          <div className="d-flex flex-column p-2">
             <div className="crossword-svg-container">
-              <div className="float-left">
-                <svg
-                  width={svgWidth}
-                  height={svgHeight}
-                  viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                >
-                  <rect
-                    width={svgWidth}
-                    height={svgHeight}
-                    color="black"
-                  ></rect>
-                  {entries
-                    .filter((cell) => cell.editable)
-                    .map((cell, index) => {
-                      const [xPos, yPos] = [
-                        cell.x * cellWidth,
-                        cell.y * cellHeight,
-                      ];
-                      return (
-                        <g key={index} onClick={() => onCellClick(cell)} data-cy={`grid-cell-${cell.x}-${cell.y}`}>
+              <svg
+                width={svgWidth}
+                height={svgHeight}
+                viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+                preserveAspectRatio="xMidYMid meet"
+              >
+                <rect width={svgWidth} height={svgHeight} color="black"></rect>
+                {entries
+                  .filter((cell) => cell.editable)
+                  .map((cell, index) => {
+                    const [xPos, yPos] = [
+                      cell.x * cellWidth,
+                      cell.y * cellHeight,
+                    ];
+
+                    cell.clues.forEach((c) => {
+                      if (c.isHorizontalWordBreak(cell.x, cell.y)) {
+                        horizontalWordBreaks.push(cell);
+                      }
+
+                      if (c.isVerticalWordBreak(cell.x, cell.y)) {
+                        verticalWordBreaks.push(cell);
+                      }
+                    });
+
+                    return (
+                      <g
+                        key={index}
+                        onClick={() => onCellClick(cell)}
+                        data-cy={`grid-cell-${cell.x}-${cell.y}`}
+                      >
+                        <rect
+                          x={xPos + 1}
+                          y={yPos + 1}
+                          width={cellWidth - 2}
+                          height={cellHeight - 2}
+                          fill={
+                            selectedClue &&
+                            selectedClue.contains(cell.x, cell.y)
+                              ? ClueSelectionColour
+                              : "#FFFFFF"
+                          }
+                        ></rect>
+                        {cell.clueStarts?.length > 0 && (
+                          <text x={xPos + 2} y={yPos + 10} fontSize="0.625rem">
+                            {cell.clueStarts[0].number}
+                          </text>
+                        )}
+                        {cell.content && !cell.positionEquals(currentCell) && (
+                          <text
+                            x={xPos + cellWidth / 2}
+                            y={yPos + cellHeight / 1.4}
+                            fontSize="1rem"
+                            textAnchor="middle"
+                          >
+                            {cell.content}
+                          </text>
+                        )}
+                        {cell.positionEquals(currentCell) && (
                           <rect
+                            ref={solveOverlayTarget}
                             x={xPos + 1}
                             y={yPos + 1}
                             width={cellWidth - 2}
                             height={cellHeight - 2}
-                            fill={
-                              selectedClue &&
-                              selectedClue.contains(cell.x, cell.y)
-                                ? ClueSelectionColour
-                                : "#FFFFFF"
-                            }
+                            className="crossword-cell-selected"
                           ></rect>
-                          {cell.clueStarts?.length > 0 && (
-                            <text
-                              x={xPos + 2}
-                              y={yPos + 10}
-                              fontSize="0.625rem"
-                            >
-                              {cell.clueStarts[0].number}
-                            </text>
-                          )}
-                          {cell.content && !cell.positionEquals(currentCell) && (
-                            <text
-                              x={xPos + cellWidth / 2}
-                              y={yPos + cellHeight / 1.4}
-                              fontSize="1rem"
-                              textAnchor="middle"
-                            >
-                              {cell.content}
-                            </text>
-                          )}
-                          {cell.positionEquals(currentCell) && (
-                            <rect
-                              ref={solveOverlayTarget}
-                              x={xPos + 1}
-                              y={yPos + 1}
-                              width={cellWidth - 2}
-                              height={cellHeight - 2}
-                              className="crossword-cell-selected"
-                            ></rect>
-                          )}
-                        </g>
-                      );
-                    })}
-                </svg>
-                {currentCell && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      left: currentCell.x * cellWidth,
-                      top: currentCell.y * cellHeight,
-                      width: cellWidth,
-                      height: cellHeight,
-                    }}
-                  >
-                    <input
-                      className="crossword-input"
-                      onClick={() => onCellClick(currentCell)}
-                      onChange={(e) => onCellValueEntered(e.target.value)}
-                      onKeyUp={onCellKeyUp}
-                      value={currentCell.content ?? ""}
-                      ref={(ref) => ref && setInput(ref)}
-                      data-cy="grid-input"
-                    ></input>
-                  </div>
-                )}
-              </div>
+                        )}
+                      </g>
+                    );
+                  })}
+                {horizontalWordBreaks.map((cell, index) => {
+                  const [xPos, yPos] = [
+                    cell.x * cellWidth,
+                    cell.y * cellHeight,
+                  ];
+                  return (
+                    <line
+                      key={index}
+                      x1={xPos + cellWidth - wordBreakWidth}
+                      x2={xPos + cellWidth + wordBreakWidth}
+                      y1={yPos + cellHeight / 2 - 0.5}
+                      y2={yPos + cellHeight / 2 - 0.5}
+                      stroke="#000000FF"
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+                {verticalWordBreaks.map((cell, index) => {
+                  const [xPos, yPos] = [
+                    cell.x * cellWidth,
+                    cell.y * cellHeight,
+                  ];
+                  return (
+                    <line
+                      key={index}
+                      x1={xPos + cellWidth / 2 - 0.5}
+                      x2={xPos + cellWidth / 2 - 0.5}
+                      y1={yPos + cellHeight - wordBreakHeight}
+                      y2={yPos + cellHeight + wordBreakHeight}
+                      stroke="#000000FF"
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+              </svg>
+              {currentCell && (
+                <div
+                  style={{
+                    position: "absolute",
+                    left: `${(100 * currentCell.x) / puzzle.columns}%`,
+                    top: `${(100 * currentCell.y) / puzzle.rows}%`,
+                    width: `${100 / puzzle.columns}%`,
+                    height: `${100 / puzzle.rows}%`,
+                  }}
+                >
+                  <input
+                    className="crossword-input"
+                    onClick={() => onCellClick(currentCell)}
+                    onChange={(e) => onCellValueEntered(e.target.value)}
+                    onKeyDown={onCellKeyDown}
+                    onKeyUp={onCellKeyUp}
+                    value={currentCell.content ?? ""}
+                    ref={(ref) => ref && setInput(ref)}
+                    data-cy="grid-input"
+                  ></input>
+                </div>
+              )}
             </div>
             <div
               style={{
@@ -378,34 +536,77 @@ export default function Crossword(props: CrosswordProps) {
               }}
             >
               <Button
-                size="sm"
+                ref={solutionMenuTarget}
+                variant="contained"
+                color="primary"
                 className="me-2"
                 disabled={loadingSolution}
-                onClick={trySolveAll}
+                onClick={async () => await solveAllClues()}
               >
                 Solve Grid
               </Button>
+              <Button
+                className="me-2"
+                variant="contained"
+                color="secondary"
+                onClick={() => puzzle.clues.forEach(clearClueText)}
+              >
+                Clear Grid
+              </Button>
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                paddingTop: "1rem",
+              }}
+            >
               {selectedClue && (
                 <>
+                  <Hide if={loadingSolution}>
+                    <SplitButton
+                      options={[
+                        `Solve ${selectedClue.getTitle()}`,
+                        `Explain ${selectedClue.getTitle()}`,
+                      ]}
+                      onClick={async (index, _) => {
+                        if (index == 0) {
+                          await solveClue(selectedClue);
+                        } else if (index == 1) {
+                          await explainAnswer(selectedClue);
+                        }
+                      }}
+                      cypressData="solve-cell"
+                    />
+                  </Hide>
+                  {loadingSolution && (
+                    <Button
+                      className="me-2"
+                      variant="contained"
+                      color="secondary"
+                      onClick={() => {
+                        setCancelSolveGrid(true);
+                        cancelSolveClue();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <Button
-                    size="sm"
-                    className="me-2"
-                    disabled={loadingSolution}
-                    onClick={async () => solveClue(selectedClue)}
-                    data-cy="solve-cell"
+                    className="ms-2"
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => {
+                      clearClueText(selectedClue);
+                      onCellClick(
+                        entries[
+                          toIndex(puzzle, selectedClue.x, selectedClue.y)
+                        ],
+                        true
+                      );
+                    }}
                   >
-                    {loadingSolution
-                      ? "Solving..."
-                      : `Solve ${selectedClue.number} ${
-                          ClueDirection[selectedClue.direction]
-                        }`}
-                  </Button>
-                  <Button size="sm" disabled={loadingExplaination}>
-                    {loadingExplaination
-                      ? "Explaining..."
-                      : `Explain ${selectedClue.number} ${
-                          ClueDirection[selectedClue.direction]
-                        }`}
+                    Clear Clue
                   </Button>
                   <Overlay
                     target={solveOverlayTarget.current}
@@ -413,31 +614,55 @@ export default function Crossword(props: CrosswordProps) {
                     placement="top"
                   >
                     {(props) => (
-                      <Tooltip {...props} data-cy="no-solutions">{solveOverlayText}</Tooltip>
+                      <Tooltip {...props} data-cy="no-solutions">
+                        {solveOverlayText}
+                      </Tooltip>
                     )}
                   </Overlay>
                 </>
               )}
             </div>
           </div>
-          <ClueList
-            clues={puzzle.clues.filter(
-              (c) => c.direction == ClueDirection.Across
-            )}
-            title="Across"
-            onClueClicked={onClueSelectedFromList}
-            selectedClue={selectedClue}
-          />
-          <ClueList
-            clues={puzzle.clues.filter(
-              (c) => c.direction == ClueDirection.Down
-            )}
-            title="Down"
-            onClueClicked={onClueSelectedFromList}
-            selectedClue={selectedClue}
-          />
+          <div className="d-flex flex-column">
+            <div
+              className="d-flex flex-row"
+              style={{ justifyContent: "space-around" }}
+            >
+              <ClueList
+                clues={puzzle.clues.filter(
+                  (c) => c.direction == ClueDirection.Across
+                )}
+                title="Across"
+                onClueClicked={onClueSelectedFromList}
+                selectedClue={selectedClue}
+              />
+              <ClueList
+                clues={puzzle.clues.filter(
+                  (c) => c.direction == ClueDirection.Down
+                )}
+                title="Down"
+                onClueClicked={onClueSelectedFromList}
+                selectedClue={selectedClue}
+              />
+            </div>
+          </div>
         </>
       )}
+      <SolutionMenu
+        solutions={solutions}
+        anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
+        onSolutionSelected={onSolutionSelected}
+      />
+      <Dialog open={explanation != undefined}>
+        <DialogTitle>Explanation for {selectedClue?.getTitle()}</DialogTitle>
+        <DialogContent>
+          <p>Clue: {selectedClue?.text}</p>
+          <p>Explanation: {explanation}</p>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setExplanation(undefined)}>Ok</Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }
