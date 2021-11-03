@@ -576,6 +576,7 @@ export default function Crossword(props: CrosswordProps) {
                           await explainAnswer(selectedClue);
                         }
                       }}
+                      cypressData="solve-cell"
                     />
                   </Hide>
                   {loadingSolution && (
@@ -587,7 +588,6 @@ export default function Crossword(props: CrosswordProps) {
                         setCancelSolveGrid(true);
                         cancelSolveClue();
                       }}
-                      data-cy="solve-cell"
                     >
                       Cancel
                     </Button>

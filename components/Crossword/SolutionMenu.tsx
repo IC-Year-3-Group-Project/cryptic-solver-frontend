@@ -1,6 +1,5 @@
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
-import { useState } from "react";
 
 export interface SolutionMenuProps {
   solutions?: string[];

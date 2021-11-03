@@ -16,7 +16,7 @@ async function post<T>(
       "Content-Type": "application/json",
     },
     body: JSON.stringify(data),
-    signal: cancellation
+    signal: cancellation,
   });
 
   const json = await response.json();
@@ -43,7 +43,11 @@ export async function getExplanation(
   answer: string,
   cancellation?: AbortSignal
 ): Promise<string> {
-  return post("/explain_answer", { clue, answer, word_length: answer.length }, cancellation);
+  return post(
+    "/explain_answer",
+    { clue, answer, word_length: answer.length },
+    cancellation
+  );
 }
 
 export function convertEveryman(crossword: any): Puzzle {

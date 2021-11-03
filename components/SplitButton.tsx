@@ -14,6 +14,7 @@ export interface SplitButtonProps {
   selectedIndex?: number;
   options: string[];
   onClick?: (index: number, option: string) => void;
+  cypressData?: string;
 }
 
 export default function SplitButton(props: SplitButtonProps) {
@@ -52,9 +53,8 @@ export default function SplitButton(props: SplitButtonProps) {
       <ButtonGroup
         variant="contained"
         ref={anchorRef}
-        aria-label="split button"
       >
-        <Button onClick={handleClick}>{props.options[selectedIndex]}</Button>
+        <Button onClick={handleClick} data-cy={props.cypressData}>{props.options[selectedIndex]}</Button>
         <Button size="small" onClick={handleToggle}>
           <ArrowDropDownIcon />
         </Button>
