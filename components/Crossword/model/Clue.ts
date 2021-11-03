@@ -33,12 +33,19 @@ export class Clue {
     return [];
   }
 
+  /* Gets the display name of the clue (e.g. "4-Down"). */
   getTitle(): string {
     return `${this.number}: ${ClueDirection[this.direction]}`;
   }
 
+  /* Returns the text of the clue with HTML tags stripped. */
   getRawText(): string {
     return this.text.replace(/<[^>]*>?/gm, "").trim();
+  }
+
+  /* Returns the text of the clue with HTML tags and word lengths stripped. */
+  getClueText(): string {
+    return this.getRawText().replace(/\(.*\)$/g, "").trim();
   }
 }
 

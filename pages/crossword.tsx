@@ -46,8 +46,8 @@ const Crossword: NextPage = () => {
 
   return (
     <>
-      <Button style={{marginLeft: "2rem", marginTop: "2rem"}} onClick={() => router.push("/")}>🠐 Back</Button>
       <Layout>
+      <Button style={{marginLeft: "2rem", marginTop: "2rem"}} onClick={() => router.push("/")}>🠐 Back</Button>
         {puzzle && (
           <NewCrossword
             puzzle={puzzle}

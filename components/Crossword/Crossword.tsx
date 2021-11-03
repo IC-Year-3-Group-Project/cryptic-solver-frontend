@@ -1,18 +1,14 @@
 import React, { KeyboardEvent, useEffect, useRef, useState } from "react";
-import Button from "react-bootstrap/Button";
 import Tooltip from "react-bootstrap/Tooltip";
 import Overlay from "react-bootstrap/Overlay";
 import ClueList from "./ClueList";
 import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
-import { getSolutions } from "./utils";
-import Dialog from "@material-ui/core/Dialog";
-import { DialogTitle } from "@mui/material";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
-import TextField from "@material-ui/core/TextField";
-import MaterialButton from "@material-ui/core/Button";
+import { getExplanation, getSolutions } from "./utils";
+import Button from "@material-ui/core/Button";
+import SplitButton from "../SplitButton";
+import Hide from "../Hide";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -50,15 +46,12 @@ export default function Crossword(props: CrosswordProps) {
   const [input, setInput] = useState<HTMLInputElement>();
 
   const [loadingSolution, setLoadingSolution] = useState(false);
-  // TODO: Add explanation loading and multiple-solution handling.
-  const [loadingExplaination, setLoadingExplanation] = useState(false);
+  // TODO: Add multiple-solution handling.
+  const [solveWithGrid, setSolveWithGrid] = useState(true);
   const [solutions, setSolutions] = useState<Array<string>>([]);
+  const [explanation, setExplanation] = useState<string>();
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const solveOverlayTarget = useRef(null);
-
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [editClueText, setEditClueText] = useState("");
-  const [editClueError, setEditClueError] = useState<string>();
 
   const [solveCancelToken, setSolveCancelToken] = useState(
     new AbortController()
@@ -261,6 +254,13 @@ export default function Crossword(props: CrosswordProps) {
     setSolveOverlayText(undefined);
   }
 
+  function getClueText(clue: Clue): string {
+    return clue
+      .generateVertices()
+      .map((v) => entries[toIndex(puzzle, v.x, v.y)].content || "_")
+      .join("");
+  }
+
   function setClueText(clue: Clue, text: string) {
     let k = 0;
     clue
@@ -285,7 +285,7 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(true);
     try {
       // Strip html tags and word length brackets from clue.
-      const strippedClue = clue.getRawText().replace(/\(.*\)$/g, "");
+      const strippedClue = clue.getClueText();
       const solutions = await getSolutions(
         strippedClue,
         clue.totalLength,
@@ -307,6 +307,38 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(false);
   }
 
+  async function explainAnswer(clue: Clue) {
+    const answer = getClueText(clue);
+    if (answer.includes("_")) {
+      setSolveOverlayText("Cannot explain incomplete solution.");
+      return;
+    }
+
+    setSolveOverlayText(undefined);
+    setLoadingSolution(true);
+
+    try {
+      const strippedClue = clue.getClueText();
+      const explanation = await getExplanation(
+        strippedClue,
+        answer,
+        solveCancelToken.signal
+      );
+      if (explanation.length == 0) {
+        setSolveOverlayText("Could not explain solution.");
+      } else {
+        setExplanation(explanation);
+      }
+    } catch (ex: any) {
+      if (!ex.message?.includes("aborted")) {
+        console.log("Error loading explanation", ex);
+        setSolveOverlayText("Error fetching explaination.");
+      }
+    }
+
+    setLoadingSolution(false);
+  }
+
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
   async function trySolveAll() {
     setCancelSolveGrid(false);
@@ -321,16 +353,6 @@ export default function Crossword(props: CrosswordProps) {
     }
 
     setSolveOverlayText(undefined);
-  }
-
-  function saveClueEdits() {
-    const trimmed = editClueText.trim();
-    if (trimmed.length == 0) {
-      setEditClueError("Please enter a clue.");
-    } else if (selectedClue) {
-      selectedClue.text = trimmed;
-      setShowEditDialog(false);
-    }
   }
 
   const svgWidth = cellWidth * puzzle.columns;
@@ -442,7 +464,8 @@ export default function Crossword(props: CrosswordProps) {
               }}
             >
               <Button
-                size="sm"
+                variant="contained"
+                color="primary"
                 className="me-2"
                 disabled={loadingSolution}
                 onClick={trySolveAll}
@@ -450,8 +473,9 @@ export default function Crossword(props: CrosswordProps) {
                 Solve Grid
               </Button>
               <Button
-                size="sm"
                 className="me-2"
+                variant="contained"
+                color="secondary"
                 onClick={() => puzzle.clues.forEach(clearClueText)}
               >
                 Clear Grid
@@ -466,50 +490,39 @@ export default function Crossword(props: CrosswordProps) {
             >
               {selectedClue && (
                 <>
-                  <Button
-                    size="sm"
-                    className="me-2"
-                    onClick={async () => {
-                      if (loadingSolution) {
+                  <Hide if={loadingSolution}>
+                    <SplitButton
+                      options={[
+                        `Solve ${selectedClue.getTitle()}`,
+                        `Explain ${selectedClue.getTitle()}`,
+                      ]}
+                      onClick={(index, _) => {
+                        if (index == 0) {
+                          solveClue(selectedClue);
+                        } else if (index == 1) {
+                          explainAnswer(selectedClue);
+                        }
+                      }}
+                    />
+                  </Hide>
+                  {loadingSolution && (
+                    <Button
+                      className="me-2"
+                      variant="contained"
+                      color="secondary"
+                      onClick={async () => {
                         setCancelSolveGrid(true);
                         cancelSolveClue();
-                      } else {
-                        await solveClue(selectedClue);
-                      }
-                    }}
-                    data-cy="solve-cell"
-                  >
-                    {loadingSolution
-                      ? "Cancel"
-                      : `Solve ${selectedClue.number} ${
-                          ClueDirection[selectedClue.direction]
-                        }`}
-                  </Button>
+                      }}
+                      data-cy="solve-cell"
+                    >
+                      Cancel
+                    </Button>
+                  )}
                   <Button
-                    size="sm"
-                    className="me-2"
-                    disabled={loadingExplaination}
-                  >
-                    {loadingExplaination
-                      ? "Explaining..."
-                      : `Explain ${selectedClue.number} ${
-                          ClueDirection[selectedClue.direction]
-                        }`}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="me-2"
-                    onClick={() => {
-                      setEditClueError(undefined);
-                      setEditClueText(selectedClue.getRawText());
-                      setShowEditDialog(true);
-                    }}
-                  >
-                    Edit Clue
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="me-2"
+                    className="ms-2"
+                    variant="contained"
+                    color="secondary"
                     onClick={() => {
                       clearClueText(selectedClue);
                       onCellClick(
@@ -553,25 +566,6 @@ export default function Crossword(props: CrosswordProps) {
             onClueClicked={onClueSelectedFromList}
             selectedClue={selectedClue}
           />
-          <Dialog open={showEditDialog} fullWidth maxWidth="sm">
-            <DialogTitle>Edit Clue</DialogTitle>
-            <DialogContent>
-              <TextField
-                onChange={(e) => setEditClueText(e.target.value)}
-                value={editClueText}
-                error={editClueError != undefined}
-                helperText={editClueError}
-                fullWidth
-                multiline
-              />
-            </DialogContent>
-            <DialogActions>
-              <MaterialButton onClick={() => setShowEditDialog(false)}>
-                Cancel
-              </MaterialButton>
-              <MaterialButton onClick={saveClueEdits}>Save</MaterialButton>
-            </DialogActions>
-          </Dialog>
         </>
       )}
     </div>

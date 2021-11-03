@@ -38,12 +38,12 @@ export async function getSolutions(
 }
 
 /** Gets explanations linking a clue and its solution. */
-export async function getExplanations(
+export async function getExplanation(
   clue: string,
   answer: string,
   cancellation?: AbortSignal
-): Promise<any> {
-  return post("/explain", { clue, answer }, cancellation);
+): Promise<string> {
+  return post("/explain_answer", { clue, answer, word_length: answer.length }, cancellation);
 }
 
 export function convertEveryman(crossword: any): Puzzle {
