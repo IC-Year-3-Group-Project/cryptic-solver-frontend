@@ -10,7 +10,7 @@ export class Clue {
   contains(x: number, y: number) {
     if (this.direction == ClueDirection.Across) {
       return x >= this.x && x < this.x + this.totalLength && y == this.y;
-    } else if ((this.direction = ClueDirection.Down)) {
+    } else if (this.direction == ClueDirection.Down) {
       return y >= this.y && y < this.y + this.totalLength && x == this.x;
     }
 
