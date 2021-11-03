@@ -13,6 +13,7 @@ import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
+import { SolutionMenu } from "./SolutionMenu";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -52,15 +53,17 @@ export default function Crossword(props: CrosswordProps) {
   const [loadingSolution, setLoadingSolution] = useState(false);
   // TODO: Add multiple-solution handling.
   const [solveWithGrid, setSolveWithGrid] = useState(true);
-  const [solutions, setSolutions] = useState<Array<string>>([]);
+  const [solutions, setSolutions] = useState<Array<string>>();
   const [explanation, setExplanation] = useState<string>();
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const solveOverlayTarget = useRef(null);
+  const solutionMenuTarget = useRef(null);
 
   const [solveCancelToken, setSolveCancelToken] = useState(
     new AbortController()
   );
   const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
+  const [gridContinuation, setGridContinuation] = useState<number>();
 
   useEffect(() => {
     if (puzzle) {
@@ -284,7 +287,7 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   // Calls the solver and fills in the given clue on the grid.
-  async function solveClue(clue: Clue) {
+  async function solveClue(clue: Clue): Promise<boolean> {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
@@ -295,9 +298,14 @@ export default function Crossword(props: CrosswordProps) {
         clue.totalLength,
         solveCancelToken.signal
       );
-      // TODO: Handle multiple solutions (give user choice maybe).
       if (solutions.length > 0 && solutions[0].length == clue.totalLength) {
-        setClueText(clue, solutions[0]);
+        if (solutions.length > 1) {
+          setSolutions(solutions);
+          setLoadingSolution(false);
+          return true;
+        } else {
+          setClueText(clue, solutions[0]);
+        }
       } else {
         setSolveOverlayText("No solutions found.");
       }
@@ -309,6 +317,7 @@ export default function Crossword(props: CrosswordProps) {
     }
 
     setLoadingSolution(false);
+    return false;
   }
 
   async function explainAnswer(clue: Clue) {
@@ -344,19 +353,38 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
-  async function trySolveAll() {
+  async function solveAllClues(startIndex: number = 0) {
+    setGridContinuation(undefined);
     setCancelSolveGrid(false);
     setCurrentCell(undefined);
-    for (const clue of puzzle.clues) {
+    for (let i = startIndex; i < puzzle.clues.length; i++) {
       if (cancelSolveGrid) {
         break;
       }
 
+      const clue = puzzle.clues[i];
       setSelectedClue(clue);
-      await solveClue(clue);
+      const multiSolutions = await solveClue(clue);
+      if (multiSolutions) {
+        setGridContinuation(startIndex + 1);
+        break;
+      }
     }
 
+    setGridContinuation(undefined);
     setSolveOverlayText(undefined);
+  }
+
+  async function onSolutionSelected(solution: string) {
+    setSolutions(undefined);
+
+    if (selectedClue) {
+      setClueText(selectedClue, solution);
+
+      if (gridContinuation) {
+        await solveAllClues(gridContinuation);
+      }
+    }
   }
 
   const svgWidth = cellWidth * puzzle.columns;
@@ -508,11 +536,12 @@ export default function Crossword(props: CrosswordProps) {
               }}
             >
               <Button
+                ref={solutionMenuTarget}
                 variant="contained"
                 color="primary"
                 className="me-2"
                 disabled={loadingSolution}
-                onClick={trySolveAll}
+                onClick={async () => await solveAllClues()}
               >
                 Solve Grid
               </Button>
@@ -540,11 +569,11 @@ export default function Crossword(props: CrosswordProps) {
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
                       ]}
-                      onClick={(index, _) => {
+                      onClick={async (index, _) => {
                         if (index == 0) {
-                          solveClue(selectedClue);
+                          await solveClue(selectedClue);
                         } else if (index == 1) {
-                          explainAnswer(selectedClue);
+                          await explainAnswer(selectedClue);
                         }
                       }}
                     />
@@ -554,7 +583,7 @@ export default function Crossword(props: CrosswordProps) {
                       className="me-2"
                       variant="contained"
                       color="secondary"
-                      onClick={async () => {
+                      onClick={() => {
                         setCancelSolveGrid(true);
                         cancelSolveClue();
                       }}
@@ -619,6 +648,11 @@ export default function Crossword(props: CrosswordProps) {
           </div>
         </>
       )}
+      <SolutionMenu
+        solutions={solutions}
+        anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
+        onSolutionSelected={onSolutionSelected}
+      />
       <Dialog open={explanation != undefined}>
         <DialogTitle>Explanation for {selectedClue?.getTitle()}</DialogTitle>
         <DialogContent>
