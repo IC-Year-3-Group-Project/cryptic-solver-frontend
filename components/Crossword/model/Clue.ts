@@ -45,7 +45,21 @@ export class Clue {
 
   /* Returns the text of the clue with HTML tags and word lengths stripped. */
   getClueText(): string {
-    return this.getRawText().replace(/\(.*\)$/g, "").trim();
+    return this.getRawText()
+      .replace(/\(.*\)$/g, "")
+      .trim();
+  }
+
+  isHorizontalWordBreak(x: number, y: number): boolean {
+    return this.lengths
+      .filter((_, i) => i != this.lengths.length - 1)
+      .some((l) => l == x - this.x + 1);
+  }
+
+  isVerticalWordBreak(x: number, y: number): boolean {
+    return this.lengths
+      .filter((_, i) => i != this.lengths.length - 1)
+      .some((l) => l == y - this.y + 1);
   }
 }
 

@@ -357,6 +357,10 @@ export default function Crossword(props: CrosswordProps) {
 
   const svgWidth = cellWidth * puzzle.columns;
   const svgHeight = cellHeight * puzzle.rows;
+  const verticalWordBreaks = new Array<GridEntry>();
+  const horizontalWordBreaks = new Array<GridEntry>();
+  const wordBreakWidth = cellWidth / 8;
+  const wordBreakHeight = cellHeight / 8;
   return (
     <div className="crossword-container">
       {puzzle && (
@@ -381,6 +385,17 @@ export default function Crossword(props: CrosswordProps) {
                         cell.x * cellWidth,
                         cell.y * cellHeight,
                       ];
+
+                      cell.clues.forEach((c) => {
+                        if (c.isHorizontalWordBreak(cell.x, cell.y)) {
+                          horizontalWordBreaks.push(cell);
+                        }
+
+                        if (c.isVerticalWordBreak(cell.x, cell.y)) {
+                          verticalWordBreaks.push(cell);
+                        }
+                      });
+
                       return (
                         <g
                           key={index}
@@ -431,6 +446,40 @@ export default function Crossword(props: CrosswordProps) {
                         </g>
                       );
                     })}
+                  {horizontalWordBreaks.map((cell, index) => {
+                    const [xPos, yPos] = [
+                      cell.x * cellWidth,
+                      cell.y * cellHeight,
+                    ];
+                    return (
+                      <line
+                        key={index}
+                        x1={xPos + cellWidth - wordBreakWidth}
+                        x2={xPos + cellWidth + wordBreakWidth}
+                        y1={yPos + cellHeight / 2 - 0.5}
+                        y2={yPos + cellHeight / 2 - 0.5}
+                        stroke="#000000FF"
+                        strokeWidth={1}
+                      />
+                    );
+                  })}
+                  {verticalWordBreaks.map((cell, index) => {
+                    const [xPos, yPos] = [
+                      cell.x * cellWidth,
+                      cell.y * cellHeight,
+                    ];
+                    return (
+                      <line
+                        key={index}
+                        x1={xPos + cellWidth / 2 - 0.5}
+                        x2={xPos + cellWidth / 2 - 0.5}
+                        y1={yPos + cellHeight - wordBreakHeight}
+                        y2={yPos + cellHeight + wordBreakHeight}
+                        stroke="#000000FF"
+                        strokeWidth={1}
+                      />
+                    );
+                  })}
                 </svg>
                 {currentCell && (
                   <div
