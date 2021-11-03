@@ -22,10 +22,13 @@ const Crossword: NextPage = () => {
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
+      setFetchError(false);
       setLoadingCrossword(true);
+      
       await getCrossword(router.query.url as string)
         .then((data) => {
           setPuzzle(convertEveryman(data));
+          setFetchError(false);
         })
         .catch((error) => {
           console.log(
