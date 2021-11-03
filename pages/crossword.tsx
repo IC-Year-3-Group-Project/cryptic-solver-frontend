@@ -41,6 +41,10 @@ const Crossword: NextPage = () => {
 
     if (router.query.url) {
       fetchCrossword();
+    } else {
+      console.log("No url found");
+      setFetchError(true);
+      setLoadingCrossword(false);
     }
   }, [router.query.url]);
 
