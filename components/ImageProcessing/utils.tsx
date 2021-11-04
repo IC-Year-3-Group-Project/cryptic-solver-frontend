@@ -4,10 +4,10 @@ import { Puzzle } from "../Crossword/model/Puzzle";
 export function preprocess(text: string) {
   // Preprocess weird characters
   let character_replacements = new Map([
-    ["©", "(5)"],
-    ["|", "I"],
-    ["®", "(5"],
-    ["@", "(7)"],
+    [/©/g, "(5)"],
+    [/\|/g, "I"],
+    [/®/g, "(5"],
+    [/@/g, "(7)"],
   ]);
 
   character_replacements.forEach((replacement, key) => {
@@ -31,9 +31,20 @@ export function preprocess(text: string) {
   return text;
 }
 
+export function preprocessClue(clue: string) {
+  clue = clue.replace(/\n/g, " ").trim();
+  if (!clue.endsWith(")")) {
+    clue += ")";
+  }
+
+  return clue;
+}
+
 /* Extracts clues from a block of text using a regex. */
 export function extractClues(text: string): Partial<Clue>[] {
   text = preprocess(text);
+
+  console.log(text);
 
   // lol
   let maxClue = 0;
@@ -42,7 +53,7 @@ export function extractClues(text: string): Partial<Clue>[] {
       // Split text into separate clues.
       .split("\n\n")
       // Map clues to regex groups.
-      .map((c) => /(\d+)\s+(.*)\((.+?)(?:[,.]|)\)/g.exec(c.replace(/\n/g, " ")))
+      .map((c) => /(\d+)\s+(.*)\((.+?)(?:[,.]|)\)/g.exec(preprocessClue(c)))
       // Filter any 'clues' that aren't actually clues (that don't match regex).
       .filter((m) => m && m.length == 4)
       // Map regex matches to partial clue object.
@@ -77,6 +88,7 @@ export function fillClues(
     const matching = grid.clues.find(
       (c) => c.number == clue.number && c.direction == direction
     );
+    console.log(clue, matching);
     if (matching) {
       Object.assign(matching, clue);
     }
