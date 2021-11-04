@@ -1,9 +1,13 @@
+import { Clue, ClueDirection } from "../Crossword/model/Clue";
+import { Puzzle } from "../Crossword/model/Puzzle";
+
 export function preprocess(text: string) {
   // Preprocess weird characters
   let character_replacements = new Map([
     ["©", "(5)"],
     ["|", "I"],
     ["®", "(5"],
+    ["@", "(7)"],
   ]);
 
   character_replacements.forEach((replacement, key) => {
@@ -27,99 +31,57 @@ export function preprocess(text: string) {
   return text;
 }
 
-export function extract_clues(text: string) {
+/* Extracts clues from a block of text using a regex. */
+export function extractClues(text: string): Partial<Clue>[] {
   text = preprocess(text);
 
-  console.log("Preprocessed text: " + text);
+  // lol
+  let maxClue = 0;
+  return (
+    text
+      // Split text into separate clues.
+      .split("\n\n")
+      // Map clues to regex groups.
+      .map((c) => /(\d+)\s+(.*)\((.+?)(?:[,.]|)\)/g.exec(c.replace(/\n/g, " ")))
+      // Filter any 'clues' that aren't actually clues (that don't match regex).
+      .filter((m) => m && m.length == 4)
+      // Map regex matches to partial clue object.
+      .map((m) => {
+        // Sometimes the preceding 1 gets stripped from numbers > 10.
+        // Use the fact that clues are in order to account for this.
+        let clueNumber = +m![1];
+        maxClue = Math.max(clueNumber, maxClue);
+        if (clueNumber < maxClue) {
+          clueNumber += 10;
+        }
 
-  let parts = text.split("\n\n");
-  let clues = [];
-
-  for (let part of parts) {
-    let part_new = part.replace(/\n/g, "");
-    let front = part_new;
-    let lengths: string[] = [];
-
-    if (part.includes("(")) {
-      let splittedPart = part_new.split("(");
-      front = splittedPart[0];
-      let lengthsWithComma = splittedPart[1].substring(
-        0,
-        splittedPart[1].length - 1
-      );
-
-      if (lengthsWithComma.includes(",")) {
-        lengths = lengthsWithComma.split(",");
-      } else {
-        lengths = [lengthsWithComma];
-      }
-    }
-
-    let i = 0;
-    while (front[i] != " ") {
-      i++;
-    }
-
-    let number = front.substring(0, i);
-    let clue = front.substring(i + 1);
-
-    clues.push({
-      clueNumber: number,
-      clue: clue,
-      lengths: lengths,
-    });
-  }
-  return clues;
+        const lengths = m![3].split(/[.,]/g).map((l) => +l.trim());
+        // Use regex groups to build partial clue object.
+        return {
+          number: clueNumber,
+          text: `${m![2].trim()} (${m![3].replace(".", ",")})`,
+          lengths: lengths,
+          totalLength: lengths.reduce((sum, next) => sum + next, 0),
+        };
+      })
+  );
 }
 
-export function fill_clues(
-  across_clues: { [key: string]: any },
-  down_clues: { [key: string]: any },
-  grid: { [key: string]: any }
+/* Reduced function to replace clue texts/lengths in processed grid. */
+export function fillClues(
+  acrossClues: Partial<Clue>[],
+  downClues: Partial<Clue>[],
+  grid: Puzzle
 ) {
-  let grid_clues = grid.payload.clues;
-
-  down_clues.forEach(
-    (clue: { clueNumber: string; clue: any; lengths: any[] }) => {
-      grid_clues.forEach(
-        (grid_clue: {
-          direction: number;
-          number: number;
-          text: any;
-          lengths: any;
-        }) => {
-          if (
-            grid_clue.direction === 1 &&
-            grid_clue.number === parseInt(clue.clueNumber)
-          ) {
-            grid_clue.text = clue.clue;
-            grid_clue.lengths = clue.lengths.map((l) => parseInt(l));
-          }
-        }
-      );
+  function fill(direction: ClueDirection, clue: Partial<Clue>) {
+    const matching = grid.clues.find(
+      (c) => c.number == clue.number && c.direction == direction
+    );
+    if (matching) {
+      Object.assign(matching, clue);
     }
-  );
+  }
 
-  across_clues.forEach(
-    (clue: { clueNumber: string; clue: any; lengths: any[] }) => {
-      grid_clues.forEach(
-        (grid_clue: {
-          direction: number;
-          number: number;
-          text: any;
-          lengths: number[];
-        }) => {
-          if (
-            grid_clue.direction === 0 &&
-            grid_clue.number === parseInt(clue.clueNumber)
-          ) {
-            grid_clue.text = clue.clue;
-            grid_clue.lengths = clue.lengths.map((l) => parseInt(l));
-          }
-        }
-      );
-    }
-  );
-
-  return grid;
+  acrossClues.forEach((clue) => fill(ClueDirection.Across, clue));
+  downClues.forEach((clue) => fill(ClueDirection.Down, clue));
 }

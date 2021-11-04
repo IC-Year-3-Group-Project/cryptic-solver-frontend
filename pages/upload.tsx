@@ -4,10 +4,16 @@ import Layout from "@/components/_Layout";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Box from "@mui/system/Box";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import cv from "../services/cv";
 import { createWorker } from "tesseract.js";
-import { extract_clues, fill_clues } from "@/components/ImageProcessing/utils";
+import { extractClues, fillClues } from "@/components/ImageProcessing/utils";
+import { Clue } from "@/components/Crossword/model/Clue";
+import Backdrop from "@mui/material/Backdrop";
+import CircularProgress from "@mui/material/CircularProgress";
+import Typography from "@mui/material/Typography";
+import LinearProgress from "@mui/material/LinearProgress";
+import LoadingButton from "@mui/lab/LoadingButton";
 
 export default function Upload() {
   const router = useRouter();
@@ -15,94 +21,106 @@ export default function Upload() {
   const [gridImg, setGridImg] = useState<string>("");
   const [downImg, setDownImg] = useState<string>("");
   const [acrossImg, setAcrossImg] = useState<string>("");
-  const [acrossLoaded, setAcrossLoaded] = useState(false);
-  const [downLoaded, setDownLoaded] = useState(false);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [acrossClues, setAcrossClues] = useState<any>({});
-  const [downClues, setDownClues] = useState<any>({});
-  const [grid, setGrid] = useState<any>({});
 
-  const workerAcross = createWorker({
-    logger: (m: any) => {},
-  });
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState<string>();
+  const [error, setError] = useState(false);
 
-  const workerDown = createWorker({
-    logger: (m: any) => {},
-  });
+  // Loads an image into an html element as a promise so it can be awaited in sequence.
+  function loadImageAsync(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve) => {
+      const image = new Image();
+      image.onload = () => {
+        resolve(image);
+      };
+      image.src = src;
+    });
+  }
 
-  const handle_process = async () => {
-    console.log("loading...");
-    await cv.load();
-    await workerAcross.load();
-    await workerAcross.loadLanguage("eng");
-    await workerAcross.initialize("eng");
-    await workerDown.load();
-    await workerDown.loadLanguage("eng");
-    await workerDown.initialize("eng");
+  // Uses CV to extract the grid from its image.
+  async function processGrid(): Promise<any> {
+    const canvas = document.createElement("canvas") as HTMLCanvasElement;
+    const context = canvas.getContext("2d")!;
+    const gridImage = await loadImageAsync(gridImg);
+    canvas.width = gridImage.width;
+    canvas.height = gridImage.height;
+    context.drawImage(gridImage, 0, 0);
+    const imgData = context.getImageData(
+      0,
+      0,
+      gridImage.width,
+      gridImage.height
+    );
 
-    const acrossImage = new Image();
-    acrossImage.src = acrossImg;
-    acrossImage.onload = async () => {
-      const {
-        data: { text },
-      } = await workerDown.recognize(acrossImage);
-      console.log(`Text: ${text}`);
-
-      let across_clues = extract_clues(text);
-      setAcrossClues(across_clues);
-      setAcrossLoaded(true);
-    };
-
-    const downImage = new Image();
-    downImage.src = downImg;
-    downImage.onload = async () => {
-      const {
-        data: { text },
-      } = await workerAcross.recognize(downImage);
-      console.log(`Text: ${text}`);
-
-      let down_clues = extract_clues(text);
-      setDownClues(down_clues);
-      setDownLoaded(true);
-    };
-
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-    const gridImage = new Image();
-    gridImage.src = gridImg;
-    gridImage.onload = async () => {
-      canvas.width = gridImage.width;
-      canvas.height = gridImage.height;
-      //@ts-ignore
-      context.drawImage(gridImage, 0, 0);
-      //@ts-ignore
-      let imgData = context.getImageData(
-        0,
-        0,
-        gridImage.width,
-        gridImage.height
-      );
-
-      await cv
-        .getGridFromImage(imgData)
-        .then((res) => {
-          console.log("Completed Promise");
-          setGrid(res);
-          setImageLoaded(true);
-        })
-        .catch((err) => {
-          console.log("Error occurred trying to process image");
-          console.log(err);
-        });
-    };
-  };
-
-  //@ts-ignore
-  useEffect(async () => {
-    if (acrossLoaded && downLoaded && imageLoaded) {
-      console.log(fill_clues(acrossClues, downClues, grid.data));
+    try {
+      // Await grid processing and return payload from worker message.
+      const result = await cv.getGridFromImage(imgData);
+      return result.data.payload;
+    } catch (ex) {
+      console.log("Error occured while processing grid.", ex);
+    } finally {
+      // Must be killed.
+      cv.worker?.terminate();
     }
-  }, [acrossLoaded, downLoaded, imageLoaded]);
+
+    // Something went wrong...
+    return undefined;
+  }
+
+  async function handleProcess() {
+    setError(false);
+    setProgress(-1);
+    setStatus("Loading OpenCV...");
+    await cv.load();
+
+    setStatus("Processing grid...");
+    const grid = await processGrid();
+    if (!grid) {
+      setStatus("Failed to process grid.");
+      setError(true);
+      return;
+    }
+
+    // Create one new tesseract worker.
+    const worker = createWorker({
+      logger: (message: any) => {
+        if (message.progress) {
+          setProgress(message.progress * 100);
+        }
+      },
+    });
+    await worker.load();
+    await worker.loadLanguage("eng");
+    await worker.initialize("eng");
+
+    // Processes an image with the tessaract worker to extract the text and then clues.
+    async function processImage(
+      image: HTMLImageElement
+    ): Promise<Partial<Clue>[]> {
+      const {
+        data: { text },
+      } = await worker.recognize(image);
+      return extractClues(text);
+    }
+
+    // Load and process across and down images.
+    setStatus("Processing across clues...");
+    const acrossImage = await loadImageAsync(acrossImg);
+    const acrossClues = await processImage(acrossImage);
+    setStatus("Processing down clues...");
+    const downImage = await loadImageAsync(downImg);
+    const downClues = await processImage(downImage);
+
+    // Kill tesseract worker.
+    await worker.terminate();
+
+    // Fill clues into processed grid.
+    fillClues(acrossClues, downClues, grid);
+    setStatus(undefined);
+
+    // Navigate to crossword page with processed crossword.
+    router.push(`/crossword?raw=${JSON.stringify(grid)}`);
+  }
 
   return (
     <Layout>
@@ -142,13 +160,39 @@ export default function Upload() {
         </Grid>
       </Grid>
       <Box mt={5}>
-        {
-          //TODO: make this button call image recognition function
-        }
-        <Button variant="contained" onClick={handle_process}>
+        <LoadingButton
+          variant="contained"
+          onClick={handleProcess}
+          loading={status != undefined}
+        >
           Process Images
-        </Button>
+        </LoadingButton>
+        {error && (
+          <Typography color="secondary" sx={{ mt: 2 }}>
+            {status}
+          </Typography>
+        )}
       </Box>
+      <Backdrop
+        sx={{ color: "#fff", zIndex: 100, flexDirection: "column" }}
+        open={status != undefined}
+      >
+        <Typography sx={{ mb: 2 }}>{status}</Typography>
+        {progress == -1 ? (
+          <CircularProgress color="inherit" />
+        ) : (
+          <>
+            <Box sx={{ width: "50%", mb: 1 }}>
+              <LinearProgress
+                color="inherit"
+                variant="determinate"
+                value={progress}
+              />
+            </Box>
+            <Typography>{Math.floor(progress)}%</Typography>
+          </>
+        )}
+      </Backdrop>
     </Layout>
   );
 }

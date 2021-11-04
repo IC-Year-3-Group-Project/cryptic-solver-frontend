@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Button from "@mui/material/Button";
 import Grid from "@mui/material/Grid";
+import { Typography } from "@mui/material";
 
 interface Props {
   title: string;
@@ -13,14 +14,17 @@ export default function ImageUpload({ title, img, setImg }: Props) {
     <Grid
       container
       direction="column"
-      justifyContent="center"
+      justifyContent="end"
       alignItems="center"
+      minHeight={300}
+      minWidth={300}
     >
       {img && (
         <Grid item>
-          <Image src={img} width={250} height={250} />
+          <img src={img} width={250} height={250} style={{ width: "auto" }} />
         </Grid>
       )}
+      {!img && <Typography sx={{ mb: "125px" }}>No image</Typography>}
       <Grid item>
         <Button variant="contained" component="label">
           {title}

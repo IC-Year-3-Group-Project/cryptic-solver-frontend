@@ -134,7 +134,7 @@ const Home: NextPage = () => {
       </Box>
 
       <Box mt={5}>
-        <Button variant="contained" href="/upload">
+        <Button variant="contained" onClick={() => router.push("/upload")}>
           Click to upload a crossword from an image
         </Button>
       </Box>

@@ -300,8 +300,8 @@ function writeClue(grid, clues, j, k, direction) {
       text: "TODO",
       totalLength: grid[j][k][direction],
       lengths: [grid[j][k][direction]],
-      x: j,
-      y: k,
+      x: k,
+      y: j,
     });
   }
 }
