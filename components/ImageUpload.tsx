@@ -19,7 +19,7 @@ export default function ImageUpload({ title, img, setImg }: Props) {
     >
       {img && (
         <Grid item>
-          <Image src={URL.createObjectURL(img)} width={250} height={250} />
+          <Image src={img} width={250} height={250} />
         </Grid>
       )}
       <Grid item>
@@ -30,7 +30,7 @@ export default function ImageUpload({ title, img, setImg }: Props) {
             name="myImg"
             onChange={(e) => {
               if (e.target.files && e.target.files[0]) {
-                setImg(e.target.files[0]);
+                setImg(URL.createObjectURL(e.target.files[0]));
               } else {
                 console.log("Could not upload image, please try again");
               }
