@@ -14,6 +14,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
+import Box from "@mui/system/Box";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -136,6 +137,8 @@ export default function Crossword(props: CrosswordProps) {
       currentCell.content
     ) {
       updateGrid(currentCell, { content: "" });
+    } else if (event.key == TabKey) {
+      event.preventDefault();
     }
   }
 
@@ -247,6 +250,7 @@ export default function Crossword(props: CrosswordProps) {
     }
 
     setSolveOverlayText(undefined);
+    input?.focus();
   }
 
   function getClueText(clue: Clue): string {
@@ -385,7 +389,7 @@ export default function Crossword(props: CrosswordProps) {
     <div className="crossword-container">
       {puzzle && (
         <>
-          <div className="d-flex flex-column p-2">
+          <Box sx={{ display: "flex", flexDirection: "column", p: 2 }}>
             <div className="crossword-svg-container">
               <svg
                 width={svgWidth}
@@ -527,14 +531,14 @@ export default function Crossword(props: CrosswordProps) {
                 ref={solutionMenuTarget}
                 variant="contained"
                 color="primary"
-                className="me-2"
+                sx={{ mr: 1 }}
                 disabled={loadingSolution}
                 onClick={async () => await solveAllClues()}
               >
                 Solve Grid
               </Button>
               <Button
-                className="me-2"
+                sx={{ mr: 1 }}
                 variant="contained"
                 color="secondary"
                 onClick={() => puzzle.clues.forEach(clearClueText)}
@@ -569,7 +573,6 @@ export default function Crossword(props: CrosswordProps) {
                   </Hide>
                   {loadingSolution && (
                     <Button
-                      className="me-2"
                       variant="contained"
                       color="secondary"
                       onClick={() => {
@@ -581,7 +584,7 @@ export default function Crossword(props: CrosswordProps) {
                     </Button>
                   )}
                   <Button
-                    className="ms-2"
+                    sx={{ ml: 1 }}
                     variant="contained"
                     color="secondary"
                     onClick={() => {
@@ -610,12 +613,9 @@ export default function Crossword(props: CrosswordProps) {
                 </>
               )}
             </div>
-          </div>
-          <div className="d-flex flex-column">
-            <div
-              className="d-flex flex-row"
-              style={{ justifyContent: "space-around" }}
-            >
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column" }}>
+            <Box sx={{ display: "flex", flexDirection: "row" }}>
               <ClueList
                 clues={puzzle.clues.filter(
                   (c) => c.direction == ClueDirection.Across
@@ -632,8 +632,8 @@ export default function Crossword(props: CrosswordProps) {
                 onClueClicked={onClueSelectedFromList}
                 selectedClue={selectedClue}
               />
-            </div>
-          </div>
+            </Box>
+          </Box>
         </>
       )}
       <SolutionMenu

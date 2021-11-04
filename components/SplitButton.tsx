@@ -76,7 +76,7 @@ export default function SplitButton(props: SplitButtonProps) {
                       key={option}
                       selected={index === selectedIndex}
                       onClick={(event) => handleMenuItemClick(event, index)}
-                      className="p-2 d-flex"
+                      sx={{display: "flex"}}
                     >
                       {option}
                     </MenuItem>

@@ -59,11 +59,11 @@ export default function ClueList(props: ClueListProps) {
               </a>
               {c == selectedClue && (
                 <IconButton
+                  sx={{ml: 0.5}}
                   size="small"
                   color="primary"
                   component="span"
                   title="Edit Clue"
-                  className="ms-2"
                   onClick={() => {
                     setEditClueError(undefined);
                     setEditClueText(selectedClue.getRawText());
@@ -81,6 +81,7 @@ export default function ClueList(props: ClueListProps) {
         <DialogTitle>Edit Clue</DialogTitle>
         <DialogContent>
           <TextField
+            sx={{mt: 1}}
             onChange={(e) => setEditClueText(e.target.value)}
             value={editClueText}
             error={editClueError != undefined}
