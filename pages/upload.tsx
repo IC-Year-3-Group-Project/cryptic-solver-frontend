@@ -1,9 +1,9 @@
 import ImageUpload from "@/components/ImageUpload";
 import { useRouter } from "next/router";
 import Layout from "@/components/_Layout";
-import { Grid } from "@mui/material";
-import { Button } from "@material-ui/core";
-import { Box } from "@mui/system";
+import Grid from "@mui/material/Grid";
+import Button from "@mui/material/Button";
+import Box from "@mui/system/Box";
 import React, { useState, useEffect } from "react";
 import cv from "../services/cv";
 import { createWorker } from "tesseract.js";

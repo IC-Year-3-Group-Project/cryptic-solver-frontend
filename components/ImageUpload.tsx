@@ -1,7 +1,6 @@
 import Image from "next/image";
-import { Box } from "@mui/system";
 import Button from "@mui/material/Button";
-import { Grid } from "@mui/material";
+import Grid from "@mui/material/Grid";
 
 interface Props {
   title: string;

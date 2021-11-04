@@ -6,13 +6,13 @@ import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
 import { getExplanation, getSolutions } from "./utils";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
 import Hide from "../Hide";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogActions from "@material-ui/core/DialogActions";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 
 export interface CrosswordProps {
@@ -104,19 +104,6 @@ export default function Crossword(props: CrosswordProps) {
       setEntries(newEntries);
     }
   }, [puzzle]);
-
-  // Permafocus crossword input.
-  useEffect(() => {
-    if (input) {
-      function hideOnUnfocus() {
-        input?.focus();
-      }
-
-      input.focus();
-      input.addEventListener("focusout", hideOnUnfocus);
-      return () => input.removeEventListener("focusout", hideOnUnfocus);
-    }
-  }, [input]);
 
   // Update an entry in the current grid.
   function updateGrid(cell: { x: number; y: number }, updated: any) {
@@ -247,6 +234,7 @@ export default function Crossword(props: CrosswordProps) {
       }
     }
 
+    input?.focus();
     setCurrentCell(cell);
   }
 

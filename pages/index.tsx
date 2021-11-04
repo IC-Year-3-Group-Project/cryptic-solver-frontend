@@ -5,13 +5,11 @@ import styles from "@/styles/Home.module.css";
 import TextField from "@mui/material/TextField";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import Link from "next/link";
-import Card from "@mui/material/Card";
-import { CardContent, Typography } from "@mui/material";
+import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import { Box } from "@mui/system";
-import { Button, ButtonGroup } from "@material-ui/core";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import Box from "@mui/system/Box";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
 import LoadingButton from "@mui/lab/LoadingButton";
 

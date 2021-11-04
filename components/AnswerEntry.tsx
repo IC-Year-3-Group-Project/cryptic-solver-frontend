@@ -2,8 +2,8 @@ import React, { useState, useReducer, Reducer } from "react";
 import Box from "@mui/material/Box";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
-import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
+import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
 import LoadingButton from "@mui/lab/LoadingButton";
 
 const apiUrl = "https://cryptic-solver-backend.herokuapp.com";

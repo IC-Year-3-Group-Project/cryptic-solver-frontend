@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Typography } from "@material-ui/core";
+import Typography from "@mui/material/Typography";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import Layout from "@/components/_Layout";

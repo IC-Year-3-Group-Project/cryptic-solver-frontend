@@ -6,10 +6,10 @@ import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
 import { Puzzle } from "@/components/Crossword/model/Puzzle";
-import { Box } from "@mui/system";
+import Box from "@mui/system/Box";
 import { convertEveryman, getCrossword } from "@/components/Crossword/utils";
 import NewCrossword from "@/components/Crossword/Crossword";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 
 const Crossword: NextPage = () => {
   const router = useRouter();
