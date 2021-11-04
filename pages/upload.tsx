@@ -1,4 +1,5 @@
 import ImageUpload from "@/components/ImageUpload";
+import { useRouter } from "next/router";
 import Layout from "@/components/_Layout";
 import { Grid } from "@mui/material";
 import { Button } from "@material-ui/core";
@@ -9,6 +10,8 @@ import { createWorker } from "tesseract.js";
 import { extract_clues, fill_clues } from "@/components/ImageProcessing/utils";
 
 export default function Upload() {
+  const router = useRouter();
+
   const [gridImg, setGridImg] = useState<string>("");
   const [downImg, setDownImg] = useState<string>("");
   const [acrossImg, setAcrossImg] = useState<string>("");
@@ -103,6 +106,12 @@ export default function Upload() {
 
   return (
     <Layout>
+      <Button
+        style={{ marginLeft: "2rem", marginTop: "2rem" }}
+        onClick={() => router.push("/")}
+      >
+        🠐 Back
+      </Button>
       <Grid
         container
         direction="row"
