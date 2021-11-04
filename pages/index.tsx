@@ -66,68 +66,68 @@ const Home: NextPage = () => {
 
   return (
     <Layout>
-        <h1 className={styles.title} data-cy="title">
-          Cryptic Crossword Solver
-        </h1>
+      <h1 className={styles.title} data-cy="title">
+        Cryptic Crossword Solver
+      </h1>
 
-        <p className={styles.description}>
-          Enter a link to an Everyman Guardian crossword:
-        </p>
+      <p className={styles.description}>
+        Enter a link to an Everyman Guardian crossword:
+      </p>
 
-        <TextField
-          label="Everyman link or Crossword Number"
-          fullWidth
-          style={{ marginBottom: 16 }}
-          variant="standard"
-          value={crosswordLink}
-          data-cy="link-input"
-          onChange={handleCrosswordLinkInput}
-          onKeyDown={handleCrosswordLinkEntry}
-        />
-        <LoadingButton
-          variant="contained"
-          onClick={fetchCrossword}
-          data-cy="fetch-crossword-button"
+      <TextField
+        label="Everyman link or Crossword Number"
+        fullWidth
+        style={{ marginBottom: 16 }}
+        variant="standard"
+        value={crosswordLink}
+        data-cy="link-input"
+        onChange={handleCrosswordLinkInput}
+        onKeyDown={handleCrosswordLinkEntry}
+      />
+      <LoadingButton
+        variant="contained"
+        onClick={fetchCrossword}
+        data-cy="fetch-crossword-button"
+      >
+        Fetch!
+      </LoadingButton>
+
+      <Box mt={5}>
+        <Grid
+          container
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          spacing={2}
         >
-          Fetch!
-        </LoadingButton>
+          <Grid item>
+            <Typography variant="h6">Crosswords to try:</Typography>
+          </Grid>
 
-        <Box mt={5}>
-          <Grid
-            container
-            direction="row"
-            justifyContent="center"
-            alignItems="center"
-            spacing={2}
-          >
+          {loadingEveryman && (
             <Grid item>
-              <Typography variant="h6">Crosswords to try:</Typography>
+              <CircularProgress size={20} />
             </Grid>
+          )}
 
-            {loadingEveryman && (
-              <Grid item>
-                <CircularProgress size={20} />
-              </Grid>
-            )}
-
-            {!loadingEveryman &&
-              everymanUrls.slice(0, 5).map((url, i) => {
-                return (
-                  <Grid item key={i}>
-                    <Button
-                      variant="outlined"
-                      href={"/crossword?url=" + url}
-                      data-cy="crossword-link"
-                    >
-                      #
-                      {url.replace(
-                        "https://www.theguardian.com/crosswords/everyman/",
-                        ""
-                      )}
-                    </Button>
-                  </Grid>
-                );
-              })}
+          {!loadingEveryman &&
+            everymanUrls.slice(0, 5).map((url, i) => {
+              return (
+                <Grid item key={i}>
+                  <Button
+                    variant="outlined"
+                    href={"/crossword?url=" + url}
+                    data-cy="crossword-link"
+                  >
+                    #
+                    {url.replace(
+                      "https://www.theguardian.com/crosswords/everyman/",
+                      ""
+                    )}
+                  </Button>
+                </Grid>
+              );
+            })}
         </Grid>
       </Box>
 

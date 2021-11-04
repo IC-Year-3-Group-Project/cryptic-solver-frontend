@@ -6,11 +6,7 @@ import { Box } from "@mui/system";
 import React, { useState, useEffect } from "react";
 import cv from "../services/cv";
 import { createWorker } from "tesseract.js";
-import {
-  preprocess,
-  extract_clues,
-  fill_clues,
-} from "@/components/ImageProcessing/utils";
+import { extract_clues, fill_clues } from "@/components/ImageProcessing/utils";
 
 export default function Upload() {
   const [gridImg, setGridImg] = useState<string>("");

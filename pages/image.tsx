@@ -4,12 +4,7 @@ import Layout from "@/components/_Layout";
 import styles from "@/styles/Home.module.css";
 import cv from "../services/cv";
 import { createWorker } from "tesseract.js";
-import { split } from "cypress/types/lodash";
-import {
-  preprocess,
-  extract_clues,
-  fill_clues,
-} from "@/components/ImageProcessing/utils";
+import { extract_clues, fill_clues } from "@/components/ImageProcessing/utils";
 
 //@ts-ignore
 const ImagePage: NextPage = () => {
