@@ -9,6 +9,7 @@ import { Puzzle } from "@/components/Crossword/model/Puzzle";
 import { Box } from "@mui/system";
 import { convertEveryman, getCrossword } from "@/components/Crossword/utils";
 import NewCrossword from "@/components/Crossword/Crossword";
+import Button from "@material-ui/core/Button";
 
 const Crossword: NextPage = () => {
   const router = useRouter();
@@ -21,10 +22,13 @@ const Crossword: NextPage = () => {
   // Load crossword data.
   useEffect(() => {
     async function fetchCrossword() {
+      setFetchError(false);
       setLoadingCrossword(true);
+      
       await getCrossword(router.query.url as string)
         .then((data) => {
           setPuzzle(convertEveryman(data));
+          setFetchError(false);
         })
         .catch((error) => {
           console.log(
@@ -48,26 +52,29 @@ const Crossword: NextPage = () => {
   }, [router.query.url]);
 
   return (
-    <Layout>
-      {puzzle && (
-        <NewCrossword
-          puzzle={puzzle}
-          cellWidth={32}
-          cellHeight={32}
-        ></NewCrossword>
-      )}
-      {loadingCrossword && <CircularProgress />}
-      {fetchError && !loadingCrossword && (
-        <Box>
-          <Typography variant="h4" data-cy="sorry">
-            Sorry, your crossword could not be found!
-          </Typography>
-          <Link href="/">
-            <a data-cy="try-again">Try Again</a>
-          </Link>
-        </Box>
-      )}
-    </Layout>
+    <>
+      <Layout>
+      <Button style={{marginLeft: "2rem", marginTop: "2rem"}} onClick={() => router.push("/")}>🠐 Back</Button>
+        {puzzle && (
+          <NewCrossword
+            puzzle={puzzle}
+            cellWidth={32}
+            cellHeight={32}
+          ></NewCrossword>
+        )}
+        {loadingCrossword && <CircularProgress />}
+        {fetchError && !loadingCrossword && (
+          <Box>
+            <Typography variant="h4" data-cy="sorry">
+              Sorry, your crossword could not be found!
+            </Typography>
+            <Link href="/">
+              <a data-cy="try-again">Try Again</a>
+            </Link>
+          </Box>
+        )}
+      </Layout>
+    </>
   );
 };
 
