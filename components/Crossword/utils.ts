@@ -77,3 +77,14 @@ export function convertEveryman(crossword: any): Puzzle {
     columns: crossword.dimensions.cols,
   };
 }
+
+/* Adds Clue methods to partial clue objects. */
+export function classify(crossword: any): Puzzle {
+  if (crossword.clues) {
+    crossword.clues = (crossword.clues as Partial<Clue>[]).map((c) =>
+      Object.assign(new Clue(), c)
+    );
+  }
+
+  return crossword as Puzzle;
+}

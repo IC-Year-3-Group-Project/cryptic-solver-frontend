@@ -7,7 +7,11 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Link from "next/link";
 import { Puzzle } from "@/components/Crossword/model/Puzzle";
 import Box from "@mui/system/Box";
-import { convertEveryman, getCrossword } from "@/components/Crossword/utils";
+import {
+  classify,
+  convertEveryman,
+  getCrossword,
+} from "@/components/Crossword/utils";
 import NewCrossword from "@/components/Crossword/Crossword";
 import Button from "@mui/material/Button";
 
@@ -24,7 +28,7 @@ const Crossword: NextPage = () => {
     async function fetchCrossword() {
       setFetchError(false);
       setLoadingCrossword(true);
-      
+
       await getCrossword(router.query.url as string)
         .then((data) => {
           setPuzzle(convertEveryman(data));
@@ -51,10 +55,28 @@ const Crossword: NextPage = () => {
     }
   }, [router.query.url]);
 
+  useEffect(() => {
+    if (router.query.raw) {
+      try {
+        setPuzzle(classify(JSON.parse(router.query.raw as string)));
+        setFetchError(false);
+      } catch (ex) {
+        console.log("Error loading raw crossword.", ex);
+        setFetchError(true);
+      }
+      setLoadingCrossword(false);
+    }
+  }, [router.query.raw]);
+
   return (
     <>
       <Layout>
-      <Button style={{marginLeft: "2rem", marginTop: "2rem"}} onClick={() => router.push("/")}>🠐 Back</Button>
+        <Button
+          style={{ marginLeft: "2rem", marginTop: "2rem" }}
+          onClick={() => router.push("/")}
+        >
+          🠐 Back
+        </Button>
         {puzzle && (
           <NewCrossword
             puzzle={puzzle}

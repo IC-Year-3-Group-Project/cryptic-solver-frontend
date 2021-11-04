@@ -4,8 +4,9 @@ import Layout from "@/components/_Layout";
 import styles from "@/styles/Home.module.css";
 import cv from "../services/cv";
 import { createWorker } from "tesseract.js";
-import { extract_clues, fill_clues } from "@/components/ImageProcessing/utils";
+import { extractClues, fillClues } from "@/components/ImageProcessing/utils";
 
+// TODO: I think this is redundant now?
 //@ts-ignore
 const ImagePage: NextPage = () => {
   const canvasGridRef = useRef(null);
@@ -58,7 +59,7 @@ const ImagePage: NextPage = () => {
       } = await workerDown.recognize(acrossClues);
       console.log(`Text: ${text}`);
 
-      let clues = extract_clues(text);
+      let clues = extractClues(text);
       setAcrossClues(clues);
       setAcrossLoaded(true);
     };
@@ -79,7 +80,7 @@ const ImagePage: NextPage = () => {
       console.log(`Text: ${text}`);
 
       // DEBUG
-      let down_clues = extract_clues(text);
+      let down_clues = extractClues(text);
       setDownClues(down_clues);
       setDownLoaded(true);
     };
@@ -119,7 +120,7 @@ const ImagePage: NextPage = () => {
   //@ts-ignore
   useEffect(async () => {
     if (acrossLoaded && downLoaded && imageLoaded) {
-      console.log(fill_clues(acrossClues, downClues, grid.data));
+      console.log(fillClues(acrossClues, downClues, grid.data));
     }
   }, [acrossLoaded, downLoaded, imageLoaded]);
 
