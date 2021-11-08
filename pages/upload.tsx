@@ -14,34 +14,24 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
 import LoadingButton from "@mui/lab/LoadingButton";
+import { loadImageAsync } from "@/components/utils";
+import ImageCrop from "@/components/Cropping/ImageCrop";
+import CropFlow from "@/components/Cropping/CropFlow";
 
 export default function Upload() {
   const router = useRouter();
-
-  const [gridImg, setGridImg] = useState<string>("");
-  const [downImg, setDownImg] = useState<string>("");
-  const [acrossImg, setAcrossImg] = useState<string>("");
 
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<string>();
   const [error, setError] = useState(false);
 
-  // Loads an image into an html element as a promise so it can be awaited in sequence.
-  function loadImageAsync(src: string): Promise<HTMLImageElement> {
-    return new Promise((resolve) => {
-      const image = new Image();
-      image.onload = () => {
-        resolve(image);
-      };
-      image.src = src;
-    });
-  }
+  const [imageUrls, setImageUrls] = useState<{ [key: string]: string }>({});
 
   // Uses CV to extract the grid from its image.
   async function processGrid(): Promise<any> {
     const canvas = document.createElement("canvas") as HTMLCanvasElement;
     const context = canvas.getContext("2d")!;
-    const gridImage = await loadImageAsync(gridImg);
+    const gridImage = await loadImageAsync(imageUrls.grid!);
     canvas.width = gridImage.width;
     canvas.height = gridImage.height;
     context.drawImage(gridImage, 0, 0);
@@ -94,22 +84,18 @@ export default function Upload() {
     await worker.initialize("eng");
 
     // Processes an image with the tessaract worker to extract the text and then clues.
-    async function processImage(
-      image: HTMLImageElement
-    ): Promise<Partial<Clue>[]> {
+    async function processImage(imageUrl: string): Promise<Partial<Clue>[]> {
       const {
         data: { text },
-      } = await worker.recognize(image);
+      } = await worker.recognize(imageUrl);
       return extractClues(text);
     }
 
     // Load and process across and down images.
     setStatus("Processing across clues...");
-    const acrossImage = await loadImageAsync(acrossImg);
-    const acrossClues = await processImage(acrossImage);
+    const acrossClues = await processImage(imageUrls.across!);
     setStatus("Processing down clues...");
-    const downImage = await loadImageAsync(downImg);
-    const downClues = await processImage(downImage);
+    const downClues = await processImage(imageUrls.down!);
 
     // Kill tesseract worker.
     await worker.terminate();
@@ -123,55 +109,39 @@ export default function Upload() {
   }
 
   return (
-    <Layout>
+    <>
       <Button
         style={{ marginLeft: "2rem", marginTop: "2rem" }}
         onClick={() => router.push("/")}
       >
         🠐 Back
       </Button>
-      <Grid
-        container
-        direction="row"
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
+      <Box
+        sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the grid"}
-            img={gridImg}
-            setImg={setGridImg}
-          />
-        </Grid>
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the down clues"}
-            img={downImg}
-            setImg={setDownImg}
-          />
-        </Grid>
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the across clues"}
-            img={acrossImg}
-            setImg={setAcrossImg}
-          />
-        </Grid>
-      </Grid>
-      <Box mt={5}>
-        <LoadingButton
-          variant="contained"
-          onClick={handleProcess}
-          loading={status != undefined}
-        >
-          Process Images
-        </LoadingButton>
-        {error && (
-          <Typography color="secondary" sx={{ mt: 2 }}>
-            {status}
-          </Typography>
-        )}
+        <CropFlow
+          stages={[
+            { name: "grid", text: "Crop Grid" },
+            { name: "across", text: "Crop Across Clues" },
+            { name: "down", text: "Crop Down Clues" },
+          ]}
+          onComplete={(stages) => setImageUrls(stages)}
+        />
+        <Box mt={5}>
+          <LoadingButton
+            variant="contained"
+            onClick={handleProcess}
+            loading={status != undefined}
+            disabled={Object.keys(imageUrls).length < 3}
+          >
+            Process Images
+          </LoadingButton>
+          {error && (
+            <Typography color="secondary" sx={{ mt: 2 }}>
+              {status}
+            </Typography>
+          )}
+        </Box>
       </Box>
       <Backdrop
         sx={{ color: "#fff", zIndex: 100, flexDirection: "column" }}
@@ -193,6 +163,6 @@ export default function Upload() {
           </>
         )}
       </Backdrop>
-    </Layout>
+    </>
   );
 }
