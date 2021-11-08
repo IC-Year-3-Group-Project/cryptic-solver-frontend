@@ -63,7 +63,7 @@ const Home: NextPage = () => {
   };
 
   return (
-    <Layout>
+    <Layout home>
       <h1 className={styles.title} data-cy="title">
         Cryptic Crossword Solver
       </h1>
@@ -136,6 +136,15 @@ const Home: NextPage = () => {
       <Box mt={5}>
         <Button variant="contained" onClick={() => router.push("/upload")}>
           Click to upload a crossword from an image
+        </Button>
+      </Box>
+
+      <Box mt={5}>
+        <Button
+          variant="contained"
+          onClick={() => router.push("/upload-backend")}
+        >
+          Click to upload a crossword from an image (Backend)
         </Button>
       </Box>
     </Layout>

@@ -14,6 +14,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
 import LoadingButton from "@mui/lab/LoadingButton";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
 export default function Upload() {
   const router = useRouter();
@@ -124,12 +125,6 @@ export default function Upload() {
 
   return (
     <Layout>
-      <Button
-        style={{ marginLeft: "2rem", marginTop: "2rem" }}
-        onClick={() => router.push("/")}
-      >
-        🠐 Back
-      </Button>
       <Grid
         container
         direction="row"
