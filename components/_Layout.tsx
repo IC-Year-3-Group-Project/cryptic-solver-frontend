@@ -4,6 +4,7 @@ import styles from "@/styles/Home.module.css";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import Button from "@mui/material/Button";
 import { useRouter } from "next/router";
+import { Box } from "@mui/system";
 
 interface Props {
   home?: boolean;
@@ -35,14 +36,16 @@ export default function Layout({
 
       {!home && (
         <footer>
-          <Button
-            style={{ marginLeft: "2rem", marginTop: "2rem" }}
-            onClick={() => router.back()}
-            startIcon={<ArrowBackIosIcon />}
-            variant="outlined"
-          >
-            Back
-          </Button>
+          <Box mb={2}>
+            <Button
+              style={{ marginLeft: "2rem", marginTop: "2rem" }}
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIosIcon />}
+              variant="outlined"
+            >
+              Back
+            </Button>
+          </Box>
         </footer>
       )}
     </div>
