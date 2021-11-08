@@ -39,7 +39,56 @@ export class Rect {
     this.right = right;
     this.bottom = bottom;
   }
+
+  normalise(): Rect {
+    const normal = new Rect(this.left, this.top, this.right, this.bottom);
+    if (this.left > this.right) {
+      normal.left = this.right;
+      normal.right = this.left;
+    }
+
+    if (this.top > this.bottom) {
+      normal.top = this.bottom;
+      normal.bottom = this.top;
+    }
+
+    return normal;
+  }
+
+  contains(x: number, y: number): boolean {
+    return (
+      x >= this.left && x <= this.right && y >= this.top && y <= this.bottom
+    );
+  }
+
+  containsRect(rect: Rect): boolean {
+    return (
+      rect.left >= this.left &&
+      rect.right <= this.right &&
+      rect.top >= this.top &&
+      rect.bottom <= this.bottom
+    );
+  }
+
+  translate(dx: number, dy: number): Rect {
+    return new Rect(
+      this.left + dx,
+      this.top + dy,
+      this.right + dx,
+      this.bottom + dy
+    );
+  }
+
+  static createSquare(x: number, y: number, radius: number): Rect {
+    return new Rect(x - radius, y - radius, x + radius, y + radius);
+  }
 }
+
+export interface MouseModifier {
+  (x: number, y: number, rect: Rect, dx: number, dy: number): Rect;
+}
+
+const HandleRadius = 8;
 
 export default function ImageCrop(props: ImageCropProps) {
   const { url, reset, urlType, onCrop, onCropReset } = props;
@@ -49,6 +98,7 @@ export default function ImageCrop(props: ImageCropProps) {
   const [complete, setComplete] = useState(false);
   const [drawing, setDrawing] = useState(false);
   const [currentRect, setCurrentRect] = useState(new Rect());
+  const [mouseModifier, setMouseModifier] = useState<MouseModifier>();
 
   const [lastReset, setLastReset] = useState(!reset);
 
@@ -108,13 +158,30 @@ export default function ImageCrop(props: ImageCropProps) {
       }
 
       context.strokeStyle = complete ? "#00FF00" : "#FF0000";
-      context.lineWidth = 4;
+      context.lineWidth = 2;
       context.strokeRect(
         currentRect.left,
         currentRect.top,
         currentRect.width,
         currentRect.height
       );
+
+      if (complete) {
+        function drawHandle(x: number, y: number) {
+          context!.fillRect(
+            x - HandleRadius,
+            y - HandleRadius,
+            HandleRadius * 2,
+            HandleRadius * 2
+          );
+        }
+
+        context.fillStyle = "#FF00FF";
+        drawHandle(currentRect.left, currentRect.top);
+        drawHandle(currentRect.right, currentRect.top);
+        drawHandle(currentRect.right, currentRect.bottom);
+        drawHandle(currentRect.left, currentRect.bottom);
+      }
     }
   }
 
@@ -129,15 +196,92 @@ export default function ImageCrop(props: ImageCropProps) {
 
   function onMouseDown(event: MouseEvent<HTMLCanvasElement>) {
     const [x, y] = getCanvasPos(event);
-    setCurrentRect(new Rect(x, y, x, y));
-    setComplete(false);
+    setMouseModifier(undefined);
     setDrawing(true);
+    if (
+      complete &&
+      Rect.createSquare(
+        currentRect.left,
+        currentRect.top,
+        HandleRadius
+      ).contains(x, y)
+    ) {
+      setMouseModifier(
+        () => (x: number, y: number, rect: Rect) =>
+          new Rect(x, y, rect.right, rect.bottom)
+      );
+    } else if (
+      complete &&
+      Rect.createSquare(
+        currentRect.right,
+        currentRect.top,
+        HandleRadius
+      ).contains(x, y)
+    ) {
+      setMouseModifier(
+        () => (x: number, y: number, rect: Rect) =>
+          new Rect(rect.left, y, x, rect.bottom)
+      );
+    } else if (
+      complete &&
+      Rect.createSquare(
+        currentRect.right,
+        currentRect.bottom,
+        HandleRadius
+      ).contains(x, y)
+    ) {
+      setMouseModifier(
+        () => (x: number, y: number, rect: Rect) =>
+          new Rect(rect.left, rect.top, x, y)
+      );
+    } else if (
+      complete &&
+      Rect.createSquare(
+        currentRect.left,
+        currentRect.bottom,
+        HandleRadius
+      ).contains(x, y)
+    ) {
+      setMouseModifier(
+        () => (x: number, y: number, rect: Rect) =>
+          new Rect(x, rect.top, rect.right, y)
+      );
+    } else if (complete && currentRect.contains(x, y)) {
+      setMouseModifier(
+        () => (_x: number, _y: number, rect: Rect, dx: number, dy: number) => {
+          const newRect = rect.translate(dx, dy);
+          return new Rect(
+            0,
+            0,
+            context?.canvas.width,
+            context?.canvas.height
+          ).containsRect(newRect)
+            ? newRect
+            : rect;
+        }
+      );
+    } else {
+      setCurrentRect(new Rect(x, y, x, y));
+      setComplete(false);
+    }
   }
 
   function onMouseMove(event: MouseEvent<HTMLCanvasElement>) {
     if (drawing) {
       const [x, y] = getCanvasPos(event);
-      setCurrentRect(new Rect(currentRect.left, currentRect.top, x, y));
+      if (mouseModifier) {
+        setCurrentRect(
+          mouseModifier(
+            x,
+            y,
+            currentRect.normalise(),
+            event.movementX,
+            event.movementY
+          )
+        );
+      } else {
+        setCurrentRect(new Rect(currentRect.left, currentRect.top, x, y));
+      }
     }
   }
 
@@ -145,6 +289,7 @@ export default function ImageCrop(props: ImageCropProps) {
     const localComplete = currentRect.area > 0;
     setDrawing(false);
     setComplete(localComplete);
+    setMouseModifier(undefined);
 
     if (localComplete && onCrop) {
       const canvas = document.createElement("canvas") as HTMLCanvasElement;
