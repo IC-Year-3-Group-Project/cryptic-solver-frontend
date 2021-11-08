@@ -69,34 +69,26 @@ const Crossword: NextPage = () => {
   }, [router.query.raw]);
 
   return (
-    <>
-      <Layout>
-        <Button
-          style={{ marginLeft: "2rem", marginTop: "2rem" }}
-          onClick={() => router.push("/")}
-        >
-          🠐 Back
-        </Button>
-        {puzzle && (
-          <NewCrossword
-            puzzle={puzzle}
-            cellWidth={32}
-            cellHeight={32}
-          ></NewCrossword>
-        )}
-        {loadingCrossword && <CircularProgress />}
-        {fetchError && !loadingCrossword && (
-          <Box>
-            <Typography variant="h4" data-cy="sorry">
-              Sorry, your crossword could not be found!
-            </Typography>
-            <Link href="/">
-              <a data-cy="try-again">Try Again</a>
-            </Link>
-          </Box>
-        )}
-      </Layout>
-    </>
+    <Layout>
+      {puzzle && (
+        <NewCrossword
+          puzzle={puzzle}
+          cellWidth={32}
+          cellHeight={32}
+        ></NewCrossword>
+      )}
+      {loadingCrossword && <CircularProgress />}
+      {fetchError && !loadingCrossword && (
+        <Box>
+          <Typography variant="h4" data-cy="sorry">
+            Sorry, your crossword could not be found!
+          </Typography>
+          <Link href="/">
+            <a data-cy="try-again">Try Again</a>
+          </Link>
+        </Box>
+      )}
+    </Layout>
   );
 };
 

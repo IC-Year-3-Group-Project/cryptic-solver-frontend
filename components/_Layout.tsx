@@ -1,13 +1,24 @@
 import Head from "next/head";
 import Image from "next/image";
 import styles from "@/styles/Home.module.css";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import Button from "@mui/material/Button";
+import { useRouter } from "next/router";
+import { Box } from "@mui/system";
 
 interface Props {
+  home?: boolean;
   title?: string;
   children?: any;
 }
 
-export default function Layout({ title = "Cryptic Solver", children }: Props) {
+export default function Layout({
+  home = false,
+  title = "Cryptic Solver",
+  children,
+}: Props) {
+  const router = useRouter();
+
   return (
     <div className={styles.container}>
       <Head>
@@ -23,6 +34,20 @@ export default function Layout({ title = "Cryptic Solver", children }: Props) {
 
       <main className={styles.main}>{children}</main>
 
+      {!home && (
+        <footer>
+          <Box mb={2}>
+            <Button
+              style={{ marginLeft: "2rem", marginTop: "2rem" }}
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIosIcon />}
+              variant="outlined"
+            >
+              Back
+            </Button>
+          </Box>
+        </footer>
+      )}
     </div>
   );
 }
