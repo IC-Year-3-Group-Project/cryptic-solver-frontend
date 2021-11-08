@@ -26,6 +26,7 @@ export default function Upload() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<string>();
   const [error, setError] = useState(false);
+  const [processingError, setProcessingError] = useState(false);
 
   // Loads an image into an html element as a promise so it can be awaited in sequence.
   function loadImageAsync(src: string): Promise<HTMLImageElement> {
@@ -157,7 +158,13 @@ export default function Upload() {
       <Box mt={5}>
         <LoadingButton
           variant="contained"
-          onClick={handleProcess}
+          onClick={() => {
+            if (gridImg && acrossImg && downImg) {
+              return handleProcess;
+            } else {
+              return setProcessingError(true);
+            }
+          }}
           loading={status != undefined}
         >
           Process Images
@@ -168,6 +175,11 @@ export default function Upload() {
           </Typography>
         )}
       </Box>
+      {processingError && (
+        <Typography>
+          Please upload a picture of the grid, down clues and across clues
+        </Typography>
+      )}
       <Backdrop
         sx={{ color: "#fff", zIndex: 100, flexDirection: "column" }}
         open={status != undefined}
