@@ -23,6 +23,11 @@ const style = {
   p: 4,
 };
 
+interface crosswordUploadResp {
+  id: number;
+  grid: any;
+}
+
 export default function UploadBackend() {
   const router = useRouter();
 
@@ -32,7 +37,7 @@ export default function UploadBackend() {
 
   const [processError, setProcessError] = useState(false);
 
-  const [crosswordID, setCrosswordID] = useState(null);
+  const [crosswordID, setCrosswordID] = useState<number>(0);
   const [open, setOpen] = useState(false);
   const [crossword, setCrossword] = useState(null);
 
@@ -44,7 +49,7 @@ export default function UploadBackend() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        mobile: isMobile,
+        mobile: false,
         grid: gridImg,
         across: acrossImg,
         down: downImg,
@@ -100,8 +105,8 @@ export default function UploadBackend() {
           variant="contained"
           onClick={async () => {
             if (gridImg && downImg && acrossImg) {
+              const data: crosswordUploadResp = await uploadImages();
               if (isMobile) {
-                var data = await uploadImages();
                 setCrosswordID(data["id"]);
                 setOpen(true);
                 setCrossword(data["grid"]);
