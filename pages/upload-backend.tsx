@@ -51,7 +51,7 @@ export default function UploadBackend() {
       }),
     };
 
-    await fetch(
+    return await fetch(
       `https://cryptic-solver-backend.herokuapp.com/process-puzzle`,
       settings
     )
@@ -100,8 +100,8 @@ export default function UploadBackend() {
           variant="contained"
           onClick={async () => {
             if (gridImg && downImg && acrossImg) {
-              const data = await uploadImages();
               if (isMobile) {
+                var data = await uploadImages();
                 setCrosswordID(data["id"]);
                 setOpen(true);
                 setCrossword(data["grid"]);
@@ -124,7 +124,7 @@ export default function UploadBackend() {
       )}
       {crosswordID && (
         <Modal open={open} onClose={() => setOpen(false)}>
-          <Box sx={style}>
+          <Box>
             <Typography variant="h6">Crossword ID: {crosswordID}</Typography>
             <Typography sx={{ mt: 2 }}>
               Please enter this in on the home page on your computer
