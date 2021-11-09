@@ -9,7 +9,7 @@ import Typography from "@mui/material/Typography";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { isMobile } from "react-device-detect";
 import Modal from "@mui/material/Modal";
-import { bgcolor } from "@mui/system";
+import Link from "next/link";
 
 const style = {
   position: "absolute",
@@ -34,6 +34,7 @@ export default function UploadBackend() {
 
   const [crosswordID, setCrosswordID] = useState(null);
   const [open, setOpen] = useState(false);
+  const [crossword, setCrossword] = useState(null);
 
   async function uploadImages() {
     const settings = {
@@ -103,8 +104,9 @@ export default function UploadBackend() {
               if (isMobile) {
                 setCrosswordID(data["id"]);
                 setOpen(true);
+                setCrossword(data["grid"]);
               } else {
-                router.push("/crossword");
+                router.push(`/crosswordraw=${JSON.stringify(data["grid"])}`);
               }
             } else {
               setProcessError(true);
@@ -121,16 +123,17 @@ export default function UploadBackend() {
         </Box>
       )}
       {crosswordID && (
-        <Modal
-          open={open}
-          onClose={() => setOpen(false)}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
+        <Modal open={open} onClose={() => setOpen(false)}>
           <Box sx={style}>
             <Typography variant="h6">Crossword ID: {crosswordID}</Typography>
             <Typography sx={{ mt: 2 }}>
               Please enter this in on the home page on your computer
+            </Typography>
+            <Typography>
+              Or if you want to continue on your phone,{" "}
+              <Link href={`/crosswordraw=${JSON.stringify(crossword)}`}>
+                <a>Click Here</a>
+              </Link>
             </Typography>
           </Box>
         </Modal>
