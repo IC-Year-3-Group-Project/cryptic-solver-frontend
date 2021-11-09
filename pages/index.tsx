@@ -32,6 +32,7 @@ const Home: NextPage = () => {
   const [loadingEveryman, setLoadingEveryman] = useState(true);
   const [crosswordLink, setCrosswordLink] = useState<String>("");
   const [everymanUrls, setEverymanUrls] = useState<Array<String>>([]);
+  const [crosswordID, setCrosswordID] = useState<number>();
 
   useEffect(() => {
     const fetchEveryman = async (): Promise<any> => {
@@ -51,6 +52,41 @@ const Home: NextPage = () => {
       fetchCrossword();
     }
   };
+
+  const handleCrosswordIDInput = (e: any) => {
+    setCrosswordID(parseInt(e.target.value));
+  };
+
+  const handleCrosswordIDEntry = async (e: any) => {
+    if (e.keyCode == KEYCODE_ENTER) {
+      fetchCrosswordFromID();
+    }
+  };
+
+  async function fetchCrosswordFromID() {
+    const settings = {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        id: crosswordID,
+      }),
+    };
+
+    await fetch(
+      `https://cryptic-solver-backend.herokuapp.com/get-puzzle`,
+      settings
+    )
+      .then(async (res) => {
+        const data = await res.json();
+        router.push(`/crossword?raw=${data["grid"]}`);
+      })
+      .catch((e) => {
+        return e;
+      });
+  }
 
   const fetchCrossword = async () => {
     // Navigate to crossword page.
@@ -146,6 +182,19 @@ const Home: NextPage = () => {
         >
           Click to upload a crossword from an image (Backend)
         </Button>
+      </Box>
+
+      <Box mt={5}>
+        <Typography>If you have a crossword ID, enter it here:</Typography>
+        <TextField
+          placeholder="Crossword ID"
+          variant="outlined"
+          onChange={handleCrosswordIDInput}
+          onKeyDown={handleCrosswordIDEntry}
+          sx={{ mt: 1 }}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+          fullWidth
+        />
       </Box>
     </Layout>
   );

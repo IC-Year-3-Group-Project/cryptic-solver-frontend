@@ -11,6 +11,15 @@ interface Props {
 }
 
 export default function ImageUpload({ title, img, setImg }: Props) {
+  function encodeImageFileAsURL(file: any) {
+    var reader = new FileReader();
+    reader.onloadend = function () {
+      setImg(reader.result);
+      console.log("RESULT", reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
   return (
     <Box sx={{ border: "1px dashed grey", padding: "5px" }}>
       <Grid
@@ -28,14 +37,14 @@ export default function ImageUpload({ title, img, setImg }: Props) {
         )}
         {!img && <Typography sx={{ mb: "125px" }}>No image</Typography>}
         <Grid item>
-          <Button variant="contained" component="label">
+          <Button variant="contained" component="label" sx={{ mt: 1 }}>
             {title}
             <input
               type="file"
               name="myImg"
               onChange={(e) => {
                 if (e.target.files && e.target.files[0]) {
-                  setImg(URL.createObjectURL(e.target.files[0]));
+                  encodeImageFileAsURL(e.target.files[0]);
                 } else {
                   console.log("Could not upload image, please try again");
                 }
