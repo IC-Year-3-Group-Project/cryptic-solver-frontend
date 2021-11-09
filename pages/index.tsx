@@ -185,9 +185,7 @@ const Home: NextPage = () => {
       </Box>
 
       <Box mt={5}>
-        <Typography variant="body">
-          If you have a crossword ID, enter it here:
-        </Typography>
+        <Typography>If you have a crossword ID, enter it here:</Typography>
         <TextField
           placeholder="Crossword ID"
           variant="outlined"
