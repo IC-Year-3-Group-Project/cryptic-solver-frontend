@@ -32,7 +32,7 @@ const Home: NextPage = () => {
   const [loadingEveryman, setLoadingEveryman] = useState(true);
   const [crosswordLink, setCrosswordLink] = useState<String>("");
   const [everymanUrls, setEverymanUrls] = useState<Array<String>>([]);
-  const [crosswordID, setCrosswordID] = useState();
+  const [crosswordID, setCrosswordID] = useState<number>();
 
   useEffect(() => {
     const fetchEveryman = async (): Promise<any> => {
@@ -54,7 +54,7 @@ const Home: NextPage = () => {
   };
 
   const handleCrosswordIDInput = (e: any) => {
-    setCrosswordID(e.target.value);
+    setCrosswordID(parseInt(e.target.value));
   };
 
   const handleCrosswordIDEntry = async (e: any) => {
@@ -185,7 +185,7 @@ const Home: NextPage = () => {
       </Box>
 
       <Box mt={5}>
-        <Typography variant="p">
+        <Typography variant="body">
           If you have a crossword ID, enter it here:
         </Typography>
         <TextField
@@ -194,6 +194,7 @@ const Home: NextPage = () => {
           onChange={handleCrosswordIDInput}
           onKeyDown={handleCrosswordIDEntry}
           sx={{ mt: 1 }}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
           fullWidth
         />
       </Box>
