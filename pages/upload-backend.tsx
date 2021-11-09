@@ -5,10 +5,23 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 import Box from "@mui/system/Box";
 import React, { useState } from "react";
-import CircularProgress from "@mui/material/CircularProgress";
 import Typography from "@mui/material/Typography";
 import LoadingButton from "@mui/lab/LoadingButton";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import { isMobile } from "react-device-detect";
+import Modal from "@mui/material/Modal";
+import { bgcolor } from "@mui/system";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: 400,
+  bgcolor: "white",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 export default function UploadBackend() {
   const router = useRouter();
@@ -17,6 +30,11 @@ export default function UploadBackend() {
   const [downImg, setDownImg] = useState<string>("");
   const [acrossImg, setAcrossImg] = useState<string>("");
 
+  const [processError, setProcessError] = useState(false);
+
+  const [crosswordID, setCrosswordID] = useState(null);
+  const [open, setOpen] = useState(false);
+
   async function uploadImages() {
     const settings = {
       method: "POST",
@@ -24,16 +42,25 @@ export default function UploadBackend() {
         Accept: "application/json",
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({
+        mobile: isMobile,
+        grid: gridImg,
+        across: acrossImg,
+        down: downImg,
+      }),
     };
 
-    try {
-      //todo: replace google with actual api url
-      const fetchResponse = await fetch(`http://www.google.com`, settings);
-      const data = await fetchResponse.json();
-      return data;
-    } catch (e) {
-      return e;
-    }
+    await fetch(
+      `https://cryptic-solver-backend.herokuapp.com/process-puzzle`,
+      settings
+    )
+      .then(async (res) => {
+        const data = await res.json();
+        return data;
+      })
+      .catch((e) => {
+        return e;
+      });
   }
 
   return (
@@ -68,8 +95,46 @@ export default function UploadBackend() {
         </Grid>
       </Grid>
       <Box mt={5}>
-        <LoadingButton variant="contained">Process Images</LoadingButton>
+        <LoadingButton
+          variant="contained"
+          onClick={async () => {
+            if (gridImg && downImg && acrossImg) {
+              const data = await uploadImages();
+              if (isMobile) {
+                setCrosswordID(data["id"]);
+                setOpen(true);
+              } else {
+                router.push("/crossword");
+              }
+            } else {
+              setProcessError(true);
+            }
+          }}
+        >
+          Process Images
+        </LoadingButton>
       </Box>
+      {processError && (
+        <Box mt={5}>
+          Please upload an image of a grid, across clues and down clues before
+          clicking process
+        </Box>
+      )}
+      {crosswordID && (
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            <Typography variant="h6">Crossword ID: {crosswordID}</Typography>
+            <Typography sx={{ mt: 2 }}>
+              Please enter this in on the home page on your computer
+            </Typography>
+          </Box>
+        </Modal>
+      )}
     </Layout>
   );
 }
