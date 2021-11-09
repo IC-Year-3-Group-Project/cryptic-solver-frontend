@@ -37,7 +37,7 @@ export default function UploadBackend() {
 
   const [processError, setProcessError] = useState(false);
 
-  const [crosswordID, setCrosswordID] = useState<number>(0);
+  const [crosswordID, setCrosswordID] = useState<number>();
   const [open, setOpen] = useState(false);
   const [crossword, setCrossword] = useState(null);
 
