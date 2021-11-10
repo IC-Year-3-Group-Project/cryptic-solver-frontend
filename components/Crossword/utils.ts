@@ -50,6 +50,24 @@ export async function getExplanation(
   );
 }
 
+export async function processPuzzle(
+  grid: string,
+  across: string,
+  down: string,
+  cancellation?: AbortSignal
+): Promise<CrosswordUploadResponse> {
+  return post(
+    "/process-puzzle",
+    {
+      mobile: false,
+      grid,
+      across,
+      down,
+    },
+    cancellation
+  );
+}
+
 export function convertEveryman(crossword: any): Puzzle {
   const clues = crossword.entries.map((entry: any) => {
     const data = {
@@ -87,4 +105,9 @@ export function classify(crossword: any): Puzzle {
   }
 
   return crossword as Puzzle;
+}
+
+export interface CrosswordUploadResponse {
+  id: number;
+  grid: Puzzle;
 }
