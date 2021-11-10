@@ -39,7 +39,7 @@ export default function UploadBackend() {
 
   const [crosswordID, setCrosswordID] = useState<number>();
   const [open, setOpen] = useState(false);
-  const [crossword, setCrossword] = useState(null);
+  const [crossword, setCrossword] = useState();
 
   async function uploadImages() {
     const settings = {
@@ -65,6 +65,7 @@ export default function UploadBackend() {
         return data;
       })
       .catch((e) => {
+        console.log("error waiting for response");
         return e;
       });
   }
@@ -106,6 +107,7 @@ export default function UploadBackend() {
           onClick={async () => {
             if (gridImg && downImg && acrossImg) {
               const data: crosswordUploadResp = await uploadImages();
+              console.log(data);
               if (isMobile) {
                 setCrosswordID(data["id"]);
                 setOpen(true);
