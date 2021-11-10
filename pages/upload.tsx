@@ -109,13 +109,7 @@ export default function Upload() {
   }
 
   return (
-    <>
-      <Button
-        style={{ marginLeft: "2rem", marginTop: "2rem" }}
-        onClick={() => router.push("/")}
-      >
-        🠐 Back
-      </Button>
+    <Layout>
       <Box
         sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
       >
@@ -168,6 +162,6 @@ export default function Upload() {
           </>
         )}
       </Backdrop>
-    </>
+    </Layout>
   );
 }
