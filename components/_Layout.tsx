@@ -38,7 +38,7 @@ export default function Layout({
         <footer>
           <Box mb={2}>
             <Button
-              style={{ marginLeft: "2rem", marginTop: "2rem" }}
+              style={{ marginTop: "2rem" }}
               onClick={() => router.back()}
               startIcon={<ArrowBackIosIcon />}
               variant="outlined"

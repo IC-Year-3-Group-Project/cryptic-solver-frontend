@@ -1,8 +1,6 @@
 import Layout from "@/components/_Layout";
-import ImageUpload from "@/components/ImageUpload";
 import { useRouter } from "next/router";
 import Grid from "@mui/material/Grid";
-import Button from "@mui/material/Button";
 import Box from "@mui/system/Box";
 import React, { useState } from "react";
 import Typography from "@mui/material/Typography";
@@ -10,6 +8,12 @@ import LoadingButton from "@mui/lab/LoadingButton";
 import { isMobile } from "react-device-detect";
 import Modal from "@mui/material/Modal";
 import Link from "next/link";
+import CropFlow from "@/components/Cropping/CropFlow";
+import {
+  CrosswordUploadResponse,
+  processPuzzle,
+} from "@/components/Crossword/utils";
+import { Puzzle } from "@/components/Crossword/model/Puzzle";
 
 const style = {
   position: "absolute",
@@ -23,97 +27,59 @@ const style = {
   p: 4,
 };
 
-interface crosswordUploadResp {
-  id: number;
-  grid: any;
-}
-
 export default function UploadBackend() {
   const router = useRouter();
 
-  const [gridImg, setGridImg] = useState<string>("");
-  const [downImg, setDownImg] = useState<string>("");
-  const [acrossImg, setAcrossImg] = useState<string>("");
+  const [images, setImages] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
 
   const [processError, setProcessError] = useState(false);
 
   const [crosswordID, setCrosswordID] = useState<number>();
   const [open, setOpen] = useState(false);
-  const [crossword, setCrossword] = useState();
+  const [crossword, setCrossword] = useState<Puzzle>();
 
   async function uploadImages() {
-    const settings = {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        mobile: false,
-        grid: gridImg,
-        across: acrossImg,
-        down: downImg,
-      }),
-    };
-
-    return await fetch(
-      `https://cryptic-solver-backend.herokuapp.com/process-puzzle`,
-      settings
-    )
-      .then(async (res) => {
-        const data = await res.json();
-        return data;
-      })
-      .catch((e) => {
-        console.log("error waiting for response");
-        return e;
-      });
+    setLoading(true);
+    try {
+      const response = await processPuzzle(
+        images.grid!.split(",")[1],
+        images.across!.split(",")[1],
+        images.down!.split(",")[1]
+      );
+      return response;
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <Layout>
-      <Grid
-        container
-        direction="row"
-        justifyContent="center"
-        alignItems="center"
-        spacing={2}
-      >
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the grid"}
-            img={gridImg}
-            setImg={setGridImg}
-          />
-        </Grid>
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the down clues"}
-            img={downImg}
-            setImg={setDownImg}
-          />
-        </Grid>
-        <Grid item>
-          <ImageUpload
-            title={"Upload image of the across clues"}
-            img={acrossImg}
-            setImg={setAcrossImg}
-          />
-        </Grid>
-      </Grid>
+      <CropFlow
+        stages={[
+          { name: "grid", text: "Crop Grid" },
+          { name: "across", text: "Crop Across Clues" },
+          { name: "down", text: "Crop Down Clues" },
+        ]}
+        onComplete={(stages) => setImages(stages)}
+      />
       <Box mt={5}>
         <LoadingButton
           variant="contained"
+          loading={loading}
+          disabled={!images.grid || !images.down || !images.across}
           onClick={async () => {
-            if (gridImg && downImg && acrossImg) {
-              const data: crosswordUploadResp = await uploadImages();
-              console.log(data);
+            const data = await uploadImages();
+            console.log(data);
+            if (data) {
               if (isMobile) {
-                setCrosswordID(data["id"]);
+                setCrosswordID(data.id);
                 setOpen(true);
-                setCrossword(data["grid"]);
+                setCrossword(data.grid);
               } else {
-                router.push(`/crosswordraw=${JSON.stringify(data["grid"])}`);
+                router.push(`/crossword?raw=${JSON.stringify(data.grid)}`);
               }
             } else {
               setProcessError(true);
@@ -123,12 +89,7 @@ export default function UploadBackend() {
           Process Images
         </LoadingButton>
       </Box>
-      {processError && (
-        <Box mt={5}>
-          Please upload an image of a grid, across clues and down clues before
-          clicking process
-        </Box>
-      )}
+      {processError && <Box mt={5}>Error processing crossword.</Box>}
       {crosswordID && (
         <Modal open={open} onClose={() => setOpen(false)}>
           <Box>
@@ -138,7 +99,7 @@ export default function UploadBackend() {
             </Typography>
             <Typography>
               Or if you want to continue on your phone,{" "}
-              <Link href={`/crosswordraw=${JSON.stringify(crossword)}`}>
+              <Link href={`/crossword?raw=${JSON.stringify(crossword)}`}>
                 <a>Click Here</a>
               </Link>
             </Typography>
