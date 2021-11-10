@@ -160,9 +160,9 @@ export default function Upload() {
           variant="contained"
           onClick={() => {
             if (gridImg && acrossImg && downImg) {
-              return handleProcess;
+              handleProcess();
             } else {
-              return setProcessingError(true);
+              setProcessingError(true);
             }
           }}
           loading={status != undefined}
