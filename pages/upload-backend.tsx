@@ -113,7 +113,7 @@ export default function UploadBackend() {
                 setOpen(true);
                 setCrossword(data["grid"]);
               } else {
-                router.push(`/crosswordraw=${JSON.stringify(data["grid"])}`);
+                router.push(`/crossword?raw=${JSON.stringify(data["grid"])}`);
               }
             } else {
               setProcessError(true);
@@ -138,7 +138,7 @@ export default function UploadBackend() {
             </Typography>
             <Typography>
               Or if you want to continue on your phone,{" "}
-              <Link href={`/crosswordraw=${JSON.stringify(crossword)}`}>
+              <Link href={`/crossword?raw=${JSON.stringify(crossword)}`}>
                 <a>Click Here</a>
               </Link>
             </Typography>
