@@ -43,9 +43,9 @@ export default function UploadBackend() {
     setLoading(true);
     try {
       const response = await processPuzzle(
-        images.grid!,
-        images.across!,
-        images.down!
+        images.grid!.split(",")[1],
+        images.across!.split(",")[1],
+        images.down!.split(",")[1]
       );
       return response;
     } catch (e) {
