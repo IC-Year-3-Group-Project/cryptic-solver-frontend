@@ -15,7 +15,6 @@ import Typography from "@mui/material/Typography";
 import LinearProgress from "@mui/material/LinearProgress";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { loadImageAsync } from "@/components/utils";
-import ImageCrop from "@/components/Cropping/ImageCrop";
 import CropFlow from "@/components/Cropping/CropFlow";
 
 export default function Upload() {
@@ -24,6 +23,7 @@ export default function Upload() {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState<string>();
   const [error, setError] = useState(false);
+  const [processingError, setProcessingError] = useState(false);
 
   const [imageUrls, setImageUrls] = useState<{ [key: string]: string }>({});
 
@@ -143,6 +143,11 @@ export default function Upload() {
           )}
         </Box>
       </Box>
+      {processingError && (
+        <Typography>
+          Please upload a picture of the grid, down clues and across clues
+        </Typography>
+      )}
       <Backdrop
         sx={{ color: "#fff", zIndex: 100, flexDirection: "column" }}
         open={status != undefined}
