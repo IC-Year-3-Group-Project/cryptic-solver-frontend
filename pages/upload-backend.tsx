@@ -14,6 +14,7 @@ import {
   processPuzzle,
 } from "@/components/Crossword/utils";
 import { Puzzle } from "@/components/Crossword/model/Puzzle";
+import Image from "next/image";
 
 const style = {
   position: "absolute",
@@ -65,7 +66,7 @@ export default function UploadBackend() {
         ]}
         onComplete={(stages) => setImages(stages)}
       />
-      <Box mt={5}>
+      <Box mt={2}>
         <LoadingButton
           variant="contained"
           loading={loading}
@@ -89,7 +90,13 @@ export default function UploadBackend() {
           Process Images
         </LoadingButton>
       </Box>
-      {processError && <Box mt={5}>Error processing crossword.</Box>}
+      {processError && (
+        <Box mt={2}>
+          <Typography sx={{ color: "red" }}>
+            Error processing crossword.{" "}
+          </Typography>
+        </Box>
+      )}
       {crosswordID && (
         <Modal open={open} onClose={() => setOpen(false)}>
           <Box>
