@@ -81,7 +81,7 @@ const Home: NextPage = () => {
     )
       .then(async (res) => {
         const data = await res.json();
-        router.push(`/crossword?raw=${data["grid"]}`);
+        router.push(`/crossword?raw=${JSON.stringify(data["grid"])}`);
       })
       .catch((e) => {
         return e;
