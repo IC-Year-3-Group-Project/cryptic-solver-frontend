@@ -1,7 +1,8 @@
 import { Clue, ClueDirection } from "./model/Clue";
 import { Puzzle } from "./model/Puzzle";
 
-export const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
+// export const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
+export const apiUrl = "http://localhost:3001";
 
 /** Performs a post request sending the given data as json to the given endpoint. */
 async function post<T>(
