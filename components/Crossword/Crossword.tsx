@@ -5,7 +5,12 @@ import ClueList from "./ClueList";
 import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
-import { getExplanation, getSolutions } from "./utils";
+import {
+  getExplainedSolutions,
+  getExplanation,
+  getSolutions,
+  Solution,
+} from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
 import Hide from "../Hide";
@@ -52,11 +57,12 @@ export default function Crossword(props: CrosswordProps) {
   const [input, setInput] = useState<HTMLInputElement>();
 
   const [loadingSolution, setLoadingSolution] = useState(false);
-  // TODO: Add multiple-solution handling.
-  const [solveWithGrid, setSolveWithGrid] = useState(true);
-  const [solutions, setSolutions] = useState<Array<string>>();
+  const [solutions, setSolutions] = useState<Array<Solution>>();
   const [explanation, setExplanation] = useState<string>();
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
+  const [solutionCache, setSolutionCache] = useState<{
+    [key: string]: Solution[];
+  }>({});
   const solveOverlayTarget = useRef(null);
   const solutionMenuTarget = useRef(null);
 
@@ -68,6 +74,7 @@ export default function Crossword(props: CrosswordProps) {
 
   useEffect(() => {
     if (puzzle) {
+      setSolutionCache({});
       const newEntries = new Array<GridEntry>();
       const clueMap: { [key: string]: Clue[] } = {};
       // Build x,y -> clue mapping.
@@ -283,20 +290,27 @@ export default function Crossword(props: CrosswordProps) {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
-      // Strip html tags and word length brackets from clue.
-      const strippedClue = clue.getClueText();
-      const solutions = await getSolutions(
-        strippedClue,
-        clue.totalLength,
-        solveCancelToken.signal
-      );
-      if (solutions.length > 0 && solutions[0].length == clue.totalLength) {
+      let solutions = solutionCache[clue.getTitle()];
+      if (!solutions) {
+        // Strip html tags and word length brackets from clue.
+        const strippedClue = clue.getClueText();
+        solutions = await getExplainedSolutions(
+          strippedClue,
+          clue.totalLength,
+          solveCancelToken.signal
+        );
+      }
+      if (
+        solutions.length > 0 &&
+        solutions[0].answer.length == clue.totalLength
+      ) {
+        setSolutionCache({ ...solutionCache, [clue.getTitle()]: solutions });
         if (solutions.length > 1) {
           setSolutions(solutions);
           setLoadingSolution(false);
           return true;
         } else {
-          setClueText(clue, solutions[0]);
+          setClueText(clue, solutions[0].answer);
         }
       } else {
         setSolveOverlayText("No solutions found.");
@@ -312,7 +326,22 @@ export default function Crossword(props: CrosswordProps) {
     return false;
   }
 
-  async function explainAnswer(clue: Clue) {
+  function explainAnswerCached(clue: Clue) {
+    const solutions = solutionCache[clue.getTitle()];
+    if (solutions) {
+      const clueText = getClueText(clue);
+      const solution = solutions.find(
+        (s) => s.answer.toLowerCase() == clueText.toLowerCase()
+      );
+      if (solution) {
+        setExplanation(solution.explanation);
+        return;
+      }
+    }
+    setSolveOverlayText("Could not explain solution.");
+  }
+
+  async function explainAnswerHaskell(clue: Clue) {
     const answer = getClueText(clue).toLowerCase();
     if (answer.includes("_")) {
       setSolveOverlayText("Cannot explain incomplete solution.");
@@ -358,20 +387,21 @@ export default function Crossword(props: CrosswordProps) {
       setSelectedClue(clue);
       const multiSolutions = await solveClue(clue);
       if (multiSolutions) {
-        setGridContinuation(startIndex + 1);
+        setGridContinuation(i + 1);
         break;
       }
     }
 
-    setGridContinuation(undefined);
     setSolveOverlayText(undefined);
   }
 
-  async function onSolutionSelected(solution: string) {
+  async function onSolutionSelected(solution?: Solution) {
     setSolutions(undefined);
 
     if (selectedClue) {
-      setClueText(selectedClue, solution);
+      if (solution) {
+        setClueText(selectedClue, solution.answer);
+      }
 
       if (gridContinuation) {
         await solveAllClues(gridContinuation);
@@ -570,12 +600,15 @@ export default function Crossword(props: CrosswordProps) {
                       options={[
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
+                        `Explain ${selectedClue.getTitle()} (Haskell)`,
                       ]}
                       onClick={async (index, _) => {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
-                          await explainAnswer(selectedClue);
+                          await explainAnswerCached(selectedClue);
+                        } else if (index == 2) {
+                          await explainAnswerHaskell(selectedClue);
                         }
                       }}
                       cypressData="solve-cell"

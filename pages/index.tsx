@@ -12,17 +12,7 @@ import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
 import LoadingButton from "@mui/lab/LoadingButton";
-
-const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
-
-async function getEveryman(): Promise<String[]> {
-  const response = await fetch(`${apiUrl}/fetch-everyman`, {
-    method: "GET",
-  });
-
-  const data = await response.json();
-  return data["urls"];
-}
+import { getEveryman, getPuzzleById } from "@/components/Crossword/utils";
 
 const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
@@ -36,7 +26,7 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     const fetchEveryman = async (): Promise<any> => {
-      setEverymanUrls(await getEveryman());
+      setEverymanUrls((await getEveryman()).urls);
       setLoadingEveryman(false);
     };
 
@@ -64,28 +54,14 @@ const Home: NextPage = () => {
   };
 
   async function fetchCrosswordFromID() {
-    const settings = {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        id: crosswordID,
-      }),
-    };
-
-    await fetch(
-      `https://cryptic-solver-backend.herokuapp.com/get-puzzle`,
-      settings
-    )
-      .then(async (res) => {
-        const data = await res.json();
-        router.push(`/crossword?raw=${JSON.stringify(data["grid"])}`);
-      })
-      .catch((e) => {
-        return e;
-      });
+    try {
+      if (crosswordID) {
+        const puzzle = await getPuzzleById(crosswordID);
+        router.push(`/crossword?raw=${JSON.stringify(puzzle.grid)}`);
+      }
+    } catch (e) {
+      console.log("Error while fetching puzzle by id.", e);
+    }
   }
 
   const fetchCrossword = async () => {

@@ -23,13 +23,27 @@ async function post<T>(
   return json as T;
 }
 
+/** Performs a get request to the given endpoint. */
+async function get<T>(endpoint: string, cancellation?: AbortSignal) {
+  const response = await fetch(`${apiUrl}${endpoint}`, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+    signal: cancellation,
+  });
+
+  const json = await response.json();
+  return json as T;
+}
+
 /** Gets and parses the data for a crossword at the given url. */
-export async function getCrossword(url: string): Promise<any> {
+export function getCrossword(url: string): Promise<any> {
   return post("/fetch-crossword", { url });
 }
 
 /** Gets possible solutions returns from the solver given a clue. */
-export async function getSolutions(
+export function getSolutions(
   clue: string,
   word_length: number,
   cancellation?: AbortSignal
@@ -38,7 +52,7 @@ export async function getSolutions(
 }
 
 /** Gets explanations linking a clue and its solution. */
-export async function getExplanation(
+export function getExplanation(
   clue: string,
   answer: string,
   cancellation?: AbortSignal
@@ -50,7 +64,16 @@ export async function getExplanation(
   );
 }
 
-export async function processPuzzle(
+export function getExplainedSolutions(
+  clue: string,
+  word_length: number,
+  cancellation?: AbortSignal
+): Promise<Array<Solution>> {
+  return post("/solve-and-explain", { clue, word_length }, cancellation);
+}
+
+/** Calls the backend to process 3 puzzle images (grid, across, down clues). */
+export function processPuzzle(
   grid: string,
   across: string,
   down: string,
@@ -66,6 +89,21 @@ export async function processPuzzle(
     },
     cancellation
   );
+}
+
+/** Gets a puzzle by its id. */
+export function getPuzzleById(
+  id: number,
+  cancellation?: AbortSignal
+): Promise<{ grid: Puzzle }> {
+  return post<{ grid: Puzzle }>("/get-puzzle", { id }, cancellation);
+}
+
+/** Gets everyman crossword urls. */
+export function getEveryman(
+  cancellation?: AbortSignal
+): Promise<{ urls: string[] }> {
+  return get<{ urls: string[] }>("/fetch-everyman", cancellation);
 }
 
 export function convertEveryman(crossword: any): Puzzle {
@@ -110,4 +148,10 @@ export function classify(crossword: any): Puzzle {
 export interface CrosswordUploadResponse {
   id: number;
   grid: Puzzle;
+}
+
+export interface Solution {
+  answer: string;
+  confidence: number;
+  explanation: string;
 }
