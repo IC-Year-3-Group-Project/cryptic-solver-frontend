@@ -5,7 +5,12 @@ import ClueList from "./ClueList";
 import { Clue, ClueDirection } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
-import { getExplanation, getSolutions } from "./utils";
+import {
+  getExplainedSolutions,
+  getExplanation,
+  getSolutions,
+  Solution,
+} from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
 import Hide from "../Hide";
@@ -52,9 +57,7 @@ export default function Crossword(props: CrosswordProps) {
   const [input, setInput] = useState<HTMLInputElement>();
 
   const [loadingSolution, setLoadingSolution] = useState(false);
-  // TODO: Add multiple-solution handling.
-  const [solveWithGrid, setSolveWithGrid] = useState(true);
-  const [solutions, setSolutions] = useState<Array<string>>();
+  const [solutions, setSolutions] = useState<Array<Solution>>();
   const [explanation, setExplanation] = useState<string>();
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const solveOverlayTarget = useRef(null);
@@ -285,18 +288,21 @@ export default function Crossword(props: CrosswordProps) {
     try {
       // Strip html tags and word length brackets from clue.
       const strippedClue = clue.getClueText();
-      const solutions = await getSolutions(
+      const solutions = await getExplainedSolutions(
         strippedClue,
         clue.totalLength,
         solveCancelToken.signal
       );
-      if (solutions.length > 0 && solutions[0].length == clue.totalLength) {
+      if (
+        solutions.length > 0 &&
+        solutions[0].answer.length == clue.totalLength
+      ) {
         if (solutions.length > 1) {
           setSolutions(solutions);
           setLoadingSolution(false);
           return true;
         } else {
-          setClueText(clue, solutions[0]);
+          setClueText(clue, solutions[0].answer);
         }
       } else {
         setSolveOverlayText("No solutions found.");
@@ -358,20 +364,21 @@ export default function Crossword(props: CrosswordProps) {
       setSelectedClue(clue);
       const multiSolutions = await solveClue(clue);
       if (multiSolutions) {
-        setGridContinuation(startIndex + 1);
+        setGridContinuation(i + 1);
         break;
       }
     }
 
-    setGridContinuation(undefined);
     setSolveOverlayText(undefined);
   }
 
-  async function onSolutionSelected(solution: string) {
+  async function onSolutionSelected(solution?: Solution) {
     setSolutions(undefined);
 
     if (selectedClue) {
-      setClueText(selectedClue, solution);
+      if (solution) {
+        setClueText(selectedClue, solution.answer);
+      }
 
       if (gridContinuation) {
         await solveAllClues(gridContinuation);
