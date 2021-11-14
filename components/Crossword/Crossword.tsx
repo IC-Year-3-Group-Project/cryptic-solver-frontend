@@ -15,6 +15,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
+import { useRouter } from "next/router";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -65,6 +67,8 @@ export default function Crossword(props: CrosswordProps) {
   );
   const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   const [gridContinuation, setGridContinuation] = useState<number>();
+
+  const router = useRouter();
 
   useEffect(() => {
     if (puzzle) {
@@ -387,6 +391,16 @@ export default function Crossword(props: CrosswordProps) {
   const wordBreakHeight = cellHeight / 8;
   return (
     <div className="crossword-container">
+      <Box mb={2}>
+        <Button
+          style={{ marginTop: "2rem" }}
+          onClick={() => router.back()}
+          startIcon={<ArrowBackIosIcon />}
+          variant="outlined"
+        >
+          Back
+        </Button>
+      </Box>
       {puzzle && (
         <>
           <Box
