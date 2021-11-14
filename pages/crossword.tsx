@@ -31,8 +31,13 @@ const Crossword: NextPage = () => {
 
       await getCrossword(router.query.url as string)
         .then((data) => {
-          setPuzzle(convertEveryman(data));
-          setFetchError(false);
+          const puzzle = convertEveryman(data);
+          if (puzzle.rows && puzzle.clues && puzzle.columns) {
+            setPuzzle(puzzle);
+            setFetchError(false);
+          } else {
+            setFetchError(true);
+          }
         })
         .catch((error) => {
           console.log(
@@ -58,8 +63,13 @@ const Crossword: NextPage = () => {
   useEffect(() => {
     if (router.query.raw) {
       try {
-        setPuzzle(classify(JSON.parse(router.query.raw as string)));
-        setFetchError(false);
+        const puzzle = classify(JSON.parse(router.query.raw as string));
+        if (puzzle.rows && puzzle.clues && puzzle.columns) {
+          setPuzzle(puzzle);
+          setFetchError(false);
+        } else {
+          setFetchError(true);
+        }
       } catch (ex) {
         console.log("Error loading raw crossword.", ex);
         setFetchError(true);
@@ -73,16 +83,22 @@ const Crossword: NextPage = () => {
       {puzzle && (
         <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32} />
       )}
-      {loadingCrossword && <CircularProgress />}
+      {loadingCrossword && (
+        <Layout>
+          <CircularProgress />
+        </Layout>
+      )}
       {fetchError && !loadingCrossword && (
-        <Box>
-          <Typography variant="h4" data-cy="sorry">
-            Sorry, your crossword could not be found!
-          </Typography>
-          <Link href="/">
-            <a data-cy="try-again">Try Again</a>
-          </Link>
-        </Box>
+        <Layout>
+          <Box>
+            <Typography variant="h4" data-cy="sorry">
+              Sorry, your crossword could not be found!
+            </Typography>
+            <Link href="/">
+              <a data-cy="try-again">Try Again</a>
+            </Link>
+          </Box>
+        </Layout>
       )}
     </>
   );
