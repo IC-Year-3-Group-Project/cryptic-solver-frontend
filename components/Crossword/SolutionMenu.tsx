@@ -26,42 +26,40 @@ export function SolutionMenu(props: SolutionMenuProps) {
       <Menu anchorEl={props.anchor} open={props.solutions != undefined}>
         {props.solutions
           ?.sort((s0, s1) => s1.confidence - s0.confidence)
-          .map((solution, index) => (
-            <>
+          .map((solution, index) => [
+            <MenuItem
+              key={index}
+              onClick={() => props.onSolutionSelected(solution)}
+            >
+              {solution.answer} ({Math.round(1000 * solution.confidence) / 10}
+              %)
+            </MenuItem>,
+
+            <Button
+              sx={{
+                display: "flex",
+                margin: "auto",
+                height: "1rem",
+                width: "100%",
+              }}
+              size="small"
+              onClick={(event) => {
+                setExplainAnchor(event.currentTarget);
+                setExplainSolution(solution);
+              }}
+            >
+              Explain ?
+            </Button>,
+
+            props.solutions && index == props.solutions.length - 1 ? (
               <MenuItem
-                key={index}
-                onClick={() => props.onSolutionSelected(solution)}
+                key={index + 1}
+                onClick={() => props.onSolutionSelected()}
               >
-                {solution.answer} ({Math.round(1000 * solution.confidence) / 10}
-                %)
+                None
               </MenuItem>
-
-              <Button
-                sx={{
-                  display: "flex",
-                  margin: "auto",
-                  height: "1rem",
-                  width: "100%",
-                }}
-                size="small"
-                onClick={(event) => {
-                  setExplainAnchor(event.currentTarget);
-                  setExplainSolution(solution);
-                }}
-              >
-                Explain ?
-              </Button>
-
-              {props.solutions && index == props.solutions.length - 1 && (
-                <MenuItem
-                  key={index}
-                  onClick={() => props.onSolutionSelected()}
-                >
-                  None
-                </MenuItem>
-              )}
-            </>
-          ))}
+            ) : null,
+          ])}
       </Menu>
       <Dialog open={explainSolution != undefined}>
         <DialogTitle>Explanation of '{explainSolution?.answer}'</DialogTitle>
