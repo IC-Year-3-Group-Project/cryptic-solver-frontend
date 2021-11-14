@@ -69,13 +69,9 @@ const Crossword: NextPage = () => {
   }, [router.query.raw]);
 
   return (
-    <Layout>
+    <>
       {puzzle && (
-        <NewCrossword
-          puzzle={puzzle}
-          cellWidth={32}
-          cellHeight={32}
-        ></NewCrossword>
+        <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32} />
       )}
       {loadingCrossword && <CircularProgress />}
       {fetchError && !loadingCrossword && (
@@ -88,7 +84,7 @@ const Crossword: NextPage = () => {
           </Link>
         </Box>
       )}
-    </Layout>
+    </>
   );
 };
 
