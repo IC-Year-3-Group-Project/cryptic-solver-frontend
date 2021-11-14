@@ -138,7 +138,9 @@ describe("Fetching crossword success", () => {
 
   it("empty solutions display no solutions found", () => {
     // Mock return value for empty clue
-    cy.intercept("POST", "/solve-clue", [""]);
+    cy.intercept("POST", "/solve-and-explain", [
+      { answer: "", explanation: "", confidence: 1 },
+    ]);
 
     cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
     cy.get("[data-cy=solve-cell").click({ force: true });
@@ -149,7 +151,9 @@ describe("Fetching crossword success", () => {
   it("solutions display if found", () => {
     // Mock return value for returned solution
     const mockSolution = "Yellow";
-    cy.intercept("POST", "/solve-clue", [mockSolution]);
+    cy.intercept("POST", "/solve-and-explain", [
+      { answer: mockSolution, explanation: "", confidence: 1 },
+    ]);
 
     cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
     cy.get("[data-cy=solve-cell]").click({ force: true });
