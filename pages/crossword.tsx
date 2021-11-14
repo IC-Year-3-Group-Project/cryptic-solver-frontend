@@ -14,6 +14,7 @@ import {
 } from "@/components/Crossword/utils";
 import NewCrossword from "@/components/Crossword/Crossword";
 import Button from "@mui/material/Button";
+import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 
 const Crossword: NextPage = () => {
   const router = useRouter();
@@ -31,8 +32,13 @@ const Crossword: NextPage = () => {
 
       await getCrossword(router.query.url as string)
         .then((data) => {
-          setPuzzle(convertEveryman(data));
-          setFetchError(false);
+          const puzzle = convertEveryman(data);
+          if (puzzle.rows && puzzle.clues && puzzle.columns) {
+            setPuzzle(puzzle);
+            setFetchError(false);
+          } else {
+            setFetchError(true);
+          }
         })
         .catch((error) => {
           console.log(
@@ -58,8 +64,13 @@ const Crossword: NextPage = () => {
   useEffect(() => {
     if (router.query.raw) {
       try {
-        setPuzzle(classify(JSON.parse(router.query.raw as string)));
-        setFetchError(false);
+        const puzzle = classify(JSON.parse(router.query.raw as string));
+        if (puzzle.rows && puzzle.clues && puzzle.columns) {
+          setPuzzle(puzzle);
+          setFetchError(false);
+        } else {
+          setFetchError(true);
+        }
       } catch (ex) {
         console.log("Error loading raw crossword.", ex);
         setFetchError(true);
@@ -69,26 +80,43 @@ const Crossword: NextPage = () => {
   }, [router.query.raw]);
 
   return (
-    <Layout>
+    <>
       {puzzle && (
-        <NewCrossword
-          puzzle={puzzle}
-          cellWidth={32}
-          cellHeight={32}
-        ></NewCrossword>
+        <>
+          <Box mb={2} style={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              style={{
+                marginTop: "2rem",
+                maxWidth: "100px",
+              }}
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIosIcon />}
+              variant="outlined"
+            >
+              Back
+            </Button>
+          </Box>
+          <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32} />
+        </>
       )}
-      {loadingCrossword && <CircularProgress />}
+      {loadingCrossword && (
+        <Layout>
+          <CircularProgress />
+        </Layout>
+      )}
       {fetchError && !loadingCrossword && (
-        <Box>
-          <Typography variant="h4" data-cy="sorry">
-            Sorry, your crossword could not be found!
-          </Typography>
-          <Link href="/">
-            <a data-cy="try-again">Try Again</a>
-          </Link>
-        </Box>
+        <Layout>
+          <Box>
+            <Typography variant="h4" data-cy="sorry">
+              Sorry, your crossword could not be found!
+            </Typography>
+            <Link href="/">
+              <a data-cy="try-again">Try Again</a>
+            </Link>
+          </Box>
+        </Layout>
       )}
-    </Layout>
+    </>
   );
 };
 

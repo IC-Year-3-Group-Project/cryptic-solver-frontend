@@ -12,6 +12,7 @@
 .crossword-svg-container {
   clear: both;
   position: relative;
+  margin: auto;
 }
 
 .crossword-input {

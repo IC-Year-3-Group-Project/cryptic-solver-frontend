@@ -389,11 +389,21 @@ export default function Crossword(props: CrosswordProps) {
     <div className="crossword-container">
       {puzzle && (
         <>
-          <Box sx={{ display: "flex", flexDirection: "column", p: 2 }}>
-            <div className="crossword-svg-container">
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              overflow: "auto",
+              flexWrap: "wrap",
+              p: 2,
+            }}
+          >
+            <div
+              className="crossword-svg-container"
+              style={{ width: svgWidth, height: svgHeight }}
+            >
               <svg
-                width={svgWidth}
-                height={svgHeight}
                 viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                 preserveAspectRatio="xMidYMid meet"
               >
