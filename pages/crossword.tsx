@@ -81,21 +81,23 @@ const Crossword: NextPage = () => {
 
   return (
     <>
-      <Box mb={2} style={{ display: "flex", justifyContent: "center" }}>
-        <Button
-          style={{
-            marginTop: "2rem",
-            maxWidth: "100px",
-          }}
-          onClick={() => router.back()}
-          startIcon={<ArrowBackIosIcon />}
-          variant="outlined"
-        >
-          Back
-        </Button>
-      </Box>
       {puzzle && (
-        <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32} />
+        <>
+          <Box mb={2} style={{ display: "flex", justifyContent: "center" }}>
+            <Button
+              style={{
+                marginTop: "2rem",
+                maxWidth: "100px",
+              }}
+              onClick={() => router.back()}
+              startIcon={<ArrowBackIosIcon />}
+              variant="outlined"
+            >
+              Back
+            </Button>
+          </Box>
+          <NewCrossword puzzle={puzzle} cellWidth={32} cellHeight={32} />
+        </>
       )}
       {loadingCrossword && (
         <Layout>
