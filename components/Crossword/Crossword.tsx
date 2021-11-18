@@ -269,9 +269,10 @@ export default function Crossword(props: CrosswordProps) {
 
   function setClueText(clue: Clue, text: string) {
     let k = 0;
+    const replaced = text.replaceAll(/[^A-z]/g, "");
     clue
       .generateVertices()
-      .forEach((xy) => updateGrid(xy, { content: text[k++]?.toUpperCase() }));
+      .forEach((xy) => updateGrid(xy, { content: replaced[k++]?.toUpperCase() }));
   }
 
   function clearClueText(clue: Clue) {
@@ -302,10 +303,7 @@ export default function Crossword(props: CrosswordProps) {
           solveCancelToken.signal
         );
       }
-      if (
-        solutions.length > 0 &&
-        solutions[0].answer.length == clue.totalLength
-      ) {
+      if (solutions.length > 0) {
         setSolutionCache({ ...solutionCache, [clue.getTitle()]: solutions });
         if (solutions.length > 1) {
           setSolutions(solutions);

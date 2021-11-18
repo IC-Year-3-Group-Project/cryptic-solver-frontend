@@ -138,9 +138,7 @@ describe("Fetching crossword success", () => {
 
   it("empty solutions display no solutions found", () => {
     // Mock return value for empty clue
-    cy.intercept("POST", "/solve-and-explain", [
-      { answer: "", explanation: "", confidence: 1 },
-    ]);
+    cy.intercept("POST", "/solve-and-explain", []);
 
     cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
     cy.get("[data-cy=solve-cell").click({ force: true });
