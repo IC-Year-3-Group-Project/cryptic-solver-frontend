@@ -2,24 +2,41 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { Solution } from "./utils";
+import { Solution, stripSolution } from "./utils";
 import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 
 export interface SolutionMenuProps {
   solutions?: Solution[];
   anchor?: HTMLElement | null;
+  currentText?: string;
   onSolutionSelected: (solution?: Solution) => void;
 }
 
 export function SolutionMenu(props: SolutionMenuProps) {
-  const [explainAnchor, setExplainAnchor] =
-    useState<HTMLButtonElement | null>();
   const [explainSolution, setExplainSolution] = useState<Solution>();
+
+  function createDiffedSolution(solution: string) {
+    return (
+      <>
+        {[...stripSolution(solution)].map((c, index) =>
+          !props.currentText ||
+          props.currentText[index] == "_" ||
+          props.currentText[index].toLowerCase() == c.toLowerCase() ? (
+            c
+          ) : (
+            <span key={index} style={{ color: "red" }}>
+              {c}
+            </span>
+          )
+        )}
+        <span style={{ marginRight: "0.5rem" }}></span>
+      </>
+    );
+  }
 
   return props.anchor ? (
     <>
@@ -31,7 +48,8 @@ export function SolutionMenu(props: SolutionMenuProps) {
               key={index}
               onClick={() => props.onSolutionSelected(solution)}
             >
-              {solution.answer} ({Math.round(1000 * solution.confidence) / 10}
+              {createDiffedSolution(solution.answer)} (
+              {Math.round(1000 * solution.confidence) / 10}
               %)
             </MenuItem>,
 
@@ -44,7 +62,6 @@ export function SolutionMenu(props: SolutionMenuProps) {
               }}
               size="small"
               onClick={(event) => {
-                setExplainAnchor(event.currentTarget);
                 setExplainSolution(solution);
               }}
             >

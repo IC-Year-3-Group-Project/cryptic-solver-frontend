@@ -10,6 +10,7 @@ import {
   getExplanation,
   getSolutions,
   Solution,
+  stripSolution,
 } from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
@@ -209,6 +210,10 @@ export default function Crossword(props: CrosswordProps) {
 
   // Handles cell selection and clue-picking.
   function onCellClick(cell: GridEntry | undefined, force: boolean = false) {
+    if (loadingSolution) {
+      return;
+    }
+
     setSolveOverlayText(undefined);
 
     if (!cell) {
@@ -269,10 +274,12 @@ export default function Crossword(props: CrosswordProps) {
 
   function setClueText(clue: Clue, text: string) {
     let k = 0;
-    const replaced = text.replaceAll(/[^A-z]/g, "");
+    const stripped = stripSolution(text);
     clue
       .generateVertices()
-      .forEach((xy) => updateGrid(xy, { content: replaced[k++]?.toUpperCase() }));
+      .forEach((xy) =>
+        updateGrid(xy, { content: stripped[k++]?.toUpperCase() })
+      );
   }
 
   function clearClueText(clue: Clue) {
@@ -305,7 +312,15 @@ export default function Crossword(props: CrosswordProps) {
       }
       if (solutions.length > 0) {
         setSolutionCache({ ...solutionCache, [clue.getTitle()]: solutions });
-        if (solutions.length > 1) {
+        const currentText = getClueText(clue);
+        if (
+          solutions.length > 1 ||
+          [...stripSolution(solutions[0].answer)].some(
+            (c, i) =>
+              currentText[i] != "_" &&
+              c.toLowerCase() != currentText[i].toLowerCase()
+          )
+        ) {
           setSolutions(solutions);
           setLoadingSolution(false);
           return true;
@@ -681,6 +696,7 @@ export default function Crossword(props: CrosswordProps) {
       )}
       <SolutionMenu
         solutions={solutions}
+        currentText={selectedClue ? getClueText(selectedClue) : undefined}
         anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
         onSolutionSelected={onSolutionSelected}
       />

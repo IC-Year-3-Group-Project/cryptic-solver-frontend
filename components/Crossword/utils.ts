@@ -70,7 +70,11 @@ export function getExplainedSolutions(
   pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return post("/solve-and-explain", { clue, word_length, pattern }, cancellation);
+  return post(
+    "/solve-and-explain",
+    { clue, word_length, pattern },
+    cancellation
+  );
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
@@ -144,6 +148,10 @@ export function classify(crossword: any): Puzzle {
   }
 
   return crossword as Puzzle;
+}
+
+export function stripSolution(solution: string): string {
+  return solution.replaceAll(/[^A-z]/g, "");
 }
 
 export interface CrosswordUploadResponse {
