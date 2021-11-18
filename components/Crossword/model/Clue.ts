@@ -50,6 +50,15 @@ export class Clue {
       .trim();
   }
 
+  getSolutionPattern(): string {
+    const match = /\(\d(?:[,-]\d)*\)/g.exec(this.text);
+    if (match) {
+      return match[0];
+    }
+
+    return `(${this.totalLength})`;
+  }
+
   getBreakLengths(): number[] {
     let accum = 0;
     const breaks = this.lengths.map((l) => (accum += l));
