@@ -346,7 +346,7 @@ export default function Crossword(props: CrosswordProps) {
     if (solutions) {
       const clueText = getClueText(clue);
       const solution = solutions.find(
-        (s) => s.answer.toLowerCase() == clueText.toLowerCase()
+        (s) => stripSolution(s.answer).toLowerCase() == clueText.toLowerCase()
       );
       if (solution) {
         setExplanation(solution.explanation);
