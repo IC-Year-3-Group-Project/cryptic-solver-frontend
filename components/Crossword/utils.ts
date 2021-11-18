@@ -67,9 +67,10 @@ export function getExplanation(
 export function getExplainedSolutions(
   clue: string,
   word_length: number,
+  pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return post("/solve-and-explain", { clue, word_length }, cancellation);
+  return post("/solve-and-explain", { clue, word_length, pattern }, cancellation);
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */

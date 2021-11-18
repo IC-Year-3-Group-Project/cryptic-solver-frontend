@@ -294,9 +294,11 @@ export default function Crossword(props: CrosswordProps) {
       if (!solutions) {
         // Strip html tags and word length brackets from clue.
         const strippedClue = clue.getClueText();
+        const pattern = clue.getSolutionPattern();
         solutions = await getExplainedSolutions(
           strippedClue,
           clue.totalLength,
+          pattern,
           solveCancelToken.signal
         );
       }
