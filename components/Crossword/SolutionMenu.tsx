@@ -20,19 +20,29 @@ export function SolutionMenu(props: SolutionMenuProps) {
   const [explainSolution, setExplainSolution] = useState<Solution>();
 
   function createDiffedSolution(solution: string) {
+    let reduced = 0;
     return (
       <>
-        {[...stripSolution(solution)].map((c, index) =>
-          !props.currentText ||
-          props.currentText[index] == "_" ||
-          props.currentText[index].toLowerCase() == c.toLowerCase() ? (
-            c
-          ) : (
-            <span key={index} style={{ color: "red" }}>
-              {c}
-            </span>
-          )
-        )}
+        {[...solution].map((c, index) => {
+          if (!/[A-z]/g.test(c)) {
+            reduced++;
+            return c;
+          }
+
+          if (
+            !props.currentText ||
+            props.currentText[index - reduced] == "_" ||
+            props.currentText[index - reduced].toLowerCase() == c.toLowerCase()
+          ) {
+            return c;
+          } else {
+            return (
+              <span key={index} style={{ color: "red" }}>
+                {c}
+              </span>
+            );
+          }
+        })}
         <span style={{ marginRight: "0.5rem" }}></span>
       </>
     );
