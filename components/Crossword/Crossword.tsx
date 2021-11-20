@@ -70,8 +70,8 @@ export default function Crossword(props: CrosswordProps) {
   const [solveCancelToken, setSolveCancelToken] = useState(
     new AbortController()
   );
-  const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
-  const [gridContinuation, setGridContinuation] = useState<number>();
+  let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
+  let [gridContinuation, setGridContinuation] = useState<number>();
 
   useEffect(() => {
     if (puzzle) {
@@ -390,8 +390,8 @@ export default function Crossword(props: CrosswordProps) {
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
   async function solveAllClues(startIndex: number = 0) {
-    setGridContinuation(undefined);
-    setCancelSolveGrid(false);
+    setGridContinuation((gridContinuation = undefined));
+    setCancelSolveGrid((cancelSolveGrid = false));
     setCurrentCell(undefined);
     for (let i = startIndex; i < puzzle.clues.length; i++) {
       if (cancelSolveGrid) {
@@ -621,7 +621,7 @@ export default function Crossword(props: CrosswordProps) {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
-                          await explainAnswerCached(selectedClue);
+                          explainAnswerCached(selectedClue);
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
                         }
@@ -634,6 +634,7 @@ export default function Crossword(props: CrosswordProps) {
                       variant="contained"
                       color="secondary"
                       onClick={() => {
+                        setSolutions(undefined);
                         setCancelSolveGrid(true);
                         cancelSolveClue();
                       }}
