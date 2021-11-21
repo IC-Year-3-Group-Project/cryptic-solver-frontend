@@ -1,4 +1,4 @@
-import Button from "@mui/material/Button";
+import Button, { ButtonProps } from "@mui/material/Button";
 import ButtonGroup from "@mui/material/ButtonGroup";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
@@ -7,7 +7,7 @@ import Paper from "@mui/material/Paper";
 import Popper from "@mui/material/Popper";
 import MenuItem from "@mui/material/MenuItem";
 import MenuList from "@mui/material/MenuList";
-import React, { Fragment, useRef, useState } from "react";
+import React, { Fragment, Ref, useRef, useState } from "react";
 
 export interface SplitButtonProps {
   open?: boolean;
@@ -15,9 +15,10 @@ export interface SplitButtonProps {
   options: string[];
   onClick?: (index: number, option: string) => void;
   cypressData?: string;
+  ref?: Ref<any>;
 }
 
-export default function SplitButton(props: SplitButtonProps) {
+export default function SplitButton(props: SplitButtonProps & ButtonProps) {
   const [open, setOpen] = useState(props.open || false);
   const anchorRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(props.selectedIndex || 0);
@@ -50,12 +51,16 @@ export default function SplitButton(props: SplitButtonProps) {
 
   return (
     <Fragment>
-      <ButtonGroup
-        variant="contained"
-        ref={anchorRef}
-      >
-        <Button onClick={handleClick} data-cy={props.cypressData}>{props.options[selectedIndex]}</Button>
-        <Button size="small" onClick={handleToggle}>
+      <ButtonGroup variant="contained" ref={anchorRef}>
+        <Button
+          {...props}
+          onClick={handleClick}
+          data-cy={props.cypressData}
+          ref={props.ref}
+        >
+          {props.options[selectedIndex]}
+        </Button>
+        <Button {...props} size="small" onClick={handleToggle}>
           <ArrowDropDownIcon />
         </Button>
       </ButtonGroup>
@@ -76,7 +81,7 @@ export default function SplitButton(props: SplitButtonProps) {
                       key={option}
                       selected={index === selectedIndex}
                       onClick={(event) => handleMenuItemClick(event, index)}
-                      sx={{display: "flex"}}
+                      sx={{ display: "flex" }}
                     >
                       {option}
                     </MenuItem>

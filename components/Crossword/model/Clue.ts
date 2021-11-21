@@ -19,12 +19,12 @@ export class Clue {
 
   generateVertices(): Array<{ x: number; y: number }> {
     if (this.direction == ClueDirection.Across) {
-      return [...Array(this.totalLength).keys()].map((i) => ({
+      return Array.from({ length: this.totalLength }, (_, i) => ({
         x: this.x + i,
         y: this.y,
       }));
     } else if (this.direction == ClueDirection.Down) {
-      return [...Array(this.totalLength).keys()].map((i) => ({
+      return Array.from({ length: this.totalLength }, (_, i) => ({
         x: this.x,
         y: this.y + i,
       }));
@@ -35,7 +35,7 @@ export class Clue {
 
   /* Gets the display name of the clue (e.g. "4-Down"). */
   getTitle(): string {
-    return `${this.number}: ${ClueDirection[this.direction]}`;
+    return `${this.number}-${ClueDirection[this.direction]}`;
   }
 
   /* Returns the text of the clue with HTML tags stripped. */

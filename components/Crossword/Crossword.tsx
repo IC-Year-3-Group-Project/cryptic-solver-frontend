@@ -119,6 +119,26 @@ export default function Crossword(props: CrosswordProps) {
     const index = toIndex(puzzle, cell.x, cell.y);
     const copy = [...entries];
     copy[index] = Object.assign(entries[index], updated);
+    if (currentCell && currentCell.positionEquals(cell)) {
+      currentCell.content = copy[index].content;
+    }
+
+    setEntries(copy);
+  }
+
+  function updateGridMulti(cells: { x: number; y: number }[], updated: any[]) {
+    const copy = [...entries];
+    for (let i = 0; i < cells.length && i < updated.length; i++) {
+      const cell = cells[i];
+      const newData = updated[i];
+      const index = toIndex(puzzle, cell.x, cell.y);
+      copy[index] = Object.assign(entries[index], newData);
+
+      if (currentCell && currentCell.positionEquals(cell)) {
+        currentCell.content = copy[index].content;
+      }
+    }
+
     setEntries(copy);
   }
 
@@ -265,7 +285,12 @@ export default function Crossword(props: CrosswordProps) {
     input?.focus();
   }
 
-  function getClueText(clue: Clue): string {
+  function getClueText(clue?: Clue): string {
+    clue = clue || selectedClue;
+    if (!clue) {
+      return "_".repeat(Math.max(puzzle.rows, puzzle.columns));
+    }
+
     return clue
       .generateVertices()
       .map((v) => entries[toIndex(puzzle, v.x, v.y)].content || "_")
@@ -273,17 +298,22 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   function setClueText(clue: Clue, text: string) {
-    let k = 0;
     const stripped = stripSolution(text);
-    clue
-      .generateVertices()
-      .forEach((xy) =>
-        updateGrid(xy, { content: stripped[k++]?.toUpperCase() })
-      );
+    updateGridMulti(
+      clue.generateVertices(),
+      [...stripped].map((s) => ({
+        content: s.toUpperCase(),
+      }))
+    );
   }
 
   function clearClueText(clue: Clue) {
-    setClueText(clue, "");
+    updateGridMulti(
+      clue.generateVertices(),
+      Array.from({ length: clue.totalLength }, (_, i) => ({
+        content: undefined,
+      }))
+    );
   }
 
   // Cancels the current clue solve request.
@@ -582,18 +612,21 @@ export default function Crossword(props: CrosswordProps) {
                 paddingTop: "1rem",
               }}
             >
-              <Button
-                ref={solutionMenuTarget}
+              {solutions && <div ref={solutionMenuTarget}></div>}
+              <SplitButton
+                options={["Solve Grid", "Solve Grid (Auto)"]}
                 variant="contained"
                 color="primary"
-                sx={{ mr: 1 }}
                 disabled={loadingSolution}
-                onClick={async () => await solveAllClues()}
-              >
-                Solve Grid
-              </Button>
+                onClick={async (index) => {
+                  if (index == 0) {
+                    await solveAllClues();
+                  } else if (index == 1) {
+                  }
+                }}
+              ></SplitButton>
               <Button
-                sx={{ mr: 1 }}
+                sx={{ ml: 1 }}
                 variant="contained"
                 color="secondary"
                 onClick={() => puzzle.clues.forEach(clearClueText)}
@@ -617,7 +650,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
                       ]}
-                      onClick={async (index, _) => {
+                      onClick={async (index) => {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
@@ -697,7 +730,7 @@ export default function Crossword(props: CrosswordProps) {
       )}
       <SolutionMenu
         solutions={solutions}
-        currentText={selectedClue ? getClueText(selectedClue) : undefined}
+        currentText={getClueText()}
         anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
         onSolutionSelected={onSolutionSelected}
       />
