@@ -24,9 +24,13 @@ export function SolutionMenu(props: SolutionMenuProps) {
     return (
       <>
         {[...solution].map((c, index) => {
-          if (!/[A-z]/g.test(c)) {
+          if (/[^A-z]/g.test(c)) {
             reduced++;
-            return c;
+            return (
+              <span
+                dangerouslySetInnerHTML={{ __html: c.replace(" ", "&nbsp;") }}
+              ></span>
+            );
           }
 
           if (
