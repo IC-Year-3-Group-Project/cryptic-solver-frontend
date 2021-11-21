@@ -10,6 +10,7 @@ import {
   getExplanation,
   getSolutions,
   Solution,
+  stripSolution,
 } from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
@@ -69,8 +70,8 @@ export default function Crossword(props: CrosswordProps) {
   const [solveCancelToken, setSolveCancelToken] = useState(
     new AbortController()
   );
-  const [cancelSolveGrid, setCancelSolveGrid] = useState(false);
-  const [gridContinuation, setGridContinuation] = useState<number>();
+  let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
+  let [gridContinuation, setGridContinuation] = useState<number>();
 
   useEffect(() => {
     if (puzzle) {
@@ -118,6 +119,26 @@ export default function Crossword(props: CrosswordProps) {
     const index = toIndex(puzzle, cell.x, cell.y);
     const copy = [...entries];
     copy[index] = Object.assign(entries[index], updated);
+    if (currentCell && currentCell.positionEquals(cell)) {
+      currentCell.content = copy[index].content;
+    }
+
+    setEntries(copy);
+  }
+
+  function updateGridMulti(cells: { x: number; y: number }[], updated: any[]) {
+    const copy = [...entries];
+    for (let i = 0; i < cells.length && i < updated.length; i++) {
+      const cell = cells[i];
+      const newData = updated[i];
+      const index = toIndex(puzzle, cell.x, cell.y);
+      copy[index] = Object.assign(entries[index], newData);
+
+      if (currentCell && currentCell.positionEquals(cell)) {
+        currentCell.content = copy[index].content;
+      }
+    }
+
     setEntries(copy);
   }
 
@@ -209,6 +230,10 @@ export default function Crossword(props: CrosswordProps) {
 
   // Handles cell selection and clue-picking.
   function onCellClick(cell: GridEntry | undefined, force: boolean = false) {
+    if (loadingSolution) {
+      return;
+    }
+
     setSolveOverlayText(undefined);
 
     if (!cell) {
@@ -260,7 +285,12 @@ export default function Crossword(props: CrosswordProps) {
     input?.focus();
   }
 
-  function getClueText(clue: Clue): string {
+  function getClueText(clue?: Clue): string {
+    clue = clue || selectedClue;
+    if (!clue) {
+      return "_".repeat(Math.max(puzzle.rows, puzzle.columns));
+    }
+
     return clue
       .generateVertices()
       .map((v) => entries[toIndex(puzzle, v.x, v.y)].content || "_")
@@ -268,15 +298,22 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   function setClueText(clue: Clue, text: string) {
-    let k = 0;
-    const replaced = text.replaceAll(/[^A-z]/g, "");
-    clue
-      .generateVertices()
-      .forEach((xy) => updateGrid(xy, { content: replaced[k++]?.toUpperCase() }));
+    const stripped = stripSolution(text);
+    updateGridMulti(
+      clue.generateVertices(),
+      [...stripped].map((s) => ({
+        content: s.toUpperCase(),
+      }))
+    );
   }
 
   function clearClueText(clue: Clue) {
-    setClueText(clue, "");
+    updateGridMulti(
+      clue.generateVertices(),
+      Array.from({ length: clue.totalLength }, (_, i) => ({
+        content: undefined,
+      }))
+    );
   }
 
   // Cancels the current clue solve request.
@@ -305,7 +342,15 @@ export default function Crossword(props: CrosswordProps) {
       }
       if (solutions.length > 0) {
         setSolutionCache({ ...solutionCache, [clue.getTitle()]: solutions });
-        if (solutions.length > 1) {
+        const currentText = getClueText(clue);
+        if (
+          solutions.length > 1 ||
+          [...stripSolution(solutions[0].answer)].some(
+            (c, i) =>
+              currentText[i] != "_" &&
+              c.toLowerCase() != currentText[i].toLowerCase()
+          )
+        ) {
           setSolutions(solutions);
           setLoadingSolution(false);
           return true;
@@ -331,7 +376,7 @@ export default function Crossword(props: CrosswordProps) {
     if (solutions) {
       const clueText = getClueText(clue);
       const solution = solutions.find(
-        (s) => s.answer.toLowerCase() == clueText.toLowerCase()
+        (s) => stripSolution(s.answer).toLowerCase() == clueText.toLowerCase()
       );
       if (solution) {
         setExplanation(solution.explanation);
@@ -375,8 +420,8 @@ export default function Crossword(props: CrosswordProps) {
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
   async function solveAllClues(startIndex: number = 0) {
-    setGridContinuation(undefined);
-    setCancelSolveGrid(false);
+    setGridContinuation((gridContinuation = undefined));
+    setCancelSolveGrid((cancelSolveGrid = false));
     setCurrentCell(undefined);
     for (let i = startIndex; i < puzzle.clues.length; i++) {
       if (cancelSolveGrid) {
@@ -567,18 +612,21 @@ export default function Crossword(props: CrosswordProps) {
                 paddingTop: "1rem",
               }}
             >
-              <Button
-                ref={solutionMenuTarget}
+              {solutions && <div ref={solutionMenuTarget}></div>}
+              <SplitButton
+                options={["Solve Grid", "Solve Grid (Auto)"]}
                 variant="contained"
                 color="primary"
-                sx={{ mr: 1 }}
                 disabled={loadingSolution}
-                onClick={async () => await solveAllClues()}
-              >
-                Solve Grid
-              </Button>
+                onClick={async (index) => {
+                  if (index == 0) {
+                    await solveAllClues();
+                  } else if (index == 1) {
+                  }
+                }}
+              ></SplitButton>
               <Button
-                sx={{ mr: 1 }}
+                sx={{ ml: 1 }}
                 variant="contained"
                 color="secondary"
                 onClick={() => puzzle.clues.forEach(clearClueText)}
@@ -602,11 +650,11 @@ export default function Crossword(props: CrosswordProps) {
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
                       ]}
-                      onClick={async (index, _) => {
+                      onClick={async (index) => {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
-                          await explainAnswerCached(selectedClue);
+                          explainAnswerCached(selectedClue);
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
                         }
@@ -619,6 +667,7 @@ export default function Crossword(props: CrosswordProps) {
                       variant="contained"
                       color="secondary"
                       onClick={() => {
+                        setSolutions(undefined);
                         setCancelSolveGrid(true);
                         cancelSolveClue();
                       }}
@@ -681,6 +730,7 @@ export default function Crossword(props: CrosswordProps) {
       )}
       <SolutionMenu
         solutions={solutions}
+        currentText={getClueText()}
         anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
         onSolutionSelected={onSolutionSelected}
       />
