@@ -699,6 +699,7 @@ export default function Crossword(props: CrosswordProps) {
                   if (index == 0) {
                     await solveAllClues();
                   } else if (index == 1) {
+                    await autoCompleteGrid();
                   }
                 }}
               ></SplitButton>
