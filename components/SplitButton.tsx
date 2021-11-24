@@ -14,7 +14,7 @@ export interface SplitButtonProps {
   selectedIndex?: number;
   options: string[];
   onClick?: (index: number, option: string) => void;
-  cypressData?: string;
+  "cypress-data"?: string;
   ref?: Ref<any>;
 }
 
@@ -55,7 +55,7 @@ export default function SplitButton(props: SplitButtonProps & ButtonProps) {
         <Button
           {...props}
           onClick={handleClick}
-          data-cy={props.cypressData}
+          data-cy={props["cypress-data"]}
           ref={props.ref}
         >
           {props.options[selectedIndex]}
