@@ -13,6 +13,8 @@ import {
   Solution,
   solveWithPattern,
   stripSolution,
+  gradient,
+  rgbToHex,
 } from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
@@ -405,10 +407,9 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   function setClueText(clue: Clue, text: string) {
-    const stripped = stripSolution(text);
     updateGridMulti(
       clue.generateVertices(),
-      [...stripped].map((s) => ({
+      [...text].map((s) => ({
         content: s.toUpperCase(),
       }))
     );
@@ -430,6 +431,23 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(false);
   }
 
+  function fits(clue: Clue, answer: string, same: boolean): boolean {
+    if (answer.length != clue.totalLength) {
+      return false;
+    }
+
+    const clueText = getClueText(clue);
+    answer = answer.toUpperCase();
+    return ![...clueText].some((char, index) =>
+      same ? char != answer[index] : char != "_" && char != answer[index]
+    );
+  }
+
+  function addToSolutionCache(clue: Clue, solutions: Solution[]) {
+    solutionCache[clue.getTitle()] = solutions;
+    setSolutionCache({ ...solutionCache });
+  }
+
   // Calls the solver and fills in the given clue on the grid.
   async function solveClue(clue: Clue): Promise<boolean> {
     setSolveOverlayText(undefined);
@@ -448,21 +466,16 @@ export default function Crossword(props: CrosswordProps) {
         );
       }
       if (solutions.length > 0) {
-        setSolutionCache({ ...solutionCache, [clue.getTitle()]: solutions });
-        const currentText = getClueText(clue);
+        addToSolutionCache(clue, solutions);
         if (
           solutions.length > 1 ||
-          [...stripSolution(solutions[0].answer)].some(
-            (c, i) =>
-              currentText[i] != "_" &&
-              c.toLowerCase() != currentText[i].toLowerCase()
-          )
+          !fits(clue, solutions[0].strippedAnswer, false)
         ) {
           setSolutions(solutions);
           setLoadingSolution(false);
           return true;
         } else {
-          setClueText(clue, solutions[0].answer);
+          setClueText(clue, solutions[0].strippedAnswer);
         }
       } else {
         setSolveOverlayText("No solutions found.");
@@ -478,23 +491,25 @@ export default function Crossword(props: CrosswordProps) {
     return false;
   }
 
-  function explainAnswerCached(clue: Clue) {
+  function getSolution(clue: Clue): Solution | undefined {
     const solutions = solutionCache[clue.getTitle()];
     if (solutions) {
       const clueText = getClueText(clue);
-      const solution = solutions.find(
-        (s) => stripSolution(s.answer).toLowerCase() == clueText.toLowerCase()
-      );
-      if (solution) {
-        setExplanation(solution.explanation);
-        return;
-      }
+      return solutions.find((s) => s.strippedAnswer == clueText);
+    }
+  }
+
+  function explainAnswerCached(clue: Clue) {
+    const solution = getSolution(clue);
+    if (solution) {
+      setExplanation(solution.explanation);
+      return;
     }
     setSolveOverlayText("Could not explain solution.");
   }
 
   async function explainAnswerHaskell(clue: Clue) {
-    const answer = getClueText(clue).toLowerCase();
+    const answer = getClueText(clue);
     if (answer.includes("_")) {
       setSolveOverlayText("Cannot explain incomplete solution.");
       return;
@@ -552,7 +567,7 @@ export default function Crossword(props: CrosswordProps) {
 
     if (selectedClue) {
       if (solution) {
-        setClueText(selectedClue, solution.answer);
+        setClueText(selectedClue, solution.strippedAnswer);
       }
 
       if (gridContinuation) {
@@ -598,7 +613,12 @@ export default function Crossword(props: CrosswordProps) {
                       cell.y * cellHeight,
                     ];
 
+                    let confidence: number | undefined = undefined;
                     cell.clues.forEach((c) => {
+                      const sol = getSolution(c);
+                      if (sol) {
+                        confidence = (confidence || 1) * sol.confidence;
+                      }
                       if (c.isHorizontalWordBreak(cell.x, cell.y)) {
                         horizontalWordBreaks.push(cell);
                       }
@@ -623,6 +643,18 @@ export default function Crossword(props: CrosswordProps) {
                             selectedClue &&
                             selectedClue.contains(cell.x, cell.y)
                               ? ClueSelectionColour
+                              : confidence
+                              ? rgbToHex(
+                                  gradient(
+                                    [
+                                      { r: 255, g: 0, b: 0 },
+                                      { r: 255, g: 255, b: 0 },
+                                      { r: 0, g: 255, b: 0 },
+                                    ],
+                                    confidence,
+                                    (x) => x
+                                  )
+                                )
                               : "#FFFFFF"
                           }
                         ></rect>
@@ -767,7 +799,7 @@ export default function Crossword(props: CrosswordProps) {
                           await explainAnswerHaskell(selectedClue);
                         }
                       }}
-                      cypressData="solve-cell"
+                      cypress-data="solve-cell"
                     />
                   </Hide>
                   {loadingSolution && (

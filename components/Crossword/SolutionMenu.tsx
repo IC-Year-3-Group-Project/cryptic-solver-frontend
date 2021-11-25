@@ -2,7 +2,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
-import { Solution, stripSolution } from "./utils";
+import { Solution } from "./utils";
 import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -21,6 +21,8 @@ export function SolutionMenu(props: SolutionMenuProps) {
 
   function createDiffedSolution(solution: string) {
     let reduced = 0;
+    const currentText = props.currentText?.toUpperCase();
+    solution = solution.toUpperCase();
     return (
       <>
         {[...solution].map((c, index) => {
@@ -28,15 +30,16 @@ export function SolutionMenu(props: SolutionMenuProps) {
             reduced++;
             return (
               <span
+                key={index}
                 dangerouslySetInnerHTML={{ __html: c.replace(" ", "&nbsp;") }}
               ></span>
             );
           }
 
           if (
-            !props.currentText ||
-            props.currentText[index - reduced] == "_" ||
-            props.currentText[index - reduced].toLowerCase() == c.toLowerCase()
+            !currentText ||
+            currentText[index - reduced] == "_" ||
+            currentText[index - reduced] == c
           ) {
             return c;
           } else {
@@ -75,7 +78,7 @@ export function SolutionMenu(props: SolutionMenuProps) {
                 width: "100%",
               }}
               size="small"
-              onClick={(event) => {
+              onClick={() => {
                 setExplainSolution(solution);
               }}
             >
