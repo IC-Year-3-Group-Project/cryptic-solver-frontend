@@ -64,17 +64,18 @@ export function getExplanation(
   );
 }
 
-export function getExplainedSolutions(
+export async function getExplainedSolutions(
   clue: string,
   word_length: number,
   pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return post(
+  const results = await post<Array<any>>(
     "/solve-and-explain",
     { clue, word_length, pattern },
     cancellation
   );
+  return results.map((r) => Object.assign(new Solution(), r));
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
@@ -139,6 +140,47 @@ export function convertEveryman(crossword: any): Puzzle {
   };
 }
 
+function toHex(component: number) {
+  const hex = component.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+export function rgbToHex({ r, g, b }: RGB): string {
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+export function gradient(
+  points: RGB[],
+  interp: number,
+  func: (x: number) => number
+): RGB {
+  const interpRange = 1 / (points.length - 1);
+  if (interp <= 0) {
+    return points[0];
+  }
+
+  if (interp >= 1) {
+    return points[points.length - 1];
+  }
+
+  for (let i = 0; i < points.length - 1; i++) {
+    const interpStart = interpRange * i;
+    const interpEnd = interpRange * (i + 1);
+    if (interp < interpEnd) {
+      interp = func((interp - interpStart) / interpRange);
+      const p0 = points[i];
+      const p1 = points[i + 1];
+      return {
+        r: Math.round(p0.r + (p1.r - p0.r) * interp),
+        g: Math.round(p0.g + (p1.g - p0.g) * interp),
+        b: Math.round(p0.b + (p1.b - p0.b) * interp),
+      };
+    }
+  }
+
+  return points[0];
+}
+
 /* Adds Clue methods to partial clue objects. */
 export function classify(crossword: any): Puzzle {
   if (crossword.clues) {
@@ -159,8 +201,18 @@ export interface CrosswordUploadResponse {
   grid: Puzzle;
 }
 
-export interface Solution {
-  answer: string;
-  confidence: number;
-  explanation: string;
+export class Solution {
+  answer: string = "";
+  confidence: number = 0;
+  explanation: string = "";
+
+  get strippedAnswer(): string {
+    return stripSolution(this.answer).toUpperCase();
+  }
+}
+
+export interface RGB {
+  r: number;
+  g: number;
+  b: number;
 }
