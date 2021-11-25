@@ -500,10 +500,11 @@ export default function Crossword(props: CrosswordProps) {
   function explainAnswerCached(clue: Clue) {
     const solution = getSolution(clue);
     if (solution) {
-      setExplanation(solution.explanation);
-      return;
+      // setExplanation(solution.explanation);
+      return solution.explanation;
     }
-    setSolveOverlayText("Could not explain solution.");
+    // setSolveOverlayText("Could not explain solution.");
+    return "Could not explain solution.";
   }
 
   async function explainAnswerHaskell(clue: Clue) {
@@ -853,6 +854,7 @@ export default function Crossword(props: CrosswordProps) {
                 title="Across"
                 onClueClicked={onClueSelectedFromList}
                 selectedClue={selectedClue}
+                explainAnswer={explainAnswerCached}
               />
               <ClueList
                 clues={puzzle.clues.filter(
@@ -861,6 +863,7 @@ export default function Crossword(props: CrosswordProps) {
                 title="Down"
                 onClueClicked={onClueSelectedFromList}
                 selectedClue={selectedClue}
+                explainAnswer={explainAnswerCached}
               />
             </Box>
           </Box>
