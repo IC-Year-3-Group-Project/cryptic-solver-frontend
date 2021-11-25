@@ -26,6 +26,7 @@ import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import { sortedUniqBy } from "cypress/types/lodash";
+import { Grid } from "@mui/material";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -584,8 +585,11 @@ export default function Crossword(props: CrosswordProps) {
   return (
     <div className="crossword-container">
       {puzzle && (
-        <>
-          <Box
+        <Grid container direction="row">
+          <Grid
+            item
+            xs={12}
+            xl={4}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -844,30 +848,28 @@ export default function Crossword(props: CrosswordProps) {
                 </>
               )}
             </div>
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            <Box sx={{ display: "flex", flexDirection: "row" }}>
-              <ClueList
-                clues={puzzle.clues.filter(
-                  (c) => c.direction == ClueDirection.Across
-                )}
-                title="Across"
-                onClueClicked={onClueSelectedFromList}
-                selectedClue={selectedClue}
-                explainAnswer={explainAnswerCached}
-              />
-              <ClueList
-                clues={puzzle.clues.filter(
-                  (c) => c.direction == ClueDirection.Down
-                )}
-                title="Down"
-                onClueClicked={onClueSelectedFromList}
-                selectedClue={selectedClue}
-                explainAnswer={explainAnswerCached}
-              />
-            </Box>
-          </Box>
-        </>
+          </Grid>
+          <Grid container direction="row" xs={8}>
+            <ClueList
+              clues={puzzle.clues.filter(
+                (c) => c.direction == ClueDirection.Across
+              )}
+              title="Across"
+              onClueClicked={onClueSelectedFromList}
+              selectedClue={selectedClue}
+              explainAnswer={explainAnswerCached}
+            />
+            <ClueList
+              clues={puzzle.clues.filter(
+                (c) => c.direction == ClueDirection.Down
+              )}
+              title="Down"
+              onClueClicked={onClueSelectedFromList}
+              selectedClue={selectedClue}
+              explainAnswer={explainAnswerCached}
+            />
+          </Grid>
+        </Grid>
       )}
       <SolutionMenu
         solutions={solutions}

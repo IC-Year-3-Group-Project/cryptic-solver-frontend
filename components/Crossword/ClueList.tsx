@@ -8,7 +8,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import { List, ListItem, Typography } from "@mui/material";
+import { Grid, List, ListItem, Typography } from "@mui/material";
 
 export interface ClueListProps {
   title: string;
@@ -46,67 +46,65 @@ export default function ClueList(props: ClueListProps) {
     <>
       <div className="clue-list">
         <h3 className="clue-list-title">{title}</h3>
-        <List>
-          {clues.map((c, index) => (
-            <ListItem key={index} sx={{ mt: 1 }}>
-              <a
-                href="#"
-                className={
-                  c == selectedClue ? "clue-item-selected" : "clue-item"
-                }
-                onClick={(e) => c != selectedClue && handleClueClicked(e, c)}
-              >
-                {c == selectedClue && (
+        <Grid
+          item
+          container
+          direction="column"
+          alignItems="left"
+          xs={12}
+          spacing={1.25}
+          sx={{ ml: 1.5 }}
+        >
+          {clues.map((c, index) => {
+            const selected = c == selectedClue;
+            return (
+              <Grid item key={index}>
+                <a
+                  href="#"
+                  onClick={(e) => !selected && handleClueClicked(e, c)}
+                >
                   <>
                     <Typography
-                      sx={{ fontWeight: "bold", mb: 0, mt: 1, ml: 1 }}
-                      variant="h6"
+                      sx={{
+                        mb: 0,
+                        mt: 1,
+                        ml: 1,
+                        fontWeight: selected ? "bold" : "normal",
+                      }}
+                      variant="body1"
                       noWrap
-                    >
-                      {c.number} {c.text}
-                      <IconButton
-                        sx={{ ml: 0.5 }}
-                        size="small"
-                        color="primary"
-                        component="span"
-                        title="Edit Clue"
-                        onClick={() => {
-                          setEditClueError(undefined);
-                          setEditClueText(selectedClue.getRawText());
-                          setShowEditDialog(true);
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
-                    </Typography>
-                    <Typography variant="body1" sx={{ ml: 2 }}>
-                      {explainAnswer(c)}
-                    </Typography>
-                  </>
-                )}
-                {c != selectedClue && (
-                  <>
-                    <Typography
-                      sx={{ mb: 0, mt: 1, ml: 1, fontWeight: "bold" }}
-                      display="inline"
-                      variant="h6"
                     >
                       {c.number}
+                      {". "}
+                      <span dangerouslySetInnerHTML={{ __html: c.text }} />
+                      {selected && (
+                        <IconButton
+                          sx={{ ml: 0.5 }}
+                          size="small"
+                          color="primary"
+                          component="span"
+                          title="Edit Clue"
+                          onClick={() => {
+                            setEditClueError(undefined);
+                            setEditClueText(selectedClue.getRawText());
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      )}
                     </Typography>
-                    <Typography
-                      sx={{ mb: 0, mt: 1, ml: 1 }}
-                      display="inline"
-                      variant="h6"
-                      noWrap
-                    >
-                      {c.text}
-                    </Typography>
+                    {selected && (
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        {explainAnswer(c)}
+                      </Typography>
+                    )}
                   </>
-                )}
-              </a>
-            </ListItem>
-          ))}
-        </List>
+                </a>
+              </Grid>
+            );
+          })}
+        </Grid>
       </div>
       <Dialog open={showEditDialog} fullWidth maxWidth="sm">
         <DialogTitle>Edit Clue</DialogTitle>

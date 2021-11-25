@@ -51,18 +51,6 @@
   border-bottom: 1px dotted black;
 }
 
-.clue-item {
-  margin-left: -0.5rem;
-  line-height: 2rem;
-}
-
-.clue-item-selected {
-  margin-left: -0.5rem;
-  line-height: 2rem;
-  background-color: #ffe500;
-  font-weight: bold;
-}
-
 .clue-number {
   font-weight: bold;
   width: 20px;
