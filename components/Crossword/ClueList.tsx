@@ -62,7 +62,7 @@ export default function ClueList(props: ClueListProps) {
                     variant="h6"
                     noWrap
                   >
-                    {c.number}. {c.text}
+                    {c.number} {c.text}
                     <IconButton
                       sx={{ ml: 0.5 }}
                       size="small"
@@ -83,9 +83,23 @@ export default function ClueList(props: ClueListProps) {
                   </Typography>
                 )}
                 {c != selectedClue && (
-                  <Typography sx={{ mb: 0, mt: 1, ml: 1 }} variant="h6" noWrap>
-                    {c.number}. {c.text}
-                  </Typography>
+                  <>
+                    <Typography
+                      sx={{ mb: 0, mt: 1, ml: 1, fontWeight: "bold" }}
+                      display="inline"
+                      variant="h6"
+                    >
+                      {c.number}
+                    </Typography>
+                    <Typography
+                      sx={{ mb: 0, mt: 1, ml: 1 }}
+                      display="inline"
+                      variant="h6"
+                      noWrap
+                    >
+                      {c.text}
+                    </Typography>
+                  </>
                 )}
               </a>
             </ListItem>
