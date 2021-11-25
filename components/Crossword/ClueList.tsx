@@ -57,30 +57,32 @@ export default function ClueList(props: ClueListProps) {
                 onClick={(e) => c != selectedClue && handleClueClicked(e, c)}
               >
                 {c == selectedClue && (
-                  <Typography
-                    sx={{ fontWeight: "bold", mb: 0, mt: 1, ml: 1 }}
-                    variant="h6"
-                    noWrap
-                  >
-                    {c.number} {c.text}
-                    <IconButton
-                      sx={{ ml: 0.5 }}
-                      size="small"
-                      color="primary"
-                      component="span"
-                      title="Edit Clue"
-                      onClick={() => {
-                        setEditClueError(undefined);
-                        setEditClueText(selectedClue.getRawText());
-                        setShowEditDialog(true);
-                      }}
+                  <>
+                    <Typography
+                      sx={{ fontWeight: "bold", mb: 0, mt: 1, ml: 1 }}
+                      variant="h6"
+                      noWrap
                     >
-                      <Edit />
-                    </IconButton>
+                      {c.number} {c.text}
+                      <IconButton
+                        sx={{ ml: 0.5 }}
+                        size="small"
+                        color="primary"
+                        component="span"
+                        title="Edit Clue"
+                        onClick={() => {
+                          setEditClueError(undefined);
+                          setEditClueText(selectedClue.getRawText());
+                          setShowEditDialog(true);
+                        }}
+                      >
+                        <Edit />
+                      </IconButton>
+                    </Typography>
                     <Typography variant="body1" sx={{ ml: 2 }}>
                       {explainAnswer(c)}
                     </Typography>
-                  </Typography>
+                  </>
                 )}
                 {c != selectedClue && (
                   <>
