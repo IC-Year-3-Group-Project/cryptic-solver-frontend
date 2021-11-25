@@ -8,16 +8,18 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import { List, ListItem, Typography } from "@mui/material";
 
 export interface ClueListProps {
   title: string;
   clues: Clue[];
   selectedClue?: Clue;
   onClueClicked?: (clue: Clue) => void;
+  explainAnswer: (clue: Clue) => string;
 }
 
 export default function ClueList(props: ClueListProps) {
-  const { title, clues, onClueClicked, selectedClue } = props;
+  const { title, clues, onClueClicked, selectedClue, explainAnswer } = props;
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editClueText, setEditClueText] = useState("");
@@ -44,9 +46,9 @@ export default function ClueList(props: ClueListProps) {
     <>
       <div className="clue-list">
         <h3 className="clue-list-title">{title}</h3>
-        <ol style={{ listStyleType: "none" }}>
+        <List>
           {clues.map((c, index) => (
-            <li key={index}>
+            <ListItem key={index} sx={{ mt: 1 }}>
               <a
                 href="#"
                 className={
@@ -54,34 +56,61 @@ export default function ClueList(props: ClueListProps) {
                 }
                 onClick={(e) => c != selectedClue && handleClueClicked(e, c)}
               >
-                <span className="clue-number">{c.number}</span>
-                <span dangerouslySetInnerHTML={{ __html: c.text }}></span>
+                {c == selectedClue && (
+                  <Typography
+                    sx={{ fontWeight: "bold", mb: 0, mt: 1, ml: 1 }}
+                    variant="h6"
+                    noWrap
+                  >
+                    {c.number} {c.text}
+                    <IconButton
+                      sx={{ ml: 0.5 }}
+                      size="small"
+                      color="primary"
+                      component="span"
+                      title="Edit Clue"
+                      onClick={() => {
+                        setEditClueError(undefined);
+                        setEditClueText(selectedClue.getRawText());
+                        setShowEditDialog(true);
+                      }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <Typography variant="body1" sx={{ ml: 2 }}>
+                      {explainAnswer(c)}
+                    </Typography>
+                  </Typography>
+                )}
+                {c != selectedClue && (
+                  <>
+                    <Typography
+                      sx={{ mb: 0, mt: 1, ml: 1, fontWeight: "bold" }}
+                      display="inline"
+                      variant="h6"
+                    >
+                      {c.number}
+                    </Typography>
+                    <Typography
+                      sx={{ mb: 0, mt: 1, ml: 1 }}
+                      display="inline"
+                      variant="h6"
+                      noWrap
+                    >
+                      {c.text}
+                    </Typography>
+                  </>
+                )}
               </a>
-              {c == selectedClue && (
-                <IconButton
-                  sx={{ml: 0.5}}
-                  size="small"
-                  color="primary"
-                  component="span"
-                  title="Edit Clue"
-                  onClick={() => {
-                    setEditClueError(undefined);
-                    setEditClueText(selectedClue.getRawText());
-                    setShowEditDialog(true);
-                  }}
-                >
-                  <Edit />
-                </IconButton>
-              )}
-            </li>
+            </ListItem>
           ))}
-        </ol>
+        </List>
       </div>
       <Dialog open={showEditDialog} fullWidth maxWidth="sm">
         <DialogTitle>Edit Clue</DialogTitle>
         <DialogContent>
           <TextField
-            sx={{mt: 1}}
+            sx={{ mt: 1 }}
             onChange={(e) => setEditClueText(e.target.value)}
             value={editClueText}
             error={editClueError != undefined}

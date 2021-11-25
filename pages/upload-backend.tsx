@@ -15,6 +15,7 @@ import {
 } from "@/components/Crossword/utils";
 import { Puzzle } from "@/components/Crossword/model/Puzzle";
 import Image from "next/image";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 
 const style = {
   position: "absolute",
@@ -98,8 +99,9 @@ export default function UploadBackend() {
         </Box>
       )}
       {crosswordID && (
-        <Modal open={open} onClose={() => setOpen(false)}>
-          <Box>
+        <Dialog open={crosswordID ? true : false} fullWidth maxWidth="sm">
+          <DialogTitle>Crossword Uploaded and Processed</DialogTitle>
+          <DialogContent>
             <Typography variant="h6">Crossword ID: {crosswordID}</Typography>
             <Typography sx={{ mt: 2 }}>
               Please enter this in on the home page on your computer
@@ -110,8 +112,8 @@ export default function UploadBackend() {
                 <a>Click Here</a>
               </Link>
             </Typography>
-          </Box>
-        </Modal>
+          </DialogContent>
+        </Dialog>
       )}
     </Layout>
   );
