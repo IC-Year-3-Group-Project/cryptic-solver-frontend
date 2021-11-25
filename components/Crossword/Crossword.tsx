@@ -122,6 +122,8 @@ export default function Crossword(props: CrosswordProps) {
 
   // Auto-Complete the grid in hands-off mode
   async function autoCompleteGrid() {
+    setCancelSolveGrid(false);
+    setLoadingSolution(true);
     let entrySet = entries.filter((e) => e != undefined).map((e) => true);
 
     const tempClues = puzzle.clues; //.slice(0, 4);
@@ -151,7 +153,8 @@ export default function Crossword(props: CrosswordProps) {
 
     cluesAndSolutions.sort((a, b) => a[1].length - b[1].length);
 
-    return await backtrack(cluesAndSolutions, entrySet);
+    await backtrack(cluesAndSolutions, entrySet);
+    setLoadingSolution(false);
   }
 
   // Backtracking algorithm starting with the clues with the lowest number of solutions
@@ -159,7 +162,11 @@ export default function Crossword(props: CrosswordProps) {
     cluesAndSolutions: [Clue, Solution[]][],
     entrySet: boolean[]
   ) {
-    if (cluesAndSolutions.length == 0 || !entrySet.some((e) => e)) {
+    if (
+      cluesAndSolutions.length == 0 ||
+      !entrySet.some((e) => e) ||
+      cancelSolveGrid
+    ) {
       return true;
     }
 
@@ -170,7 +177,7 @@ export default function Crossword(props: CrosswordProps) {
     for (let j = 0; j < solutionList.length; j++) {
       let solution = solutionList[j];
 
-      // Save all statees to reset after trying
+      // Save all states to reset after trying
       let oldCluesAndSolutions = [...cluesAndSolutions];
       let oldEntries = [...entries];
       let oldEntrySet = [...entrySet];
@@ -210,6 +217,10 @@ export default function Crossword(props: CrosswordProps) {
           )
         ] = [me[0], solutions];
       }
+
+      cluesAndSolutions.sort((a, b) =>
+        a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
+      );
 
       if (await backtrack(cluesAndSolutions, entrySet)) {
         return true;
