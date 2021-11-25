@@ -9,7 +9,9 @@ import {
   getExplainedSolutions,
   getExplanation,
   getSolutions,
+  getUnlikelySolutions,
   Solution,
+  solveWithPattern,
   stripSolution,
 } from "./utils";
 import Button from "@mui/material/Button";
@@ -114,82 +116,110 @@ export default function Crossword(props: CrosswordProps) {
       setEntries(newEntries);
     }
   }, [puzzle]);
-  
+
   // Auto-Complete the grid in hands-off mode
   async function autoCompleteGrid() {
+    let entrySet = entries.filter((e) => e != undefined).map((e) => true);
 
-    let entrySet = new Set(entries.filter(g => g === undefined));
+    const tempClues = puzzle.clues; //.slice(0, 4);
+    const solutionList: Solution[][] = [];
+    for (let i = 0; i < tempClues.length; i++) {
+      try {
+        const c = tempClues[i];
+        solutionList.push(
+          await getUnlikelySolutions(
+            c.getClueText(),
+            c.totalLength,
+            c.getSolutionPattern()
+          )
+        );
+      } catch (ex) {
+        console.log(ex);
+        solutionList.push([]);
+      }
+    }
 
-    const solutionList: Solution[][] = await Promise.all(puzzle.clues.map(async c => await getExplainedSolutions(
-      c.getClueText(),
-      c.totalLength,
-      c.getSolutionPattern())
-    ));
-
-    let cluesAndSolutions : [Clue, Solution[]][] = puzzle.clues.map(function(e, i) {
+    let cluesAndSolutions: [Clue, Solution[]][] = tempClues.map(function (
+      e,
+      i
+    ) {
       return [e, solutionList[i]];
     });
 
     cluesAndSolutions.sort((a, b) => a[1].length - b[1].length);
 
-    return backtrack(cluesAndSolutions, entrySet);
+    return await backtrack(cluesAndSolutions, entrySet);
   }
 
   // Backtracking algorithm starting with the clues with the lowest number of solutions
-  async function backtrack(cluesAndSolutions: [Clue, Solution[]][], entrySet: Set<GridEntry>) {
-    if (entrySet.size == 0) {
+  async function backtrack(
+    cluesAndSolutions: [Clue, Solution[]][],
+    entrySet: boolean[]
+  ) {
+    if (cluesAndSolutions.length == 0 || !entrySet.some((e) => e)) {
       return true;
     }
-    
-    for (let i = 0; i < cluesAndSolutions.length; i++) {
 
-      let size = cluesAndSolutions[0].length;
-    
-      let clueSolPair : [Clue, Solution[]] = cluesAndSolutions[i];
-      let clueSingle : Clue = clueSolPair[0];
-      let solutionList : Solution[] = clueSolPair[1];
-      
-      if (solutionList.length == size) {
-        
-        for (let j = 0; j < solutionList.length; j++) {
-          let solution = solutionList[j];
+    let clueSolPair: [Clue, Solution[]] = cluesAndSolutions[0];
+    let clueSingle: Clue = clueSolPair[0];
+    let solutionList: Solution[] = clueSolPair[1];
 
-          // Save all statees to reset after trying
-          let oldCluesAndSolutions = {...cluesAndSolutions};
-          let oldEntries = {...entries};
-          let oldEntrySet = {...entrySet};
+    for (let j = 0; j < solutionList.length; j++) {
+      let solution = solutionList[j];
 
-          cluesAndSolutions = cluesAndSolutions.splice(cluesAndSolutions.indexOf(clueSolPair), 1);
-      
-          setClueText(clueSingle, solution.answer);
-          
-          let gridEntries = clueSingle.generateVertices().map(c => entries[toIndex(puzzle, c.x, c.y)]);
+      // Save all statees to reset after trying
+      let oldCluesAndSolutions = { ...cluesAndSolutions };
+      let oldEntries = { ...entries };
+      let oldEntrySet = { ...entrySet };
 
-          gridEntries.forEach(function(g) {
-            entrySet.delete(g);
-          }); 
+      cluesAndSolutions.shift();
 
-          let toUpdate = gridEntries.filter(a => a.clues.length != 1).map((e) => e.clues).reduce((a, b) => a.concat(b));
-          
-          cluesAndSolutions.filter(cSPair => toUpdate.includes(cSPair[0])).map(async cSPair => [cSPair[0], await getExplainedSolutions(
-            cSPair[0].getClueText(),
-            cSPair[0].totalLength,
-            cSPair[0].getSolutionPattern())]
-          );
-          
-          if (await backtrack(cluesAndSolutions, entrySet)) {
-            return true;
-          }
-          
-          entrySet = oldEntrySet;
-          setEntries(oldEntries);
-          cluesAndSolutions = oldCluesAndSolutions;
-        }
+      setClueText(clueSingle, solution.answer);
+      console.log(clueSingle, solution);
+
+      let gridEntries = clueSingle
+        .generateVertices()
+        .map((c) => entries[toIndex(puzzle, c.x, c.y)]);
+
+      gridEntries.forEach((g) => (entrySet[toIndex(puzzle, g.x, g.y)] = false));
+
+      let toUpdate = gridEntries
+        .filter((a) => a.clues.length != 1)
+        .map((e) => e.clues)
+        .reduce((a, b) => a.concat(b));
+
+      const reRequest = cluesAndSolutions.filter(
+        (cSPair) =>
+          toUpdate.find((e) => e.x == cSPair[0].x && e.y == cSPair[0].y) ||
+          false
+      );
+      for (let k = 0; k < reRequest.length; k++) {
+        let me = reRequest[k];
+        cluesAndSolutions[
+          cluesAndSolutions.findIndex(
+            (p) => p[0].x == me[0].x && p[0].y == me[0].y
+          )
+        ] = [
+          me[0],
+          await solveWithPattern(
+            me[0].getClueText(),
+            me[0].totalLength,
+            me[0].getSolutionPattern(),
+            getClueText(me[0]).replaceAll("_", "?")
+          ),
+        ];
       }
+
+      if (await backtrack(cluesAndSolutions, entrySet)) {
+        return true;
+      }
+
+      entrySet = oldEntrySet;
+      setEntries(oldEntries);
+      cluesAndSolutions = oldCluesAndSolutions;
     }
     return false;
   }
-  
 
   // Update an entry in the current grid.
   function updateGrid(cell: { x: number; y: number }, updated: any) {

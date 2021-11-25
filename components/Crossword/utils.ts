@@ -77,6 +77,33 @@ export function getExplainedSolutions(
   );
 }
 
+export function getUnlikelySolutions(
+  clue: string,
+  word_length: number,
+  pattern: string,
+  cancellation?: AbortSignal
+): Promise<Array<Solution>> {
+  return post(
+    "/unlikely-solve-clue",
+    { clue, word_length, pattern },
+    cancellation
+  );
+}
+
+export function solveWithPattern(
+  clue: string,
+  word_length: number,
+  pattern: string,
+  letter_pattern: string,
+  cancellation?: AbortSignal
+): Promise<Array<Solution>> {
+  return post(
+    "/solve-with-pattern",
+    { clue, word_length, pattern, letter_pattern },
+    cancellation
+  );
+}
+
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
 export function processPuzzle(
   grid: string,
