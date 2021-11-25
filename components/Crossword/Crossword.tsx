@@ -8,9 +8,13 @@ import { Puzzle, toIndex } from "./model/Puzzle";
 import {
   getExplainedSolutions,
   getExplanation,
+  getSolutions,
+  getUnlikelySolutions,
+  Solution,
+  solveWithPattern,
+  stripSolution,
   gradient,
   rgbToHex,
-  Solution,
 } from "./utils";
 import Button from "@mui/material/Button";
 import SplitButton from "../SplitButton";
@@ -21,6 +25,8 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
+import { sortedUniqBy } from "cypress/types/lodash";
+import { Grid } from "@mui/material";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -113,6 +119,119 @@ export default function Crossword(props: CrosswordProps) {
       setEntries(newEntries);
     }
   }, [puzzle]);
+
+  // Auto-Complete the grid in hands-off mode
+  async function autoCompleteGrid() {
+    setCancelSolveGrid(false);
+    setLoadingSolution(true);
+    let entrySet = entries.filter((e) => e != undefined).map((e) => true);
+
+    const tempClues = puzzle.clues; //.slice(0, 4);
+    const solutionList: Solution[][] = [];
+    for (let i = 0; i < tempClues.length; i++) {
+      try {
+        const c = tempClues[i];
+        const solutions = await getUnlikelySolutions(
+          c.getClueText(),
+          c.totalLength,
+          c.getSolutionPattern()
+        );
+        addToSolutionCache(c, solutions);
+        solutionList.push(solutions);
+      } catch (ex) {
+        console.log(ex);
+        solutionList.push([]);
+      }
+    }
+
+    let cluesAndSolutions: [Clue, Solution[]][] = tempClues.map(function (
+      e,
+      i
+    ) {
+      return [e, solutionList[i]];
+    });
+
+    cluesAndSolutions.sort((a, b) => a[1].length - b[1].length);
+
+    await backtrack(cluesAndSolutions, entrySet);
+    setLoadingSolution(false);
+  }
+
+  // Backtracking algorithm starting with the clues with the lowest number of solutions
+  async function backtrack(
+    cluesAndSolutions: [Clue, Solution[]][],
+    entrySet: boolean[]
+  ) {
+    if (
+      cluesAndSolutions.length == 0 ||
+      !entrySet.some((e) => e) ||
+      cancelSolveGrid
+    ) {
+      return true;
+    }
+
+    let clueSolPair: [Clue, Solution[]] = cluesAndSolutions[0];
+    let clueSingle: Clue = clueSolPair[0];
+    let solutionList: Solution[] = clueSolPair[1];
+
+    for (let j = 0; j < solutionList.length; j++) {
+      let solution = solutionList[j];
+
+      // Save all states to reset after trying
+      let oldCluesAndSolutions = [...cluesAndSolutions];
+      let oldEntries = [...entries];
+      let oldEntrySet = [...entrySet];
+
+      cluesAndSolutions.shift();
+
+      setClueText(clueSingle, solution.strippedAnswer);
+
+      let gridEntries = clueSingle
+        .generateVertices()
+        .map((c) => entries[toIndex(puzzle, c.x, c.y)]);
+
+      gridEntries.forEach((g) => (entrySet[toIndex(puzzle, g.x, g.y)] = false));
+
+      let toUpdate = gridEntries
+        .filter((a) => a.clues.length != 1)
+        .map((e) => e.clues)
+        .reduce((a, b) => a.concat(b));
+
+      const reRequest = cluesAndSolutions.filter(
+        (cSPair) =>
+          toUpdate.find((e) => e.x == cSPair[0].x && e.y == cSPair[0].y) ||
+          false
+      );
+      for (let k = 0; k < reRequest.length; k++) {
+        let me = reRequest[k];
+        const solutions = await solveWithPattern(
+          me[0].getClueText(),
+          me[0].totalLength,
+          me[0].getSolutionPattern(),
+          getClueText(me[0]).replaceAll("_", "?")
+        );
+        addToSolutionCache(me[0], solutions);
+        cluesAndSolutions[
+          cluesAndSolutions.findIndex(
+            (p) => p[0].x == me[0].x && p[0].y == me[0].y
+          )
+        ] = [me[0], solutions];
+      }
+
+      cluesAndSolutions.sort((a, b) =>
+        a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
+      );
+
+      if (await backtrack(cluesAndSolutions, entrySet)) {
+        return true;
+      }
+
+      entrySet = oldEntrySet;
+      setEntries(oldEntries);
+      cluesAndSolutions = oldCluesAndSolutions;
+    }
+    return false;
+  }
 
   // Update an entry in the current grid.
   function updateGrid(cell: { x: number; y: number }, updated: any) {
@@ -477,8 +596,11 @@ export default function Crossword(props: CrosswordProps) {
   return (
     <div className="crossword-container">
       {puzzle && (
-        <>
-          <Box
+        <Grid container direction="row">
+          <Grid
+            item
+            xs={12}
+            xl={4}
             sx={{
               display: "flex",
               flexDirection: "column",
@@ -653,6 +775,7 @@ export default function Crossword(props: CrosswordProps) {
                   if (index == 0) {
                     await solveAllClues();
                   } else if (index == 1) {
+                    await autoCompleteGrid();
                   }
                 }}
               ></SplitButton>
@@ -736,30 +859,28 @@ export default function Crossword(props: CrosswordProps) {
                 </>
               )}
             </div>
-          </Box>
-          <Box sx={{ display: "flex", flexDirection: "column" }}>
-            <Box sx={{ display: "flex", flexDirection: "row" }}>
-              <ClueList
-                clues={puzzle.clues.filter(
-                  (c) => c.direction == ClueDirection.Across
-                )}
-                title="Across"
-                onClueClicked={onClueSelectedFromList}
-                selectedClue={selectedClue}
-                explainAnswer={explainAnswerCached}
-              />
-              <ClueList
-                clues={puzzle.clues.filter(
-                  (c) => c.direction == ClueDirection.Down
-                )}
-                title="Down"
-                onClueClicked={onClueSelectedFromList}
-                selectedClue={selectedClue}
-                explainAnswer={explainAnswerCached}
-              />
-            </Box>
-          </Box>
-        </>
+          </Grid>
+          <Grid container direction="row" xs={8}>
+            <ClueList
+              clues={puzzle.clues.filter(
+                (c) => c.direction == ClueDirection.Across
+              )}
+              title="Across"
+              onClueClicked={onClueSelectedFromList}
+              selectedClue={selectedClue}
+              explainAnswer={explainAnswerCached}
+            />
+            <ClueList
+              clues={puzzle.clues.filter(
+                (c) => c.direction == ClueDirection.Down
+              )}
+              title="Down"
+              onClueClicked={onClueSelectedFromList}
+              selectedClue={selectedClue}
+              explainAnswer={explainAnswerCached}
+            />
+          </Grid>
+        </Grid>
       )}
       <SolutionMenu
         solutions={solutions}

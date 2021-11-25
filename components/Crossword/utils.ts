@@ -78,6 +78,37 @@ export async function getExplainedSolutions(
   return results.map((r) => Object.assign(new Solution(), r));
 }
 
+export async function getUnlikelySolutions(
+  clue: string,
+  word_length: number,
+  pattern: string,
+  cancellation?: AbortSignal
+): Promise<Array<Solution>> {
+  return (
+    await post<Array<Solution>>(
+      "/unlikely-solve-clue",
+      { clue, word_length, pattern },
+      cancellation
+    )
+  ).map((s) => Object.assign(new Solution(), s));
+}
+
+export async function solveWithPattern(
+  clue: string,
+  word_length: number,
+  pattern: string,
+  letter_pattern: string,
+  cancellation?: AbortSignal
+): Promise<Array<Solution>> {
+  return (
+    await post<Array<Solution>>(
+      "/solve-with-pattern",
+      { clue, word_length, pattern, letter_pattern },
+      cancellation
+    )
+  ).map((s) => Object.assign(new Solution(), s));
+}
+
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
 export function processPuzzle(
   grid: string,
