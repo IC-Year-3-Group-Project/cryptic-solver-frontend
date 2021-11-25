@@ -128,13 +128,13 @@ export default function Crossword(props: CrosswordProps) {
     for (let i = 0; i < tempClues.length; i++) {
       try {
         const c = tempClues[i];
-        solutionList.push(
-          await getUnlikelySolutions(
-            c.getClueText(),
-            c.totalLength,
-            c.getSolutionPattern()
-          )
+        const solutions = await getUnlikelySolutions(
+          c.getClueText(),
+          c.totalLength,
+          c.getSolutionPattern()
         );
+        addToSolutionCache(c, solutions);
+        solutionList.push(solutions);
       } catch (ex) {
         console.log(ex);
         solutionList.push([]);
@@ -170,14 +170,13 @@ export default function Crossword(props: CrosswordProps) {
       let solution = solutionList[j];
 
       // Save all statees to reset after trying
-      let oldCluesAndSolutions = { ...cluesAndSolutions };
-      let oldEntries = { ...entries };
-      let oldEntrySet = { ...entrySet };
+      let oldCluesAndSolutions = [...cluesAndSolutions];
+      let oldEntries = [...entries];
+      let oldEntrySet = [...entrySet];
 
       cluesAndSolutions.shift();
 
-      setClueText(clueSingle, solution.answer);
-      console.log(clueSingle, solution);
+      setClueText(clueSingle, solution.strippedAnswer);
 
       let gridEntries = clueSingle
         .generateVertices()
@@ -197,19 +196,18 @@ export default function Crossword(props: CrosswordProps) {
       );
       for (let k = 0; k < reRequest.length; k++) {
         let me = reRequest[k];
+        const solutions = await solveWithPattern(
+          me[0].getClueText(),
+          me[0].totalLength,
+          me[0].getSolutionPattern(),
+          getClueText(me[0]).replaceAll("_", "?")
+        );
+        addToSolutionCache(me[0], solutions);
         cluesAndSolutions[
           cluesAndSolutions.findIndex(
             (p) => p[0].x == me[0].x && p[0].y == me[0].y
           )
-        ] = [
-          me[0],
-          await solveWithPattern(
-            me[0].getClueText(),
-            me[0].totalLength,
-            me[0].getSolutionPattern(),
-            getClueText(me[0]).replaceAll("_", "?")
-          ),
-        ];
+        ] = [me[0], solutions];
       }
 
       if (await backtrack(cluesAndSolutions, entrySet)) {
