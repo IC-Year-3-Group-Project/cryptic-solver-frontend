@@ -99,7 +99,7 @@ export default function UploadBackend() {
         </Box>
       )}
       {crosswordID && (
-        <Dialog open={crosswordID} fullWidth maxWidth="sm">
+        <Dialog open={crosswordID ? true : false} fullWidth maxWidth="sm">
           <DialogTitle>Crossword Uploaded and Processed</DialogTitle>
           <DialogContent>
             <Typography variant="h6">Crossword ID: {crosswordID}</Typography>
