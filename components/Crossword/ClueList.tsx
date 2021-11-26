@@ -44,68 +44,68 @@ export default function ClueList(props: ClueListProps) {
 
   return (
     <>
-      <Grid
-        item
-        container
-        direction="column"
-        justifyContent="flex-start"
-        alignItems="flex-start"
-        xs={6}
-        md={6}
-        spacing={2}
-        className="clue-list"
-      >
-        <Grid item>
-          <Typography variant="h5" className="clue-list-title">
-            {title}
-          </Typography>
-        </Grid>
-        {clues.map((c, index) => {
-          const selected = c == selectedClue;
-          return (
-            <Grid item key={index} ml={1.5}>
-              <a href="#" onClick={(e) => !selected && handleClueClicked(e, c)}>
-                <>
-                  <Typography
-                    sx={{
-                      mb: 0,
-                      mt: 1,
-                      ml: 1,
-                      fontWeight: selected ? "bold" : "normal",
-                    }}
-                    variant="body1"
-                  >
-                    {c.number}
-                    {". "}
-                    <span dangerouslySetInnerHTML={{ __html: c.text }} />
-                    {selected && (
-                      <IconButton
-                        sx={{ ml: 0.5 }}
-                        size="small"
-                        color="primary"
-                        component="span"
-                        title="Edit Clue"
-                        onClick={() => {
-                          setEditClueError(undefined);
-                          setEditClueText(selectedClue.getRawText());
-                          setShowEditDialog(true);
-                        }}
-                      >
-                        <Edit />
-                      </IconButton>
-                    )}
-                  </Typography>
-                  {selected && (
-                    <Typography variant="body2" sx={{ ml: 2 }}>
-                      {explainAnswer(c)}
+      <div className="clue-list">
+        <h3 className="clue-list-title">{title}</h3>
+        <Grid
+          item
+          container
+          direction="column"
+          alignItems="left"
+          xs={12}
+          spacing={1.25}
+          sx={{ ml: 1.5 }}
+        >
+          {clues.map((c, index) => {
+            const selected = c == selectedClue;
+            return (
+              <Grid item key={index}>
+                <a
+                  href="#"
+                  onClick={(e) => !selected && handleClueClicked(e, c)}
+                >
+                  <>
+                    <Typography
+                      sx={{
+                        mb: 0,
+                        mt: 1,
+                        ml: 1,
+                        fontWeight: selected ? "bold" : "normal",
+                      }}
+                      variant="body1"
+                      noWrap
+                    >
+                      {c.number}
+                      {". "}
+                      <span dangerouslySetInnerHTML={{ __html: c.text }} />
+                      {selected && (
+                        <IconButton
+                          sx={{ ml: 0.5 }}
+                          size="small"
+                          color="primary"
+                          component="span"
+                          title="Edit Clue"
+                          onClick={() => {
+                            setEditClueError(undefined);
+                            setEditClueText(selectedClue.getRawText());
+                            setShowEditDialog(true);
+                          }}
+                        >
+                          <Edit />
+                        </IconButton>
+                      )}
                     </Typography>
-                  )}
-                </>
-              </a>
-            </Grid>
-          );
-        })}
-      </Grid>
+                    {selected && (
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        {explainAnswer(c)}
+                      </Typography>
+                    )}
+                  </>
+                </a>
+              </Grid>
+            );
+          })}
+        </Grid>
+      </div>
       <Dialog open={showEditDialog} fullWidth maxWidth="sm">
         <DialogTitle>Edit Clue</DialogTitle>
         <DialogContent>
