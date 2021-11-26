@@ -12,6 +12,7 @@ import {
   getUnlikelySolutions,
   Solution,
   solveWithPattern,
+  solveWithPatternUnlikely,
   stripSolution,
   gradient,
   rgbToHex,
@@ -204,7 +205,7 @@ export default function Crossword(props: CrosswordProps) {
       );
       for (let k = 0; k < reRequest.length; k++) {
         let me = reRequest[k];
-        const solutions = await solveWithPattern(
+        const solutions = await solveWithPatternUnlikely(
           me[0].getClueText(),
           me[0].totalLength,
           me[0].getSolutionPattern(),
