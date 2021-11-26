@@ -205,24 +205,33 @@ export default function Crossword(props: CrosswordProps) {
       );
       for (let k = 0; k < reRequest.length; k++) {
         let me = reRequest[k];
-        const solutions = await solveWithPatternUnlikely(
-          me[0].getClueText(),
-          me[0].totalLength,
-          me[0].getSolutionPattern(),
-          getClueText(me[0]).replaceAll("_", "?")
-        );
-        addToSolutionCache(me[0], solutions);
-        cluesAndSolutions[
-          cluesAndSolutions.findIndex(
-            (p) => p[0].x == me[0].x && p[0].y == me[0].y
-          )
-        ] = [me[0], solutions];
+        try {
+          const solutions = await solveWithPatternUnlikely(
+            me[0].getClueText(),
+            me[0].totalLength,
+            me[0].getSolutionPattern(),
+            getClueText(me[0]).replaceAll("_", "?")
+          );
+          addToSolutionCache(me[0], solutions);
+          cluesAndSolutions[
+            cluesAndSolutions.findIndex(
+              (p) => p[0].x == me[0].x && p[0].y == me[0].y
+            )
+          ] = [me[0], solutions];
+        } catch (ex) {
+          console.log(ex);
+          cluesAndSolutions[
+            cluesAndSolutions.findIndex(
+              (p) => p[0].x == me[0].x && p[0].y == me[0].y
+            )
+          ] = [me[0], []];
+        }
       }
-
+  
       cluesAndSolutions.sort((a, b) =>
         a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
       );
-
+      
       if (await backtrack(cluesAndSolutions, entrySet)) {
         return true;
       }
