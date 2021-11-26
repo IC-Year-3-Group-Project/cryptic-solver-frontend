@@ -459,16 +459,39 @@ export default function Crossword(props: CrosswordProps) {
     setSolutionCache({ ...solutionCache });
   }
 
+  function patternParse(answer: string) {
+    const newString = [];
+    let i = answer.length;
+    while (i--) {
+      if (answer[i] === "_") {
+        newString.unshift("?");
+      } else {
+        newString.unshift(answer[i]);
+      }
+    }
+    return newString.join("");
+  }
+
+  function checkExistingSolutionInArray(
+    solution: Solution,
+    solutions: Solution[]
+  ) {
+    return solutions.some((existing) => {
+      return existing.answer === solution.answer;
+    });
+  }
+
   // Calls the solver and fills in the given clue on the grid.
   async function solveClue(clue: Clue): Promise<boolean> {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
+      const filledInAnswer = patternParse(getClueText(clue));
+      const strippedClue = clue.getClueText();
+      const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
       if (!solutions) {
         // Strip html tags and word length brackets from clue.
-        const strippedClue = clue.getClueText();
-        const pattern = clue.getSolutionPattern();
         solutions = await getExplainedSolutions(
           strippedClue,
           clue.totalLength,
@@ -476,6 +499,18 @@ export default function Crossword(props: CrosswordProps) {
           solveCancelToken.signal
         );
       }
+      const patternSolutions = await solveWithPattern(
+        strippedClue,
+        clue.totalLength,
+        pattern,
+        filledInAnswer,
+        solveCancelToken.signal
+      );
+      patternSolutions.forEach((solution) => {
+        if (!checkExistingSolutionInArray(solution, solutions)) {
+          solutions.push(solution);
+        }
+      });
       if (solutions.length > 0) {
         addToSolutionCache(clue, solutions);
         if (
