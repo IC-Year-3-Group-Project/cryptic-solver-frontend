@@ -459,19 +459,6 @@ export default function Crossword(props: CrosswordProps) {
     setSolutionCache({ ...solutionCache });
   }
 
-  function patternParse(answer: string) {
-    const newString = [];
-    let i = answer.length;
-    while (i--) {
-      if (answer[i] === "_") {
-        newString.unshift("?");
-      } else {
-        newString.unshift(answer[i]);
-      }
-    }
-    return newString.join("");
-  }
-
   function checkExistingSolutionInArray(
     solution: Solution,
     solutions: Solution[]
@@ -486,7 +473,7 @@ export default function Crossword(props: CrosswordProps) {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
-      const filledInAnswer = patternParse(getClueText(clue));
+      const filledInAnswer = getClueText(clue).replace(/_/g, "?");
       const strippedClue = clue.getClueText();
       const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
