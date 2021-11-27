@@ -227,11 +227,11 @@ export default function Crossword(props: CrosswordProps) {
           ] = [me[0], []];
         }
       }
-  
+
       cluesAndSolutions.sort((a, b) =>
         a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
       );
-      
+
       if (await backtrack(cluesAndSolutions, entrySet)) {
         return true;
       }
@@ -529,6 +529,22 @@ export default function Crossword(props: CrosswordProps) {
     return "Could not explain solution.";
   }
 
+  function getHintsFromExplanation(clue: Clue) {
+    const solution = getSolution(clue);
+    if (solution) {
+      console.log(
+        `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
+      );
+      const hints = ["Hint 1", "Hint 2"];
+      if (hints.length < solution.hintLevel) {
+        hints.push("No more hints available");
+        return hints;
+      }
+      return hints.slice(0, solution.hintLevel);
+    }
+    return ["No hints available"];
+  }
+
   async function explainAnswerHaskell(clue: Clue) {
     const answer = getClueText(clue);
     if (answer.includes("_")) {
@@ -813,6 +829,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
+                        `Get Hint ${selectedClue.getTitle()}`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -821,6 +838,23 @@ export default function Crossword(props: CrosswordProps) {
                           explainAnswerCached(selectedClue);
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
+                        } else if (index == 3) {
+                          const solutionToIncrement = getSolution(selectedClue);
+                          if (solutionToIncrement) {
+                            solutionToIncrement.hintLevel += 1;
+                            solutionCache[selectedClue.getTitle()].forEach(
+                              (solution) => {
+                                if (
+                                  solution.explanation ===
+                                  solutionToIncrement.explanation
+                                ) {
+                                  return solutionToIncrement;
+                                }
+                                return solution;
+                              }
+                            );
+                            setSolutionCache({ ...solutionCache });
+                          }
                         }
                       }}
                       cypress-data="solve-cell"
@@ -879,6 +913,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
             <ClueList
               clues={puzzle.clues.filter(
@@ -888,6 +923,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
           </Grid>
         </Grid>
