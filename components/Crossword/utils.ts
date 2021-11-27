@@ -174,6 +174,7 @@ export function convertEveryman(crossword: any): Puzzle {
         .map((len) => +len),
       x: entry.position.x,
       y: entry.position.y,
+      solution: entry.solution,
     };
     const clue = new Clue();
     Object.assign(clue, data);

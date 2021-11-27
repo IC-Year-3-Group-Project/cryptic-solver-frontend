@@ -14,6 +14,7 @@ export interface SplitButtonProps {
   selectedIndex?: number;
   options: string[];
   onClick?: (index: number, option: string) => void;
+  optionSelected?: (index: number) => void;
   "cypress-data"?: string;
   ref?: Ref<any>;
 }
@@ -32,6 +33,10 @@ export default function SplitButton(props: SplitButtonProps & ButtonProps) {
   const handleMenuItemClick = (event: any, index: number) => {
     setSelectedIndex(index);
     setOpen(false);
+
+    if (props.optionSelected) {
+      props.optionSelected(index);
+    }
   };
 
   const handleToggle = () => {
