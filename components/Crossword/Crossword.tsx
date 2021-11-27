@@ -34,6 +34,7 @@ import {
   Grid,
   Paper,
   Popover,
+  Slider,
   Switch,
   Typography,
 } from "@mui/material";
@@ -941,6 +942,20 @@ export default function Crossword(props: CrosswordProps) {
                       />
                     }
                     label="Clear Cells When Reversing Step"
+                  />
+                  <Typography sx={{ pt: 1 }}>Max Solve Retires</Typography>
+                  <Slider
+                    value={backtrackOptions.maxSolutionRetries}
+                    onChange={(_, val) =>
+                      setBacktrackOptions({
+                        ...backtrackOptions,
+                        maxSolutionRetries: Number(val),
+                      })
+                    }
+                    step={1}
+                    min={0}
+                    max={5}
+                    valueLabelDisplay="auto"
                   />
                 </Paper>
               </Popover>

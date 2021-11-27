@@ -9,18 +9,19 @@ import {
   solveWithPatternUnlikely,
 } from "./utils";
 
-const MaxSolutionRetries = 5;
 const MaxClueLoops = 20;
 export const DefaultBacktrackingOptions: BacktrackingOptions = {
   useHaskellBase: true,
   useHaskellPartial: false,
   triggerUpdateOnClear: false,
+  maxSolutionRetries: 0,
 };
 
 export interface BacktrackingOptions {
   useHaskellBase: boolean;
   useHaskellPartial: boolean;
   triggerUpdateOnClear: boolean;
+  maxSolutionRetries: number;
 }
 
 export class Backtracker {
@@ -146,7 +147,7 @@ export class Backtracker {
       } catch (ex: any) {
         if (
           !ex.message?.includes("aborted") &&
-          (!currentRetry || currentRetry < MaxSolutionRetries)
+          (currentRetry ?? 0) < this.options.maxSolutionRetries
         ) {
           // retry on server error.
           return await this.getSolutions(
@@ -192,11 +193,6 @@ export class Backtracker {
 
     const pattern = this.getExistingPattern(clue);
     const solutions = await this.getSolutions(clue, pattern);
-
-    if (solutions.length == 0) {
-      // No solutions in current branch.
-      return false;
-    }
 
     clues.shift();
     for (let solution of solutions.filter((s) =>
