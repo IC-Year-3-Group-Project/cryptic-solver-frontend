@@ -610,7 +610,6 @@ export default function Crossword(props: CrosswordProps) {
           <Grid
             item
             xs={12}
-            md={12}
             xl={4}
             sx={{
               display: "flex",
@@ -871,15 +870,7 @@ export default function Crossword(props: CrosswordProps) {
               )}
             </div>
           </Grid>
-          <Grid
-            item
-            container
-            direction="row"
-            justifyContent="center"
-            xs={12}
-            md={12}
-            xl={8}
-          >
+          <Grid container direction="row" xs={8}>
             <ClueList
               clues={puzzle.clues.filter(
                 (c) => c.direction == ClueDirection.Across
