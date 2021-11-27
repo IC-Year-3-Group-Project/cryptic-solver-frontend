@@ -614,7 +614,7 @@ export default function Crossword(props: CrosswordProps) {
       } else if (sentence.indexOf("the letters") != 1 && 
                 (sentence.indexOf("reversed") != -1  || sentence.indexOf("backwards") != -1)) {
         hints.push(`Hint #${hintNumber}: ${sentence}.`)
-      } else if (sentence.indexOf("anagram") != -1) {
+      } else if (sentence.indexOf("anagramming") != -1) {
         hints.push(`Hint #${hintNumber}: ${sentence}.`)
       } else if (sentence.indexOf("' becomes '") != -1) {
         hints.push(`Hint #${hintNumber}: ${sentence}.`)
