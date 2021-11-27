@@ -631,32 +631,6 @@ export default function Crossword(props: CrosswordProps) {
     return hints
   }
 
-  function getDefinitionFromExplanation(explanation: string) {
-    let defIndex = explanation.indexOf("' is the definition");
-    for(let i = defIndex - 1; i >= 0; i--) {
-      if (explanation[i] != "'"){
-        continue;
-      } else {
-        return explanation.substring(i + 1, defIndex)
-      }
-    }
-
-    return null;
-  }
-
-  function getWordplayFromExplanation(explanation: string) {
-    let defIndex = explanation.indexOf("' is the wordplay");
-    for(let i = defIndex - 1; i > 0; i--) {
-      if (explanation[i] != "'"){
-        continue;
-      } else {
-        return explanation.substring(i + 1, defIndex)
-      }
-    }
-
-    return null;
-  }
-
   async function explainAnswerHaskell(clue: Clue) {
     const answer = getClueText(clue);
     if (answer.includes("_")) {
