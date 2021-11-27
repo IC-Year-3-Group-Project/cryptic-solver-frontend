@@ -55,10 +55,12 @@ export default function ClueList(props: ClueListProps) {
         spacing={2}
         className="clue-list"
       >
-        <Grid item>
-          <Typography variant="h5" className="clue-list-title">
-            {title}
-          </Typography>
+        <Grid item container>
+          <Grid item xs={12}>
+            <Typography variant="h5" className="clue-list-title">
+              {title}
+            </Typography>
+          </Grid>
         </Grid>
         {clues.map((c, index) => {
           const selected = c == selectedClue;
