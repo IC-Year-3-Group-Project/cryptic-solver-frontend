@@ -32,13 +32,14 @@ export default function Layout({
         />
       </Head>
 
-      <main className={styles.main}>{children}</main>
-
       {!home && (
-        <footer>
-          <Box mb={2}>
+        <header>
+          <Box mb={2} style={{ display: "flex", justifyContent: "center" }}>
             <Button
-              style={{ marginTop: "2rem" }}
+              style={{
+                marginTop: "2rem",
+                maxWidth: "100px",
+              }}
               onClick={() => router.back()}
               startIcon={<ArrowBackIosIcon />}
               variant="outlined"
@@ -46,8 +47,9 @@ export default function Layout({
               Back
             </Button>
           </Box>
-        </footer>
+        </header>
       )}
+      <main className={styles.main}>{children}</main>
     </div>
   );
 }
