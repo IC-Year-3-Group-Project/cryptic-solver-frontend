@@ -56,7 +56,7 @@ export default function ClueList(props: ClueListProps) {
         className="clue-list"
       >
         <Grid item container>
-          <Grid item xs={12}>
+          <Grid item xs={10}>
             <Typography variant="h5" className="clue-list-title">
               {title}
             </Typography>
