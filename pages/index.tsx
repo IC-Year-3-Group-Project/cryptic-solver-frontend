@@ -13,6 +13,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { getEveryman, getPuzzleById } from "@/components/Crossword/utils";
+import { Paper } from "@mui/material";
+import ButtonGroup from "@mui/material/ButtonGroup";
 
 const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
@@ -76,17 +78,29 @@ const Home: NextPage = () => {
 
   return (
     <Layout home>
-      <Grid container direction="row" spacing={2}>
+      <Grid
+        container
+        direction="column"
+        spacing={4}
+        justifyContent="center"
+        alignItems="center"
+      >
         <Grid
           item
           justifyContent="center"
           alignItems="center"
+          direction="column"
           container
-          xs={6}
-          ml={20}
+          xs={8}
+          spacing={6}
         >
           <Grid item>
-            <Typography variant="h1" className={styles.title} data-cy="title">
+            <Typography
+              variant="h1"
+              className={styles.title}
+              data-cy="title"
+              noWrap
+            >
               Cryptic Crossword Solver
             </Typography>
 
@@ -102,9 +116,9 @@ const Home: NextPage = () => {
             direction="row"
             spacing={3}
           >
-            <Grid item xs={5}>
+            <Grid item xs={8}>
               <TextField
-                label="Everyman link or Crossword Number"
+                placeholder="Everyman link or Crossword Number"
                 fullWidth
                 variant="outlined"
                 value={crosswordLink}
@@ -166,41 +180,51 @@ const Home: NextPage = () => {
         <Grid
           item
           container
-          direction="column"
-          justifyContent="flex-start"
+          direction="row"
+          justifyContent="center"
           alignItems="flex-start"
-          xs={4}
+          xs={12}
           spacing={2}
         >
-          <Grid item xs={6}>
-            <AnswerEntry />
+          <Grid item>
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <AnswerEntry />
+            </Paper>
           </Grid>
           <Grid item>
-            <Button variant="contained" onClick={() => router.push("/upload")}>
-              Upload a crossword
-            </Button>
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <ButtonGroup orientation="vertical">
+                <Button
+                  variant="contained"
+                  onClick={() => router.push("/upload")}
+                >
+                  Upload a crossword
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => router.push("/upload-backend")}
+                >
+                  Upload a crossword (Backend)
+                </Button>
+              </ButtonGroup>
+            </Paper>
           </Grid>
 
           <Grid item>
-            <Button
-              variant="contained"
-              onClick={() => router.push("/upload-backend")}
-            >
-              Upload a crossword (Backend)
-            </Button>
-          </Grid>
-
-          <Grid item>
-            <Typography>If you have a crossword ID, enter it here:</Typography>
-            <TextField
-              placeholder="Crossword ID"
-              variant="outlined"
-              onChange={handleCrosswordIDInput}
-              onKeyDown={handleCrosswordIDEntry}
-              sx={{ mt: 1 }}
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-              fullWidth
-            />
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <Typography>
+                If you have a crossword ID, enter it here:
+              </Typography>
+              <TextField
+                placeholder="Crossword ID"
+                variant="outlined"
+                onChange={handleCrosswordIDInput}
+                onKeyDown={handleCrosswordIDEntry}
+                sx={{ mt: 1 }}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                fullWidth
+              />
+            </Paper>
           </Grid>
         </Grid>
       </Grid>
