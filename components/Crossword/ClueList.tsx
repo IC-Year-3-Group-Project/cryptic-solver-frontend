@@ -16,10 +16,12 @@ export interface ClueListProps {
   selectedClue?: Clue;
   onClueClicked?: (clue: Clue) => void;
   explainAnswer: (clue: Clue) => string;
+  getHints: (clue: Clue) => string[];
 }
 
 export default function ClueList(props: ClueListProps) {
-  const { title, clues, onClueClicked, selectedClue, explainAnswer } = props;
+  const { title, clues, onClueClicked, selectedClue, explainAnswer, getHints } =
+    props;
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editClueText, setEditClueText] = useState("");
@@ -102,6 +104,12 @@ export default function ClueList(props: ClueListProps) {
                       {explainAnswer(c)}
                     </Typography>
                   )}
+                  {selected &&
+                    getHints(c).map((hint) => (
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        {hint}
+                      </Typography>
+                    ))}
                 </>
               </a>
             </Grid>

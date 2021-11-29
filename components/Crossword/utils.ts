@@ -252,6 +252,7 @@ export class Solution {
   answer: string = "";
   confidence: number = 0;
   explanation: string = "";
+  hintLevel: number = 0;
 
   get strippedAnswer(): string {
     return stripSolution(this.answer).toUpperCase();

@@ -551,6 +551,107 @@ export default function Crossword(props: CrosswordProps) {
     return "Could not explain solution.";
   }
 
+  function getHintsFromExplanation(clue: Clue) {
+    const solution = getSolution(clue);
+    if (solution) {
+      console.log(
+        `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
+      );
+
+      const sentences = solution.explanation.split(".");
+      let hints = getHints(sentences);
+
+      if (hints.length < solution.hintLevel) {
+        hints.push("No more hints available");
+        return hints;
+      }
+      return hints.slice(0, solution.hintLevel);
+    }
+    return ["No hints available"];
+  }
+
+  // Produce a hints array of all good hints from the sentences
+  // in the explanation
+  function getHints(sentences: string[]) {
+    let hints = [];
+    let hintNumber = 0;
+    let start = 0;
+    let end = 0;
+    for (let i = 0; i < sentences.length; i++) {
+      let sentence = sentences[i];
+      hintNumber++;
+
+      // Trim the additional explanation in brackets because
+      // sometimes it expresses uncertainty e.g. "I am not sure"
+      if (sentence.indexOf("(") == 1) {
+        let closingBracketIndex = sentence.indexOf(")");
+        sentence = sentence.substring(closingBracketIndex + 1);
+      }
+
+      if (sentence.lastIndexOf(")") == sentence.length - 1) {
+        let openingBracketIndex = sentence.indexOf("(");
+        sentence = sentence.substring(0, openingBracketIndex);
+      }
+
+      if (sentence.indexOf("is a double definition") != -1) {
+        hints.push(`Hint #${hintNumber}: The clue has a double definition.`);
+      } else if (sentence.indexOf("' is the first definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The first definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the second definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The second definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`);
+      } else if (sentence.indexOf("' is the wordplay") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let wordplayHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`);
+      } else if (
+        sentence.indexOf("take the first letters") != -1 ||
+        sentence.indexOf("taking the first letters") != -1 ||
+        sentence.indexOf("take the initial letters") != -1 ||
+        sentence.indexOf("taking the initial letters") != -1 ||
+        sentence.indexOf("removing the last letter") != -1 ||
+        sentence.indexOf("to remove the last letter") != -1 ||
+        sentence.indexOf("to remove the final letter") != -1 ||
+        sentence.indexOf("removing the final letter") != -1 ||
+        sentence.indexOf("removing the first letter") != -1 ||
+        sentence.indexOf("to remove the first letter") != -1 ||
+        sentence.indexOf("take alternating letters") != -1 ||
+        sentence.indexOf("taking alternating letters") != -1 ||
+        sentence.indexOf("one lot of letters") != -1 ||
+        sentence.indexOf("the letters") != 1 && 
+                (sentence.indexOf("reversed") != -1  || sentence.indexOf("backwards") != -1) ||
+        sentence.indexOf("anagramming") != -1 ||
+        sentence.indexOf("' becomes '") != -1 ||
+        sentence.indexOf("is a reversal indicator") != -1) {
+        hints.push(`Hint #${hintNumber}: ${sentence}.`);
+      } else if (sentence.indexOf("is hidden in the letters of") != -1) {
+        let rest = sentence.substring(2);
+        let start = rest.indexOf("'");
+        rest = rest.substring(start + 1);
+        hints.push(`Hint #${hintNumber}: The answer${rest}.`);
+      } else {
+        hintNumber--;
+      }
+    }
+
+    return hints;
+  }
+
   async function explainAnswerHaskell(clue: Clue) {
     const answer = getClueText(clue);
     if (answer.includes("_")) {
@@ -836,6 +937,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
+                        `Get Hint ${selectedClue.getTitle()}`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -844,6 +946,23 @@ export default function Crossword(props: CrosswordProps) {
                           explainAnswerCached(selectedClue);
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
+                        } else if (index == 3) {
+                          const solutionToIncrement = getSolution(selectedClue);
+                          if (solutionToIncrement) {
+                            solutionToIncrement.hintLevel += 1;
+                            solutionCache[selectedClue.getTitle()].forEach(
+                              (solution) => {
+                                if (
+                                  solution.explanation ===
+                                  solutionToIncrement.explanation
+                                ) {
+                                  return solutionToIncrement;
+                                }
+                                return solution;
+                              }
+                            );
+                            setSolutionCache({ ...solutionCache });
+                          }
                         }
                       }}
                       cypress-data="solve-cell"
@@ -910,6 +1029,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
             <ClueList
               clues={puzzle.clues.filter(
@@ -919,6 +1039,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
           </Grid>
         </Grid>
