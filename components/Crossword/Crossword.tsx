@@ -468,16 +468,26 @@ export default function Crossword(props: CrosswordProps) {
     setSolutionCache({ ...solutionCache });
   }
 
+  function checkExistingSolutionInArray(
+    solution: Solution,
+    solutions: Solution[]
+  ) {
+    return solutions.some((existing) => {
+      return existing.answer === solution.answer;
+    });
+  }
+
   // Calls the solver and fills in the given clue on the grid.
   async function solveClue(clue: Clue): Promise<boolean> {
     setSolveOverlayText(undefined);
     setLoadingSolution(true);
     try {
+      const filledInAnswer = getClueText(clue).replace(/_/g, "?");
+      const strippedClue = clue.getClueText();
+      const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
       if (!solutions) {
         // Strip html tags and word length brackets from clue.
-        const strippedClue = clue.getClueText();
-        const pattern = clue.getSolutionPattern();
         solutions = await getExplainedSolutions(
           strippedClue,
           clue.totalLength,
@@ -485,6 +495,18 @@ export default function Crossword(props: CrosswordProps) {
           solveCancelToken.signal
         );
       }
+      const patternSolutions = await solveWithPattern(
+        strippedClue,
+        clue.totalLength,
+        pattern,
+        filledInAnswer,
+        solveCancelToken.signal
+      );
+      patternSolutions.forEach((solution) => {
+        if (!checkExistingSolutionInArray(solution, solutions)) {
+          solutions.push(solution);
+        }
+      });
       if (solutions.length > 0) {
         addToSolutionCache(clue, solutions);
         if (
@@ -536,8 +558,8 @@ export default function Crossword(props: CrosswordProps) {
         `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
       );
 
-      const sentences = solution.explanation.split(".")
-      let hints = getHints(sentences)
+      const sentences = solution.explanation.split(".");
+      let hints = getHints(sentences);
 
       if (hints.length < solution.hintLevel) {
         hints.push("No more hints available");
@@ -548,87 +570,86 @@ export default function Crossword(props: CrosswordProps) {
     return ["No hints available"];
   }
 
-  // Produce a hints array of all good hints from the sentences 
+  // Produce a hints array of all good hints from the sentences
   // in the explanation
-  function getHints(sentences: string[]){
-    let hints = []
-    let hintNumber = 0
-    let start = 0
-    let end = 0
-    for(let i = 0; i < sentences.length; i++){
-      let sentence = sentences[i]
+  function getHints(sentences: string[]) {
+    let hints = [];
+    let hintNumber = 0;
+    let start = 0;
+    let end = 0;
+    for (let i = 0; i < sentences.length; i++) {
+      let sentence = sentences[i];
       hintNumber++;
 
       // Trim the additional explanation in brackets because
       // sometimes it expresses uncertainty e.g. "I am not sure"
-      if (sentence.indexOf("(") == 1){
-        let closingBracketIndex = sentence.indexOf(")")
-        sentence = sentence.substring(closingBracketIndex + 1)
+      if (sentence.indexOf("(") == 1) {
+        let closingBracketIndex = sentence.indexOf(")");
+        sentence = sentence.substring(closingBracketIndex + 1);
       }
 
-      if (sentence.lastIndexOf(")") == sentence.length - 1){
-        let openingBracketIndex = sentence.indexOf("(")
-        sentence = sentence.substring(0, openingBracketIndex)
+      if (sentence.lastIndexOf(")") == sentence.length - 1) {
+        let openingBracketIndex = sentence.indexOf("(");
+        sentence = sentence.substring(0, openingBracketIndex);
       }
 
-      if(sentence.indexOf("is a double definition") != -1){
-        hints.push(`Hint #${hintNumber}: The clue has a double definition.`)
-      } else if (sentence.indexOf("' is the first definition") != -1){
-        start = sentence.indexOf("'")
-        end = sentence.lastIndexOf("'")
-        let definitionHint = sentence.substring(start, end + 1)
-        hints.push(`Hint #${hintNumber}: The first definition is ${definitionHint}.`)
-      } else if (sentence.indexOf("' is the second definition") != -1){
-        start = sentence.indexOf("'")
-        end = sentence.lastIndexOf("'")
-        let definitionHint = sentence.substring(start, end + 1)
-        hints.push(`Hint #${hintNumber}: The second definition is ${definitionHint}.`)
-      } else if (sentence.indexOf("' is the definition") != -1){
-        start = sentence.indexOf("'")
-        end = sentence.lastIndexOf("'")
-        let definitionHint = sentence.substring(start, end + 1)
-        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`)
-      } else if (sentence.indexOf("' is the wordplay") != -1){
-        start = sentence.indexOf("'")
-        end = sentence.lastIndexOf("'")
-        let wordplayHint = sentence.substring(start, end + 1)
-        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`)
-      } else if (sentence.indexOf("take the first letters") != -1 ||
-                sentence.indexOf("taking the first letters") != -1 || 
-                sentence.indexOf("take the initial letters") != -1 || 
-                sentence.indexOf("taking the initial letters") != -1) {
-        hints.push(`Hint #${hintNumber}: Notice that ${sentence}.`)
-      } else if (sentence.indexOf("removing the last letter") != -1 ||
-                sentence.indexOf("to remove the last letter") != -1 || 
-                sentence.indexOf("to remove the final letter") != -1 || 
-                sentence.indexOf("removing the final letter") != -1) {
-        hints.push(`Hint #${hintNumber}: Notice that ${sentence}.`)
-      } else if (sentence.indexOf("removing the first letter") != -1 ||
-                sentence.indexOf("to remove the first letter") != -1) {
-        hints.push(`Hint #${hintNumber}: Notice that ${sentence}.`)
-      } else if (sentence.indexOf("take alternating letters") != -1 ||
-                sentence.indexOf("taking alternating letters") != -1) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`)
-      } else if (sentence.indexOf("one lot of letters") != -1) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`)
-      } else if (sentence.indexOf("the letters") != 1 && 
-                (sentence.indexOf("reversed") != -1  || sentence.indexOf("backwards") != -1)) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`)
-      } else if (sentence.indexOf("anagramming") != -1) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`)
-      } else if (sentence.indexOf("' becomes '") != -1) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`)
+      if (sentence.indexOf("is a double definition") != -1) {
+        hints.push(`Hint #${hintNumber}: The clue has a double definition.`);
+      } else if (sentence.indexOf("' is the first definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The first definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the second definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The second definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`);
+      } else if (sentence.indexOf("' is the wordplay") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let wordplayHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`);
+      } else if (
+        sentence.indexOf("take the first letters") != -1 ||
+        sentence.indexOf("taking the first letters") != -1 ||
+        sentence.indexOf("take the initial letters") != -1 ||
+        sentence.indexOf("taking the initial letters") != -1 ||
+        sentence.indexOf("removing the last letter") != -1 ||
+        sentence.indexOf("to remove the last letter") != -1 ||
+        sentence.indexOf("to remove the final letter") != -1 ||
+        sentence.indexOf("removing the final letter") != -1 ||
+        sentence.indexOf("removing the first letter") != -1 ||
+        sentence.indexOf("to remove the first letter") != -1 ||
+        sentence.indexOf("take alternating letters") != -1 ||
+        sentence.indexOf("taking alternating letters") != -1 ||
+        sentence.indexOf("one lot of letters") != -1 ||
+        sentence.indexOf("the letters") != 1 && 
+                (sentence.indexOf("reversed") != -1  || sentence.indexOf("backwards") != -1) ||
+        sentence.indexOf("anagramming") != -1 ||
+        sentence.indexOf("' becomes '") != -1 ||
+        sentence.indexOf("is a reversal indicator") != -1) {
+        hints.push(`Hint #${hintNumber}: ${sentence}.`);
       } else if (sentence.indexOf("is hidden in the letters of") != -1) {
-        let rest = sentence.substring(2)
-        let start = rest.indexOf("'")
-        rest = rest.substring(start + 1)
-        hints.push(`Hint #${hintNumber}: The answer${rest}.`)
+        let rest = sentence.substring(2);
+        let start = rest.indexOf("'");
+        rest = rest.substring(start + 1);
+        hints.push(`Hint #${hintNumber}: The answer${rest}.`);
       } else {
         hintNumber--;
       }
     }
-    
-    return hints
+
+    return hints;
   }
 
   async function explainAnswerHaskell(clue: Clue) {
@@ -712,6 +733,7 @@ export default function Crossword(props: CrosswordProps) {
           <Grid
             item
             xs={12}
+            md={12}
             xl={4}
             sx={{
               display: "flex",
@@ -990,7 +1012,15 @@ export default function Crossword(props: CrosswordProps) {
               )}
             </div>
           </Grid>
-          <Grid container direction="row" xs={8}>
+          <Grid
+            item
+            container
+            direction="row"
+            justifyContent="center"
+            xs={12}
+            md={12}
+            xl={8}
+          >
             <ClueList
               clues={puzzle.clues.filter(
                 (c) => c.direction == ClueDirection.Across
