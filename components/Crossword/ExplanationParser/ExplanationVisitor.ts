@@ -11,6 +11,7 @@ import {
   SubtractContext,
   MultiWordContext,
   InsertContext,
+  AnagramContext,
 } from "./antlr/MorseGrammarParser";
 import { MorseGrammarVisitor } from "./antlr/MorseGrammarVisitor";
 import ComplexOperation from "./ast/ComplexOperation";
@@ -31,7 +32,10 @@ export default class ExplanationVisitor
   implements MorseGrammarVisitor<ExplanationNode>
 {
   protected defaultResult(): ExplanationNode {
-    return {};
+    return {
+      result: "",
+      toEnglish: () => [],
+    };
   }
 
   visitFullExplanation(context: FullExplanationContext) {
@@ -62,13 +66,26 @@ export default class ExplanationVisitor
   visitComplexOperation(context: ComplexOperationContext): ComplexOperation {
     const operation = context.COMPLEX_OPERATION().text;
     const source = this.getMultiWordText(context.subject().multiWord());
-    const subject = this.visitChildren(context);
+    const subject = this.visit(context.explanation());
     return new ComplexOperation(operation, source, subject);
   }
 
   visitWordJoin(context: WordJoinContext): WordJoin {
     const words = context.explanation().map((w) => this.visit(w));
     return new WordJoin(words);
+  }
+
+  visitAnagram(context: AnagramContext): ComplexOperation | SimpleOperation {
+    console.log(context);
+    const operation = context.ANAGRAM().text;
+    const source = this.getMultiWordText(context.subject().multiWord());
+    const subjectContext = context.explanation();
+    if (subjectContext) {
+      const subject = this.visit(subjectContext);
+      return new ComplexOperation(operation, source, subject);
+    }
+
+    return new SimpleOperation(operation, source);
   }
 
   visitSynonym(context: SynonymContext): Synonym {

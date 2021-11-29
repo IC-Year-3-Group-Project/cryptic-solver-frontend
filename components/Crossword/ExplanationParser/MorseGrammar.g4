@@ -9,16 +9,13 @@ EQUALS: '=';
 INTO: 'into';
 FROM: 'from';
 
+ANAGRAM: 'anagram';
 HYPONYM: 'hyponym';
 DUPLICATE: 'duplicate';
 INSERT: 'insert';
 SUBTRACT: 'subtract';
 
-SIMPLE_OPERATION:
-	'anagram'
-	| 'charade'
-	| 'odd letters'
-	| 'even letters';
+SIMPLE_OPERATION: 'charade' | 'odd letters' | 'even letters';
 COMPLEX_OPERATION:
 	'abbreviation'
 	| 'first letters'
@@ -29,7 +26,7 @@ COMPLEX_OPERATION:
 	| 'reversal'
 	| 'rotation';
 
-WORD: [a-zA-Z<>]+;
+WORD: [a-zA-Z<>0-9]+;
 
 multiWord: WORD+;
 subject: '[' multiWord ']';
@@ -37,6 +34,7 @@ subject: '[' multiWord ']';
 explanation:
 	explanation EQUALS explanation														# synonym
 	| explanation (WORD_JOIN explanation)+												# wordJoin
+	| ANAGRAM subject explanation?														# anagram
 	| SIMPLE_OPERATION subject															# simpleOperation
 	| COMPLEX_OPERATION subject explanation												# complexOperation
 	| multiWord OPEN_BRACKET explanation+ CLOSE_BRACKET									# wordExplanation
