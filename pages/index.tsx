@@ -114,7 +114,7 @@ const Home: NextPage = () => {
             justifyContent="center"
             alignItems="center"
             direction="row"
-            spacing={3}
+            spacing={1}
           >
             <Grid item xs={8}>
               <TextField
