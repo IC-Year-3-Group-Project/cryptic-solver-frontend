@@ -135,44 +135,38 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
   };
 
   return (
-    <Box maxWidth={400} style={{ margin: 16 }}>
-      <Typography style={{ marginBottom: 16 }}>
-        Want to find an explanation for an answer?
-        <br />
-        Enter your answer and clue here:
-      </Typography>
-      <Grid container direction="column">
-        <Stack spacing={2} direction="row" style={{ marginBottom: 16 }}>
-          <TextField
-            label="Answer"
-            fullWidth
-            variant="standard"
-            value={explanationSearch.answer}
-            data-cy="answer-input"
-            onChange={handleExplanationSearchInput}
-            name="answer"
-            error={loadingExplanationError.answer}
-            helperText={
-              loadingExplanationError.answer &&
-              (loadingExplanationErrorMessages.answer ||
-                "Sorry, an error has occurred")
-            }
-          />
-          <LoadingButton
-            loading={loadingExplanation}
-            variant="contained"
-            onClick={fetchExplanation}
-            data-cy="find-explanation-button"
-          >
-            {loadingExplanation ? "" : "Find!"}
-          </LoadingButton>
-        </Stack>
+    <Grid container spacing={2} direction="column">
+      <Grid item>
+        <Typography gutterBottom>
+          Want to find an explanation for an answer?
+          <br />
+          Enter your answer and clue here:
+        </Typography>
+      </Grid>
+      <Grid item>
+        <TextField
+          label="Answer"
+          fullWidth
+          variant="outlined"
+          value={explanationSearch.answer}
+          data-cy="answer-input"
+          onChange={handleExplanationSearchInput}
+          name="answer"
+          error={loadingExplanationError.answer}
+          helperText={
+            loadingExplanationError.answer &&
+            (loadingExplanationErrorMessages.answer ||
+              "Sorry, an error has occurred")
+          }
+        />
+      </Grid>
+      <Grid item>
         <TextField
           label="Clue"
           fullWidth
           multiline
           maxRows={4}
-          variant="standard"
+          variant="outlined"
           value={explanationSearch.clue}
           data-cy="clue-input"
           onChange={handleExplanationSearchInput}
@@ -204,6 +198,16 @@ export default function AnswerEntry({ setExplanationCallback }: Props) {
             </Typography>
           )}
       </Grid>
-    </Box>
+      <Grid item>
+        <LoadingButton
+          loading={loadingExplanation}
+          variant="contained"
+          onClick={fetchExplanation}
+          data-cy="find-explanation-button"
+        >
+          {loadingExplanation ? "" : "Find!"}
+        </LoadingButton>
+      </Grid>
+    </Grid>
   );
 }

@@ -13,6 +13,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import AnswerEntry from "@/components/AnswerEntry";
 import LoadingButton from "@mui/lab/LoadingButton";
 import { getEveryman, getPuzzleById } from "@/components/Crossword/utils";
+import { Paper } from "@mui/material";
+import ButtonGroup from "@mui/material/ButtonGroup";
 
 const Home: NextPage = () => {
   const KEYCODE_ENTER = 13;
@@ -76,102 +78,156 @@ const Home: NextPage = () => {
 
   return (
     <Layout home>
-      <h1 className={styles.title} data-cy="title">
-        Cryptic Crossword Solver
-      </h1>
-
-      <p className={styles.description}>
-        Enter a link to an Everyman Guardian crossword:
-      </p>
-
-      <TextField
-        label="Everyman link or Crossword Number"
-        fullWidth
-        style={{ marginBottom: 16 }}
-        variant="standard"
-        value={crosswordLink}
-        data-cy="link-input"
-        onChange={handleCrosswordLinkInput}
-        onKeyDown={handleCrosswordLinkEntry}
-      />
-      <LoadingButton
-        variant="contained"
-        onClick={fetchCrossword}
-        data-cy="fetch-crossword-button"
+      <Grid
+        container
+        direction="column"
+        spacing={4}
+        justifyContent="center"
+        alignItems="center"
       >
-        Fetch!
-      </LoadingButton>
-
-      <Box mt={5}>
         <Grid
+          item
+          justifyContent="center"
+          alignItems="center"
+          direction="column"
+          container
+          xs={8}
+          spacing={6}
+        >
+          <Grid item>
+            <Typography
+              variant="h1"
+              className={styles.title}
+              data-cy="title"
+              noWrap
+            >
+              Cryptic Crossword Solver
+            </Typography>
+
+            <Typography variant="body1" className={styles.description}>
+              Enter a link to an Everyman Guardian crossword:
+            </Typography>
+          </Grid>
+          <Grid
+            item
+            container
+            justifyContent="center"
+            alignItems="center"
+            direction="row"
+            spacing={1}
+          >
+            <Grid item xs={8}>
+              <TextField
+                placeholder="Everyman link or Crossword Number"
+                fullWidth
+                variant="outlined"
+                value={crosswordLink}
+                data-cy="link-input"
+                onChange={handleCrosswordLinkInput}
+                onKeyDown={handleCrosswordLinkEntry}
+              />
+            </Grid>
+            <Grid item>
+              <LoadingButton
+                variant="contained"
+                onClick={fetchCrossword}
+                data-cy="fetch-crossword-button"
+              >
+                Fetch!
+              </LoadingButton>
+            </Grid>
+          </Grid>
+
+          <Grid
+            item
+            container
+            justifyContent="center"
+            alignItems="center"
+            direction="row"
+            spacing={2}
+          >
+            <Grid item>
+              <Typography variant="h6">Crosswords to try:</Typography>
+            </Grid>
+
+            {loadingEveryman && (
+              <Grid item>
+                <CircularProgress size={20} />
+              </Grid>
+            )}
+
+            {!loadingEveryman &&
+              everymanUrls.slice(0, 5).map((url, i) => {
+                return (
+                  <Grid item key={i}>
+                    <Button
+                      variant="outlined"
+                      href={"/crossword?url=" + url}
+                      data-cy="crossword-link"
+                    >
+                      #
+                      {url.replace(
+                        "https://www.theguardian.com/crosswords/everyman/",
+                        ""
+                      )}
+                    </Button>
+                  </Grid>
+                );
+              })}
+          </Grid>
+        </Grid>
+
+        <Grid
+          item
           container
           direction="row"
           justifyContent="center"
-          alignItems="center"
+          alignItems="flex-start"
+          xs={12}
           spacing={2}
         >
           <Grid item>
-            <Typography variant="h6">Crosswords to try:</Typography>
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <AnswerEntry />
+            </Paper>
+          </Grid>
+          <Grid item>
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <ButtonGroup orientation="vertical">
+                <Button
+                  variant="contained"
+                  onClick={() => router.push("/upload")}
+                >
+                  Upload a crossword
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => router.push("/upload-backend")}
+                >
+                  Upload a crossword (Backend)
+                </Button>
+              </ButtonGroup>
+            </Paper>
           </Grid>
 
-          {loadingEveryman && (
-            <Grid item>
-              <CircularProgress size={20} />
-            </Grid>
-          )}
-
-          {!loadingEveryman &&
-            everymanUrls.slice(0, 5).map((url, i) => {
-              return (
-                <Grid item key={i}>
-                  <Button
-                    variant="outlined"
-                    href={"/crossword?url=" + url}
-                    data-cy="crossword-link"
-                  >
-                    #
-                    {url.replace(
-                      "https://www.theguardian.com/crosswords/everyman/",
-                      ""
-                    )}
-                  </Button>
-                </Grid>
-              );
-            })}
+          <Grid item>
+            <Paper variant="outlined" sx={{ padding: 4 }}>
+              <Typography>
+                If you have a crossword ID, enter it here:
+              </Typography>
+              <TextField
+                placeholder="Crossword ID"
+                variant="outlined"
+                onChange={handleCrosswordIDInput}
+                onKeyDown={handleCrosswordIDEntry}
+                sx={{ mt: 1 }}
+                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+                fullWidth
+              />
+            </Paper>
+          </Grid>
         </Grid>
-      </Box>
-
-      <Box mt={5}>
-        <AnswerEntry />
-      </Box>
-
-      <Box mt={5}>
-        <Button variant="contained" onClick={() => router.push("/upload")}>
-          Click to upload a crossword from an image
-        </Button>
-      </Box>
-
-      <Box mt={5}>
-        <Button
-          variant="contained"
-          onClick={() => router.push("/upload-backend")}
-        >
-          Click to upload a crossword from an image (Backend)
-        </Button>
-      </Box>
-
-      <Box mt={5}>
-        <Typography>If you have a crossword ID, enter it here:</Typography>
-        <TextField
-          placeholder="Crossword ID"
-          variant="outlined"
-          onChange={handleCrosswordIDInput}
-          onKeyDown={handleCrosswordIDEntry}
-          sx={{ mt: 1 }}
-          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-          fullWidth
-        />
-      </Box>
+      </Grid>
     </Layout>
   );
 };
