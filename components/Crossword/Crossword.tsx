@@ -32,6 +32,7 @@ import {
   ClickAwayListener,
   FormControlLabel,
   Grid,
+  LinearProgress,
   Paper,
   Popover,
   Slider,
@@ -92,9 +93,9 @@ export default function Crossword(props: CrosswordProps) {
   const [backtrackOptions, setBacktrackOptions] = useState<BacktrackingOptions>(
     DefaultBacktrackingOptions
   );
+  const [backtrackProgress, setBacktrackProgress] = useState<number>();
   const [incorrect, setIncorrect] = useState<Clue[]>();
   const [backtrackTime, setBacktrackTime] = useState(0);
-  const [solveButtonIndex, setSolveButtonIndex] = useState(0);
   const [showBacktrackOptions, setShowBacktrackOptions] = useState(false);
   const backtrackOptionsAnchor = useRef(null);
   const solveOverlayTarget = useRef(null);
@@ -146,128 +147,6 @@ export default function Crossword(props: CrosswordProps) {
       setEntries(newEntries);
     }
   }, [puzzle]);
-
-  // Auto-Complete the grid in hands-off mode
-  async function autoCompleteGrid() {
-    setCancelSolveGrid(false);
-    setLoadingSolution(true);
-    let entrySet = entries.filter((e) => e != undefined).map((e) => true);
-
-    const tempClues = puzzle.clues; //.slice(0, 4);
-    const solutionList: Solution[][] = [];
-    for (let i = 0; i < tempClues.length; i++) {
-      try {
-        const c = tempClues[i];
-        const solutions = await getUnlikelySolutions(
-          c.getClueText(),
-          c.totalLength,
-          c.getSolutionPattern()
-        );
-        addToSolutionCache(c, solutions);
-        solutionList.push(solutions);
-      } catch (ex) {
-        console.log(ex);
-        solutionList.push([]);
-      }
-    }
-
-    let cluesAndSolutions: [Clue, Solution[]][] = tempClues.map(function (
-      e,
-      i
-    ) {
-      return [e, solutionList[i]];
-    });
-
-    cluesAndSolutions.sort((a, b) => a[1].length - b[1].length);
-
-    await backtrack(cluesAndSolutions, entrySet);
-    setLoadingSolution(false);
-  }
-
-  // Backtracking algorithm starting with the clues with the lowest number of solutions
-  async function backtrack(
-    cluesAndSolutions: [Clue, Solution[]][],
-    entrySet: boolean[]
-  ) {
-    if (
-      cluesAndSolutions.length == 0 ||
-      !entrySet.some((e) => e) ||
-      cancelSolveGrid
-    ) {
-      return true;
-    }
-
-    let clueSolPair: [Clue, Solution[]] = cluesAndSolutions[0];
-    let clueSingle: Clue = clueSolPair[0];
-    let solutionList: Solution[] = clueSolPair[1];
-
-    for (let j = 0; j < solutionList.length; j++) {
-      let solution = solutionList[j];
-
-      // Save all states to reset after trying
-      let oldCluesAndSolutions = [...cluesAndSolutions];
-      let oldEntries = [...entries];
-      let oldEntrySet = [...entrySet];
-
-      cluesAndSolutions.shift();
-
-      setClueText(clueSingle, solution.strippedAnswer);
-
-      let gridEntries = clueSingle
-        .generateVertices()
-        .map((c) => entries[toIndex(puzzle, c.x, c.y)]);
-
-      gridEntries.forEach((g) => (entrySet[toIndex(puzzle, g.x, g.y)] = false));
-
-      let toUpdate = gridEntries
-        .filter((a) => a.clues.length != 1)
-        .map((e) => e.clues)
-        .reduce((a, b) => a.concat(b));
-
-      const reRequest = cluesAndSolutions.filter(
-        (cSPair) =>
-          toUpdate.find((e) => e.x == cSPair[0].x && e.y == cSPair[0].y) ||
-          false
-      );
-      for (let k = 0; k < reRequest.length; k++) {
-        let me = reRequest[k];
-        try {
-          const solutions = await solveWithPatternUnlikely(
-            me[0].getClueText(),
-            me[0].totalLength,
-            me[0].getSolutionPattern(),
-            getClueText(me[0]).replaceAll("_", "?")
-          );
-          addToSolutionCache(me[0], solutions);
-          cluesAndSolutions[
-            cluesAndSolutions.findIndex(
-              (p) => p[0].x == me[0].x && p[0].y == me[0].y
-            )
-          ] = [me[0], solutions];
-        } catch (ex) {
-          console.log(ex);
-          cluesAndSolutions[
-            cluesAndSolutions.findIndex(
-              (p) => p[0].x == me[0].x && p[0].y == me[0].y
-            )
-          ] = [me[0], []];
-        }
-      }
-
-      cluesAndSolutions.sort((a, b) =>
-        a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
-      );
-
-      if (await backtrack(cluesAndSolutions, entrySet)) {
-        return true;
-      }
-
-      entrySet = oldEntrySet;
-      setEntries(oldEntries);
-      cluesAndSolutions = oldCluesAndSolutions;
-    }
-    return false;
-  }
 
   // Update an entry in the current grid.
   function updateGrid(cell: { x: number; y: number }, updated: any) {
@@ -643,6 +522,31 @@ export default function Crossword(props: CrosswordProps) {
     }
   }
 
+  async function solveAllCluesAuto() {
+    const start = new Date().getTime();
+    setIncorrect(undefined);
+    setBacktrackProgress(undefined);
+    setLoadingSolution(true);
+    const backtrack = new Backtracker(
+      puzzle,
+      entries,
+      setClueText,
+      setBacktrackProgress,
+      (c, s) => addToSolutionCache(c, s, true),
+      onClueSelectedFromList
+    );
+    backtrack.options = backtrackOptions;
+    setBacktracker(backtrack);
+    await backtrack.solveAll();
+    setBacktrackProgress(undefined);
+    setLoadingSolution(false);
+    onCellClick(undefined);
+    if (!backtrack.cancelled) {
+      setIncorrect(puzzle.clues.filter((c) => getClueText(c) != c.solution));
+      setBacktrackTime(new Date().getTime() - start);
+    }
+  }
+
   const svgWidth = cellWidth * puzzle.columns;
   const svgHeight = cellHeight * puzzle.rows;
   const verticalWordBreaks = new Array<GridEntry>();
@@ -836,6 +740,14 @@ export default function Crossword(props: CrosswordProps) {
                 </p>
               </div>
             )}
+            {(backtrackProgress || 0) > 0 && (
+              <Box sx={{ width: `${svgWidth}px`, mt: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(100 * backtrackProgress!) / puzzle.clues.length}
+                />
+              </Box>
+            )}
             <div
               style={{
                 display: "flex",
@@ -853,40 +765,28 @@ export default function Crossword(props: CrosswordProps) {
                   if (index == 0) {
                     await solveAllClues();
                   } else if (index == 1) {
-                    const start = new Date().getTime();
-                    setIncorrect(undefined);
-                    setLoadingSolution(true);
-                    const backtrack = new Backtracker(
-                      puzzle,
-                      entries,
-                      setClueText,
-                      (c, s) => addToSolutionCache(c, s, true),
-                      onClueSelectedFromList
-                    );
-                    backtrack.options = backtrackOptions;
-                    setBacktracker(backtrack);
-                    await backtrack.solveAll();
-                    setLoadingSolution(false);
-                    onCellClick(undefined);
-                    if (!backtrack.cancelled) {
-                      setIncorrect(
-                        puzzle.clues.filter((c) => getClueText(c) != c.solution)
-                      );
-                      setBacktrackTime(new Date().getTime() - start);
-                    }
+                    await solveAllCluesAuto();
                   }
                 }}
-                optionSelected={setSolveButtonIndex}
               ></SplitButton>
-              {solveButtonIndex == 1 && (
-                <IconButton
-                  sx={{ ml: 1 }}
-                  onClick={() => setShowBacktrackOptions(true)}
-                  ref={backtrackOptionsAnchor}
-                >
-                  <SettingsIcon />
-                </IconButton>
-              )}
+              <Button
+                sx={{ ml: 1 }}
+                variant="contained"
+                color="secondary"
+                onClick={() => {
+                  setIncorrect(undefined);
+                  puzzle.clues.forEach(clearClueText);
+                }}
+              >
+                Clear Grid
+              </Button>
+              <IconButton
+                sx={{ ml: 1 }}
+                onClick={() => setShowBacktrackOptions(true)}
+                ref={backtrackOptionsAnchor}
+              >
+                <SettingsIcon />
+              </IconButton>
               <Popover
                 anchorEl={backtrackOptionsAnchor.current}
                 open={showBacktrackOptions}
@@ -901,6 +801,7 @@ export default function Crossword(props: CrosswordProps) {
                 }}
               >
                 <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h5">Auto-Solve Settings</Typography>
                   <FormControlLabel
                     control={
                       <Switch
@@ -959,17 +860,6 @@ export default function Crossword(props: CrosswordProps) {
                   />
                 </Paper>
               </Popover>
-              <Button
-                sx={{ ml: 1 }}
-                variant="contained"
-                color="secondary"
-                onClick={() => {
-                  setIncorrect(undefined);
-                  puzzle.clues.forEach(clearClueText);
-                }}
-              >
-                Clear Grid
-              </Button>
             </div>
             <div
               style={{

@@ -29,6 +29,7 @@ export class Backtracker {
   entries: GridEntry[];
   options: BacktrackingOptions = DefaultBacktrackingOptions;
   onUpdate?: (clue: Clue, answer: string) => void;
+  onSolveCountUpdate?: (count: number) => void;
   setCache?: (clue: Clue, solutions: Solution[]) => void;
   setSolving?: (clue: Clue) => void;
 
@@ -44,12 +45,14 @@ export class Backtracker {
     puzzle: Puzzle,
     entries: GridEntry[],
     onUpdate?: (clue: Clue, answer: string) => void,
+    onSolveCountUpdate?: (count: number) => void,
     setCache?: (clue: Clue, solutions: Solution[]) => void,
     setSolving?: (clue: Clue) => void
   ) {
     this.puzzle = puzzle;
     this.entries = entries.map((e) => Object.assign(new GridEntry(), e));
     this.onUpdate = onUpdate;
+    this.onSolveCountUpdate = onSolveCountUpdate;
     this.setCache = setCache;
     this.setSolving = setSolving;
   }
@@ -182,6 +185,10 @@ export class Backtracker {
   }
 
   async backtrack(clues: Clue[]) {
+    if (this.onSolveCountUpdate) {
+      this.onSolveCountUpdate(this.puzzle.clues.length - clues.length);
+    }
+
     if (clues.length == 0) {
       return true;
     }
