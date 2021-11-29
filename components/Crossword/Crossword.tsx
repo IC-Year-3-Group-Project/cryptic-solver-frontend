@@ -895,7 +895,7 @@ export default function Crossword(props: CrosswordProps) {
                 sx={{ ml: 1 }}
                 variant="contained"
                 onClick={async () => {
-                  await autoCompleteGrid();
+                  await solveAllCluesAuto();
                 }}
               >
                 Solve Grid (Auto)
