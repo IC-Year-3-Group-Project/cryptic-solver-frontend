@@ -105,8 +105,8 @@ export default function ClueList(props: ClueListProps) {
                     </Typography>
                   )}
                   {selected &&
-                    getHints(c).map((hint) => (
-                      <Typography variant="body2" sx={{ ml: 2 }}>
+                    getHints(c).map((hint, index) => (
+                      <Typography key={index} variant="body2" sx={{ ml: 2 }}>
                         {hint}
                       </Typography>
                     ))}

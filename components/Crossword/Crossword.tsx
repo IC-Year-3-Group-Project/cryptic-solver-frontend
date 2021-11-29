@@ -8,12 +8,8 @@ import { Puzzle, toIndex } from "./model/Puzzle";
 import {
   getExplainedSolutions,
   getExplanation,
-  getSolutions,
-  getUnlikelySolutions,
   Solution,
   solveWithPattern,
-  solveWithPatternUnlikely,
-  stripSolution,
   gradient,
   rgbToHex,
 } from "./utils";
@@ -27,9 +23,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
-import { sortedUniqBy } from "cypress/types/lodash";
 import {
-  ClickAwayListener,
   FormControlLabel,
   Grid,
   LinearProgress,
@@ -45,6 +39,7 @@ import {
   BacktrackingOptions,
   DefaultBacktrackingOptions,
 } from "./Backtracking";
+import { parseExplanation } from "./ExplanationParser/AntlrParser";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -600,6 +595,7 @@ export default function Crossword(props: CrosswordProps) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation);
+        console.log(parseExplanation(explanation));
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
