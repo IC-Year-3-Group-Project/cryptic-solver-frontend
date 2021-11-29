@@ -27,7 +27,7 @@ import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import { sortedUniqBy } from "cypress/types/lodash";
-import { Grid } from "@mui/material";
+import { ButtonGroup, Grid } from "@mui/material";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -799,19 +799,24 @@ export default function Crossword(props: CrosswordProps) {
               }}
             >
               {solutions && <div ref={solutionMenuTarget}></div>}
-              <SplitButton
-                options={["Solve Grid", "Solve Grid (Auto)"]}
+              <Button
                 variant="contained"
-                color="primary"
-                disabled={loadingSolution}
-                onClick={async (index) => {
-                  if (index == 0) {
-                    await solveAllClues();
-                  } else if (index == 1) {
-                    await autoCompleteGrid();
-                  }
+                onClick={async () => {
+                  await solveAllClues();
                 }}
-              ></SplitButton>
+              >
+                Solve Grid
+              </Button>
+              <Button
+                sx={{ ml: 1 }}
+                variant="contained"
+                onClick={async () => {
+                  await autoCompleteGrid();
+                }}
+              >
+                Solve Grid (Auto)
+              </Button>
+
               <Button
                 sx={{ ml: 1 }}
                 variant="contained"
