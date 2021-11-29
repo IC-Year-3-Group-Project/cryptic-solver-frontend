@@ -18,6 +18,7 @@ import {
   rgbToHex,
 } from "./utils";
 import Button from "@mui/material/Button";
+import IconButton from "@mui/material/IconButton";
 import SplitButton from "../SplitButton";
 import Hide from "../Hide";
 import Dialog from "@mui/material/Dialog";
@@ -27,7 +28,24 @@ import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import { sortedUniqBy } from "cypress/types/lodash";
-import { ButtonGroup, Grid } from "@mui/material";
+import {
+  ButtonGroup,
+  ClickAwayListener,
+  FormControlLabel,
+  Grid,
+  LinearProgress,
+  Paper,
+  Popover,
+  Slider,
+  Switch,
+  Typography,
+} from "@mui/material";
+import SettingsIcon from "@mui/icons-material/Settings";
+import {
+  Backtracker,
+  BacktrackingOptions,
+  DefaultBacktrackingOptions,
+} from "./Backtracking";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
@@ -43,6 +61,7 @@ const RightKey = "ArrowRight";
 const UpKey = "ArrowUp";
 const DownKey = "ArrowDown";
 const TabKey = "Tab";
+const EscapeKey = "Escape";
 
 const KeyDirections: {
   [key: string]: { direction: ClueDirection; delta: number };
@@ -71,6 +90,15 @@ export default function Crossword(props: CrosswordProps) {
   const [solutionCache, setSolutionCache] = useState<{
     [key: string]: Solution[];
   }>({});
+  const [backtracker, setBacktracker] = useState<Backtracker>();
+  const [backtrackOptions, setBacktrackOptions] = useState<BacktrackingOptions>(
+    DefaultBacktrackingOptions
+  );
+  const [backtrackProgress, setBacktrackProgress] = useState<number>();
+  const [incorrect, setIncorrect] = useState<Clue[]>();
+  const [backtrackTime, setBacktrackTime] = useState(0);
+  const [showBacktrackOptions, setShowBacktrackOptions] = useState(false);
+  const backtrackOptionsAnchor = useRef(null);
   const solveOverlayTarget = useRef(null);
   const solutionMenuTarget = useRef(null);
 
@@ -120,128 +148,6 @@ export default function Crossword(props: CrosswordProps) {
       setEntries(newEntries);
     }
   }, [puzzle]);
-
-  // Auto-Complete the grid in hands-off mode
-  async function autoCompleteGrid() {
-    setCancelSolveGrid(false);
-    setLoadingSolution(true);
-    let entrySet = entries.filter((e) => e != undefined).map((e) => true);
-
-    const tempClues = puzzle.clues; //.slice(0, 4);
-    const solutionList: Solution[][] = [];
-    for (let i = 0; i < tempClues.length; i++) {
-      try {
-        const c = tempClues[i];
-        const solutions = await getUnlikelySolutions(
-          c.getClueText(),
-          c.totalLength,
-          c.getSolutionPattern()
-        );
-        addToSolutionCache(c, solutions);
-        solutionList.push(solutions);
-      } catch (ex) {
-        console.log(ex);
-        solutionList.push([]);
-      }
-    }
-
-    let cluesAndSolutions: [Clue, Solution[]][] = tempClues.map(function (
-      e,
-      i
-    ) {
-      return [e, solutionList[i]];
-    });
-
-    cluesAndSolutions.sort((a, b) => a[1].length - b[1].length);
-
-    await backtrack(cluesAndSolutions, entrySet);
-    setLoadingSolution(false);
-  }
-
-  // Backtracking algorithm starting with the clues with the lowest number of solutions
-  async function backtrack(
-    cluesAndSolutions: [Clue, Solution[]][],
-    entrySet: boolean[]
-  ) {
-    if (
-      cluesAndSolutions.length == 0 ||
-      !entrySet.some((e) => e) ||
-      cancelSolveGrid
-    ) {
-      return true;
-    }
-
-    let clueSolPair: [Clue, Solution[]] = cluesAndSolutions[0];
-    let clueSingle: Clue = clueSolPair[0];
-    let solutionList: Solution[] = clueSolPair[1];
-
-    for (let j = 0; j < solutionList.length; j++) {
-      let solution = solutionList[j];
-
-      // Save all states to reset after trying
-      let oldCluesAndSolutions = [...cluesAndSolutions];
-      let oldEntries = [...entries];
-      let oldEntrySet = [...entrySet];
-
-      cluesAndSolutions.shift();
-
-      setClueText(clueSingle, solution.strippedAnswer);
-
-      let gridEntries = clueSingle
-        .generateVertices()
-        .map((c) => entries[toIndex(puzzle, c.x, c.y)]);
-
-      gridEntries.forEach((g) => (entrySet[toIndex(puzzle, g.x, g.y)] = false));
-
-      let toUpdate = gridEntries
-        .filter((a) => a.clues.length != 1)
-        .map((e) => e.clues)
-        .reduce((a, b) => a.concat(b));
-
-      const reRequest = cluesAndSolutions.filter(
-        (cSPair) =>
-          toUpdate.find((e) => e.x == cSPair[0].x && e.y == cSPair[0].y) ||
-          false
-      );
-      for (let k = 0; k < reRequest.length; k++) {
-        let me = reRequest[k];
-        try {
-          const solutions = await solveWithPatternUnlikely(
-            me[0].getClueText(),
-            me[0].totalLength,
-            me[0].getSolutionPattern(),
-            getClueText(me[0]).replaceAll("_", "?")
-          );
-          addToSolutionCache(me[0], solutions);
-          cluesAndSolutions[
-            cluesAndSolutions.findIndex(
-              (p) => p[0].x == me[0].x && p[0].y == me[0].y
-            )
-          ] = [me[0], solutions];
-        } catch (ex) {
-          console.log(ex);
-          cluesAndSolutions[
-            cluesAndSolutions.findIndex(
-              (p) => p[0].x == me[0].x && p[0].y == me[0].y
-            )
-          ] = [me[0], []];
-        }
-      }
-
-      cluesAndSolutions.sort((a, b) =>
-        a[1].length == 0 ? 1 : b[1].length == 0 ? -1 : a[1].length - b[1].length
-      );
-
-      if (await backtrack(cluesAndSolutions, entrySet)) {
-        return true;
-      }
-
-      entrySet = oldEntrySet;
-      setEntries(oldEntries);
-      cluesAndSolutions = oldCluesAndSolutions;
-    }
-    return false;
-  }
 
   // Update an entry in the current grid.
   function updateGrid(cell: { x: number; y: number }, updated: any) {
@@ -296,6 +202,9 @@ export default function Crossword(props: CrosswordProps) {
       updateGrid(currentCell, { content: "" });
     } else if (event.key == TabKey) {
       event.preventDefault();
+    } else if (event.key == EscapeKey) {
+      event.preventDefault();
+      onCellClick(undefined);
     }
   }
 
@@ -430,7 +339,7 @@ export default function Crossword(props: CrosswordProps) {
     updateGridMulti(
       clue.generateVertices(),
       [...text].map((s) => ({
-        content: s.toUpperCase(),
+        content: s == "_" ? undefined : s.toUpperCase(),
       }))
     );
   }
@@ -463,9 +372,26 @@ export default function Crossword(props: CrosswordProps) {
     );
   }
 
-  function addToSolutionCache(clue: Clue, solutions: Solution[]) {
-    solutionCache[clue.getTitle()] = solutions;
-    setSolutionCache({ ...solutionCache });
+  function addToSolutionCache(
+    clue: Clue,
+    solutions: Solution[],
+    append?: boolean
+  ) {
+    if (solutions.length > 0) {
+      const solutionList = append
+        ? solutionCache[clue.getTitle()] ||
+          (solutionCache[clue.getTitle()] = [])
+        : [];
+      (append
+        ? solutions.filter(
+            (s) =>
+              !solutionList.some((s2) => s2.strippedAnswer == s.strippedAnswer)
+          )
+        : solutions
+      ).forEach((s) => solutionList.push(s));
+      solutionCache[clue.getTitle()] = solutionList;
+      setSolutionCache({ ...solutionCache });
+    }
   }
 
   function checkExistingSolutionInArray(
@@ -551,6 +477,109 @@ export default function Crossword(props: CrosswordProps) {
     return "Could not explain solution.";
   }
 
+  function getHintsFromExplanation(clue: Clue) {
+    const solution = getSolution(clue);
+    if (solution) {
+      console.log(
+        `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
+      );
+
+      const sentences = solution.explanation.split(".");
+      let hints = getHints(sentences);
+
+      if (hints.length < solution.hintLevel) {
+        hints.push("No more hints available");
+        return hints;
+      }
+      return hints.slice(0, solution.hintLevel);
+    }
+    return ["No hints available"];
+  }
+
+  // Produce a hints array of all good hints from the sentences
+  // in the explanation
+  function getHints(sentences: string[]) {
+    let hints = [];
+    let hintNumber = 0;
+    let start = 0;
+    let end = 0;
+    for (let i = 0; i < sentences.length; i++) {
+      let sentence = sentences[i];
+      hintNumber++;
+
+      // Trim the additional explanation in brackets because
+      // sometimes it expresses uncertainty e.g. "I am not sure"
+      if (sentence.indexOf("(") == 1) {
+        let closingBracketIndex = sentence.indexOf(")");
+        sentence = sentence.substring(closingBracketIndex + 1);
+      }
+
+      if (sentence.lastIndexOf(")") == sentence.length - 1) {
+        let openingBracketIndex = sentence.indexOf("(");
+        sentence = sentence.substring(0, openingBracketIndex);
+      }
+
+      if (sentence.indexOf("is a double definition") != -1) {
+        hints.push(`Hint #${hintNumber}: The clue has a double definition.`);
+      } else if (sentence.indexOf("' is the first definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The first definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the second definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(
+          `Hint #${hintNumber}: The second definition is ${definitionHint}.`
+        );
+      } else if (sentence.indexOf("' is the definition") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let definitionHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`);
+      } else if (sentence.indexOf("' is the wordplay") != -1) {
+        start = sentence.indexOf("'");
+        end = sentence.lastIndexOf("'");
+        let wordplayHint = sentence.substring(start, end + 1);
+        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`);
+      } else if (
+        sentence.indexOf("take the first letters") != -1 ||
+        sentence.indexOf("taking the first letters") != -1 ||
+        sentence.indexOf("take the initial letters") != -1 ||
+        sentence.indexOf("taking the initial letters") != -1 ||
+        sentence.indexOf("removing the last letter") != -1 ||
+        sentence.indexOf("to remove the last letter") != -1 ||
+        sentence.indexOf("to remove the final letter") != -1 ||
+        sentence.indexOf("removing the final letter") != -1 ||
+        sentence.indexOf("removing the first letter") != -1 ||
+        sentence.indexOf("to remove the first letter") != -1 ||
+        sentence.indexOf("take alternating letters") != -1 ||
+        sentence.indexOf("taking alternating letters") != -1 ||
+        sentence.indexOf("one lot of letters") != -1 ||
+        (sentence.indexOf("the letters") != 1 &&
+          (sentence.indexOf("reversed") != -1 ||
+            sentence.indexOf("backwards") != -1)) ||
+        sentence.indexOf("anagramming") != -1 ||
+        sentence.indexOf("' becomes '") != -1 ||
+        sentence.indexOf("is a reversal indicator") != -1
+      ) {
+        hints.push(`Hint #${hintNumber}: ${sentence}.`);
+      } else if (sentence.indexOf("is hidden in the letters of") != -1) {
+        let rest = sentence.substring(2);
+        let start = rest.indexOf("'");
+        rest = rest.substring(start + 1);
+        hints.push(`Hint #${hintNumber}: The answer${rest}.`);
+      } else {
+        hintNumber--;
+      }
+    }
+
+    return hints;
+  }
+
   async function explainAnswerHaskell(clue: Clue) {
     const answer = getClueText(clue);
     if (answer.includes("_")) {
@@ -616,6 +645,31 @@ export default function Crossword(props: CrosswordProps) {
       if (gridContinuation) {
         await solveAllClues(gridContinuation);
       }
+    }
+  }
+
+  async function solveAllCluesAuto() {
+    const start = new Date().getTime();
+    setIncorrect(undefined);
+    setBacktrackProgress(undefined);
+    setLoadingSolution(true);
+    const backtrack = new Backtracker(
+      puzzle,
+      entries,
+      setClueText,
+      setBacktrackProgress,
+      (c, s) => addToSolutionCache(c, s, true),
+      onClueSelectedFromList
+    );
+    backtrack.options = backtrackOptions;
+    setBacktracker(backtrack);
+    await backtrack.solveAll();
+    setBacktrackProgress(undefined);
+    setLoadingSolution(false);
+    onCellClick(undefined);
+    if (!backtrack.cancelled) {
+      setIncorrect(puzzle.clues.filter((c) => getClueText(c) != c.solution));
+      setBacktrackTime(new Date().getTime() - start);
     }
   }
 
@@ -791,6 +845,36 @@ export default function Crossword(props: CrosswordProps) {
                 </div>
               )}
             </div>
+            {incorrect && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  paddingTop: "1rem",
+                }}
+              >
+                <p>{`${puzzle.clues.length - incorrect.length}/${
+                  puzzle.clues.length
+                } correct!`}</p>
+                {incorrect.map((c, i) => (
+                  <a key={i} onClick={() => onClueSelectedFromList(c)}>
+                    {c.getTitle()}: {getClueText(c)} vs {c.solution}
+                  </a>
+                ))}
+                <p>
+                  Backtracking took {Math.round(backtrackTime * 10) / 10000}s.
+                </p>
+              </div>
+            )}
+            {(backtrackProgress || 0) > 0 && (
+              <Box sx={{ width: `${svgWidth}px`, mt: 1 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={(100 * backtrackProgress!) / puzzle.clues.length}
+                />
+              </Box>
+            )}
             <div
               style={{
                 display: "flex",
@@ -821,10 +905,93 @@ export default function Crossword(props: CrosswordProps) {
                 sx={{ ml: 1 }}
                 variant="contained"
                 color="secondary"
-                onClick={() => puzzle.clues.forEach(clearClueText)}
+                onClick={() => {
+                  setIncorrect(undefined);
+                  puzzle.clues.forEach(clearClueText);
+                }}
               >
                 Clear Grid
               </Button>
+              <IconButton
+                sx={{ ml: 1 }}
+                onClick={() => setShowBacktrackOptions(true)}
+                ref={backtrackOptionsAnchor}
+              >
+                <SettingsIcon />
+              </IconButton>
+              <Popover
+                anchorEl={backtrackOptionsAnchor.current}
+                open={showBacktrackOptions}
+                onClose={() => setShowBacktrackOptions(false)}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "center",
+                }}
+                transformOrigin={{
+                  vertical: "bottom",
+                  horizontal: "center",
+                }}
+              >
+                <Paper sx={{ p: 2, display: "flex", flexDirection: "column" }}>
+                  <Typography variant="h5">Auto-Solve Settings</Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.useHaskellBase}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            useHaskellBase: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Use Haskell For Unsolved Clues"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.useHaskellPartial}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            useHaskellPartial: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Use Haskell For Partially Solved Clues"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.triggerUpdateOnClear}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            triggerUpdateOnClear: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Clear Cells When Reversing Step"
+                  />
+                  <Typography sx={{ pt: 1 }}>Max Solve Retires</Typography>
+                  <Slider
+                    value={backtrackOptions.maxSolutionRetries}
+                    onChange={(_, val) =>
+                      setBacktrackOptions({
+                        ...backtrackOptions,
+                        maxSolutionRetries: Number(val),
+                      })
+                    }
+                    step={1}
+                    min={0}
+                    max={5}
+                    valueLabelDisplay="auto"
+                  />
+                </Paper>
+              </Popover>
             </div>
             <div
               style={{
@@ -841,6 +1008,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
+                        `Get Hint ${selectedClue.getTitle()}`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -849,6 +1017,23 @@ export default function Crossword(props: CrosswordProps) {
                           explainAnswerCached(selectedClue);
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
+                        } else if (index == 3) {
+                          const solutionToIncrement = getSolution(selectedClue);
+                          if (solutionToIncrement) {
+                            solutionToIncrement.hintLevel += 1;
+                            solutionCache[selectedClue.getTitle()].forEach(
+                              (solution) => {
+                                if (
+                                  solution.explanation ===
+                                  solutionToIncrement.explanation
+                                ) {
+                                  return solutionToIncrement;
+                                }
+                                return solution;
+                              }
+                            );
+                            setSolutionCache({ ...solutionCache });
+                          }
                         }
                       }}
                       cypress-data="solve-cell"
@@ -862,6 +1047,7 @@ export default function Crossword(props: CrosswordProps) {
                         setSolutions(undefined);
                         setCancelSolveGrid(true);
                         cancelSolveClue();
+                        backtracker?.cancelSolve();
                       }}
                     >
                       Cancel
@@ -916,6 +1102,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
             <ClueList
               clues={puzzle.clues.filter(
@@ -925,6 +1112,7 @@ export default function Crossword(props: CrosswordProps) {
               onClueClicked={onClueSelectedFromList}
               selectedClue={selectedClue}
               explainAnswer={explainAnswerCached}
+              getHints={getHintsFromExplanation}
             />
           </Grid>
         </Grid>
