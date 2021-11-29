@@ -139,6 +139,7 @@ describe("Fetching crossword success", () => {
   it("empty solutions display no solutions found", () => {
     // Mock return value for empty clue
     cy.intercept("POST", "/solve-and-explain", []);
+    cy.intercept("POST", "/solve-with-pattern", []);
 
     cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
     cy.get("[data-cy=solve-cell").click({ force: true });
@@ -152,12 +153,31 @@ describe("Fetching crossword success", () => {
     cy.intercept("POST", "/solve-and-explain", [
       { answer: mockSolution, explanation: "", confidence: 1 },
     ]);
+    cy.intercept("POST", "/solve-with-pattern", []);
 
     cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
     cy.get("[data-cy=solve-cell]").click({ force: true });
 
     for (let i = 1; i < mockSolution.length; i++) {
       cy.get(`[data-cy=grid-cell-0-${i}]`).contains(
+        mockSolution[i].toUpperCase()
+      );
+    }
+  });
+
+  it("partially solved solutions display if found", () => {
+    // Mock return value for returned solution
+    const mockSolution = "Yank";
+    cy.intercept("POST", "/solve-and-explain", []);
+    cy.intercept("POST", "/solve-with-pattern", [
+      { answer: mockSolution, explanation: "", confidence: 1 },
+    ]);
+
+    cy.get("[data-cy=grid-cell-0-0]").click({ force: true });
+    cy.get("[data-cy=solve-cell]").click({ force: true });
+
+    for (let i = 1; i < mockSolution.length; i++) {
+      cy.get(`[data-cy=grid-cell-${i}-0]`).contains(
         mockSolution[i].toUpperCase()
       );
     }

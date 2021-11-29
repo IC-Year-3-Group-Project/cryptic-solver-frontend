@@ -16,10 +16,12 @@ export interface ClueListProps {
   selectedClue?: Clue;
   onClueClicked?: (clue: Clue) => void;
   explainAnswer: (clue: Clue) => string;
+  getHints: (clue: Clue) => string[];
 }
 
 export default function ClueList(props: ClueListProps) {
-  const { title, clues, onClueClicked, selectedClue, explainAnswer } = props;
+  const { title, clues, onClueClicked, selectedClue, explainAnswer, getHints } =
+    props;
 
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editClueText, setEditClueText] = useState("");
@@ -48,16 +50,24 @@ export default function ClueList(props: ClueListProps) {
         item
         container
         direction="column"
-        alignItems="left"
-        xs={5}
-        spacing={1.25}
-        sx={{ ml: 1.5 }}
+        justifyContent="flex-start"
+        alignItems="flex-start"
+        xs={6}
+        md={6}
+        spacing={2}
+        className="clue-list"
       >
-        <h3 className="clue-list-title">{title}</h3>
+        <Grid item container>
+          <Grid item xs={10}>
+            <Typography variant="h5" className="clue-list-title">
+              {title}
+            </Typography>
+          </Grid>
+        </Grid>
         {clues.map((c, index) => {
           const selected = c == selectedClue;
           return (
-            <Grid item key={index}>
+            <Grid item key={index} ml={1.5}>
               <a href="#" onClick={(e) => !selected && handleClueClicked(e, c)}>
                 <>
                   <Typography
@@ -68,7 +78,6 @@ export default function ClueList(props: ClueListProps) {
                       fontWeight: selected ? "bold" : "normal",
                     }}
                     variant="body1"
-                    noWrap
                   >
                     {c.number}
                     {". "}
@@ -95,6 +104,12 @@ export default function ClueList(props: ClueListProps) {
                       {explainAnswer(c)}
                     </Typography>
                   )}
+                  {selected &&
+                    getHints(c).map((hint) => (
+                      <Typography variant="body2" sx={{ ml: 2 }}>
+                        {hint}
+                      </Typography>
+                    ))}
                 </>
               </a>
             </Grid>
