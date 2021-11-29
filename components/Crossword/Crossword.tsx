@@ -29,6 +29,7 @@ import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import { sortedUniqBy } from "cypress/types/lodash";
 import {
+  ButtonGroup,
   ClickAwayListener,
   FormControlLabel,
   Grid,
@@ -882,19 +883,24 @@ export default function Crossword(props: CrosswordProps) {
               }}
             >
               {solutions && <div ref={solutionMenuTarget}></div>}
-              <SplitButton
-                options={["Solve Grid", "Solve Grid (Auto)"]}
+              <Button
                 variant="contained"
-                color="primary"
-                disabled={loadingSolution}
-                onClick={async (index) => {
-                  if (index == 0) {
-                    await solveAllClues();
-                  } else if (index == 1) {
-                    await solveAllCluesAuto();
-                  }
+                onClick={async () => {
+                  await solveAllClues();
                 }}
-              ></SplitButton>
+              >
+                Solve Grid
+              </Button>
+              <Button
+                sx={{ ml: 1 }}
+                variant="contained"
+                onClick={async () => {
+                  await solveAllCluesAuto();
+                }}
+              >
+                Solve Grid (Auto)
+              </Button>
+
               <Button
                 sx={{ ml: 1 }}
                 variant="contained"
@@ -1086,6 +1092,7 @@ export default function Crossword(props: CrosswordProps) {
             xs={12}
             md={12}
             xl={8}
+            mb={2}
           >
             <ClueList
               clues={puzzle.clues.filter(
