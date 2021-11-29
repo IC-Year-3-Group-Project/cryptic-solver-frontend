@@ -906,6 +906,7 @@ export default function Crossword(props: CrosswordProps) {
             xs={12}
             md={12}
             xl={8}
+            mb={2}
           >
             <ClueList
               clues={puzzle.clues.filter(
