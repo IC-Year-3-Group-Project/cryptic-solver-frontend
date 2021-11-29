@@ -76,102 +76,134 @@ const Home: NextPage = () => {
 
   return (
     <Layout home>
-      <h1 className={styles.title} data-cy="title">
-        Cryptic Crossword Solver
-      </h1>
-
-      <p className={styles.description}>
-        Enter a link to an Everyman Guardian crossword:
-      </p>
-
-      <TextField
-        label="Everyman link or Crossword Number"
-        fullWidth
-        style={{ marginBottom: 16 }}
-        variant="standard"
-        value={crosswordLink}
-        data-cy="link-input"
-        onChange={handleCrosswordLinkInput}
-        onKeyDown={handleCrosswordLinkEntry}
-      />
-      <LoadingButton
-        variant="contained"
-        onClick={fetchCrossword}
-        data-cy="fetch-crossword-button"
-      >
-        Fetch!
-      </LoadingButton>
-
-      <Box mt={5}>
+      <Grid container direction="row" spacing={2}>
         <Grid
-          container
-          direction="row"
+          item
           justifyContent="center"
           alignItems="center"
-          spacing={2}
+          container
+          xs={6}
+          ml={20}
         >
           <Grid item>
-            <Typography variant="h6">Crosswords to try:</Typography>
+            <Typography variant="h1" className={styles.title} data-cy="title">
+              Cryptic Crossword Solver
+            </Typography>
+
+            <Typography variant="body1" className={styles.description}>
+              Enter a link to an Everyman Guardian crossword:
+            </Typography>
+          </Grid>
+          <Grid
+            item
+            container
+            justifyContent="center"
+            alignItems="center"
+            direction="row"
+            spacing={3}
+          >
+            <Grid item xs={5}>
+              <TextField
+                label="Everyman link or Crossword Number"
+                fullWidth
+                variant="outlined"
+                value={crosswordLink}
+                data-cy="link-input"
+                onChange={handleCrosswordLinkInput}
+                onKeyDown={handleCrosswordLinkEntry}
+              />
+            </Grid>
+            <Grid item>
+              <LoadingButton
+                variant="contained"
+                onClick={fetchCrossword}
+                data-cy="fetch-crossword-button"
+              >
+                Fetch!
+              </LoadingButton>
+            </Grid>
           </Grid>
 
-          {loadingEveryman && (
+          <Grid
+            item
+            container
+            justifyContent="center"
+            alignItems="center"
+            direction="row"
+            spacing={2}
+          >
             <Grid item>
-              <CircularProgress size={20} />
+              <Typography variant="h6">Crosswords to try:</Typography>
             </Grid>
-          )}
 
-          {!loadingEveryman &&
-            everymanUrls.slice(0, 5).map((url, i) => {
-              return (
-                <Grid item key={i}>
-                  <Button
-                    variant="outlined"
-                    href={"/crossword?url=" + url}
-                    data-cy="crossword-link"
-                  >
-                    #
-                    {url.replace(
-                      "https://www.theguardian.com/crosswords/everyman/",
-                      ""
-                    )}
-                  </Button>
-                </Grid>
-              );
-            })}
+            {loadingEveryman && (
+              <Grid item>
+                <CircularProgress size={20} />
+              </Grid>
+            )}
+
+            {!loadingEveryman &&
+              everymanUrls.slice(0, 5).map((url, i) => {
+                return (
+                  <Grid item key={i}>
+                    <Button
+                      variant="outlined"
+                      href={"/crossword?url=" + url}
+                      data-cy="crossword-link"
+                    >
+                      #
+                      {url.replace(
+                        "https://www.theguardian.com/crosswords/everyman/",
+                        ""
+                      )}
+                    </Button>
+                  </Grid>
+                );
+              })}
+          </Grid>
         </Grid>
-      </Box>
 
-      <Box mt={5}>
-        <AnswerEntry />
-      </Box>
-
-      <Box mt={5}>
-        <Button variant="contained" onClick={() => router.push("/upload")}>
-          Click to upload a crossword from an image
-        </Button>
-      </Box>
-
-      <Box mt={5}>
-        <Button
-          variant="contained"
-          onClick={() => router.push("/upload-backend")}
+        <Grid
+          item
+          container
+          direction="column"
+          justifyContent="flex-start"
+          alignItems="flex-start"
+          xs={4}
+          spacing={2}
         >
-          Click to upload a crossword from an image (Backend)
-        </Button>
-      </Box>
+          <Grid item xs={6}>
+            <AnswerEntry />
+          </Grid>
+          <Grid item>
+            <Button variant="contained" onClick={() => router.push("/upload")}>
+              Upload a crossword
+            </Button>
+          </Grid>
 
-      <Box mt={5}>
-        <Typography>If you have a crossword ID, enter it here:</Typography>
-        <TextField
-          placeholder="Crossword ID"
-          variant="outlined"
-          onChange={handleCrosswordIDInput}
-          onKeyDown={handleCrosswordIDEntry}
-          sx={{ mt: 1 }}
-          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-          fullWidth
-        />
-      </Box>
+          <Grid item>
+            <Button
+              variant="contained"
+              onClick={() => router.push("/upload-backend")}
+            >
+              Upload a crossword (Backend)
+            </Button>
+          </Grid>
+
+          <Grid item>
+            <Typography>If you have a crossword ID, enter it here:</Typography>
+            <TextField
+              placeholder="Crossword ID"
+              variant="outlined"
+              onChange={handleCrosswordIDInput}
+              onKeyDown={handleCrosswordIDEntry}
+              sx={{ mt: 1 }}
+              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              fullWidth
+            />
+          </Grid>
+        </Grid>
+      </Grid>
     </Layout>
   );
 };
