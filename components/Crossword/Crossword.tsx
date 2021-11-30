@@ -10,6 +10,7 @@ import {
   getExplanation,
   Solution,
   solveWithPattern,
+  solveWithPatternUnlikely,
   gradient,
   rgbToHex,
 } from "./utils";
@@ -71,6 +72,11 @@ const KeyDirections: {
 export const ClueSelectionColour = "#FFF7B2";
 export const CellSelectionColour = "#FFE500";
 
+function useForceUpdate() {
+  const [value, setValue] = useState(0);
+  return () => setValue((value) => 1 - value);
+}
+
 export default function Crossword(props: CrosswordProps) {
   const { puzzle, cellWidth, cellHeight } = props;
 
@@ -103,6 +109,7 @@ export default function Crossword(props: CrosswordProps) {
   );
   let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   let [gridContinuation, setGridContinuation] = useState<number>();
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     if (puzzle) {
@@ -464,30 +471,69 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   function explainAnswerCached(clue: Clue) {
-    const solution = getSolution(clue);
-    if (solution) {
-      // setExplanation(solution.explanation);
-      return solution.explanation;
+    if (clue.showExplanation) {
+      const solution = getSolution(clue);
+      if (solution) {
+        // setExplanation(solution.explanation);
+        return solution.explanation;
+      }
+      // setSolveOverlayText("Could not explain solution.");
+      return "Could not explain entered solution.";
     }
-    // setSolveOverlayText("Could not explain solution.");
-    return "Could not explain solution.";
   }
 
-  function getHintsFromExplanation(clue: Clue) {
-    const solution = getSolution(clue);
-    if (solution) {
-      console.log(
-        `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
+  function processHints(hints: string[], solution: string): string[] {
+    const hintSet = new Set();
+    let hintNumber = 0;
+    const newHints = [];
+    for (let hint of hints) {
+      const wordSet = new Set(
+        hint
+          .replace(/[^a-zA-Z ]/g, "")
+          .toLowerCase()
+          .split(" ")
       );
-
-      const sentences = solution.explanation.split(".");
-      let hints = getHints(sentences);
-
-      if (hints.length < solution.hintLevel) {
-        hints.push("No more hints available");
-        return hints;
+      if (!hintSet.has(hint) && !wordSet.has(solution.toLowerCase())) {
+        hintNumber += 1;
+        newHints.push(`Hint #${hintNumber}: ${hint}`);
       }
-      return hints.slice(0, solution.hintLevel);
+      hintSet.add(hint);
+    }
+    return newHints;
+  }
+
+  async function getHintsFromExplanation(clue: Clue) {
+    if (clue.solution) {
+      let hints: string[] = [];
+      if (!clue.explanation) {
+        clue.explanation = await getExplanation(clue.text, clue.solution);
+        if (!clue.explanation) {
+          const solutions = await solveWithPatternUnlikely(
+            clue.text,
+            clue.totalLength,
+            `(${clue.lengths.join()})`,
+            clue.solution
+          );
+          clue.explanation = solutions[0]?.explanation;
+          if (!clue.explanation) {
+            return ["No hints available"];
+          }
+          const sentences = clue.explanation.split(".");
+          let hintNumber = 0;
+          hints = getHints(sentences);
+        } else {
+          let hintNumber = 0;
+          hints = parseExplanation(clue.explanation).toEnglish();
+        }
+      }
+
+      hints = processHints(hints, clue.solution);
+
+      if (hints.length < 1) {
+        return ["No hints available"];
+      }
+      hints.push("No more hints available");
+      return hints;
     }
     return ["No hints available"];
   }
@@ -496,12 +542,10 @@ export default function Crossword(props: CrosswordProps) {
   // in the explanation
   function getHints(sentences: string[]) {
     let hints = [];
-    let hintNumber = 0;
     let start = 0;
     let end = 0;
     for (let i = 0; i < sentences.length; i++) {
       let sentence = sentences[i];
-      hintNumber++;
 
       // Trim the additional explanation in brackets because
       // sometimes it expresses uncertainty e.g. "I am not sure"
@@ -516,31 +560,27 @@ export default function Crossword(props: CrosswordProps) {
       }
 
       if (sentence.indexOf("is a double definition") != -1) {
-        hints.push(`Hint #${hintNumber}: The clue has a double definition.`);
+        hints.push(`The clue has a double definition.`);
       } else if (sentence.indexOf("' is the first definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(
-          `Hint #${hintNumber}: The first definition is ${definitionHint}.`
-        );
+        hints.push(`The first definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the second definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(
-          `Hint #${hintNumber}: The second definition is ${definitionHint}.`
-        );
+        hints.push(`The second definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`);
+        hints.push(`The definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the wordplay") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let wordplayHint = sentence.substring(start, end + 1);
-        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`);
+        hints.push(`The wordplay is ${wordplayHint}.`);
       } else if (
         sentence.indexOf("take the first letters") != -1 ||
         sentence.indexOf("taking the first letters") != -1 ||
@@ -562,17 +602,14 @@ export default function Crossword(props: CrosswordProps) {
         sentence.indexOf("' becomes '") != -1 ||
         sentence.indexOf("is a reversal indicator") != -1
       ) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`);
+        hints.push(`${sentence}.`);
       } else if (sentence.indexOf("is hidden in the letters of") != -1) {
         let rest = sentence.substring(2);
         let start = rest.indexOf("'");
         rest = rest.substring(start + 1);
-        hints.push(`Hint #${hintNumber}: The answer${rest}.`);
-      } else {
-        hintNumber--;
+        hints.push(`The answer${rest}.`);
       }
     }
-
     return hints;
   }
 
@@ -645,6 +682,10 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   async function solveAllCluesAuto() {
+    puzzle.clues.forEach((clue) => {
+      clue.hintLevel = 0;
+      clue.showExplanation = true;
+    });
     const start = new Date().getTime();
     setIncorrect(undefined);
     setBacktrackProgress(undefined);
@@ -1010,26 +1051,14 @@ export default function Crossword(props: CrosswordProps) {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
+                          selectedClue.showExplanation = true;
                           explainAnswerCached(selectedClue);
+                          forceUpdate();
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
                         } else if (index == 3) {
-                          const solutionToIncrement = getSolution(selectedClue);
-                          if (solutionToIncrement) {
-                            solutionToIncrement.hintLevel += 1;
-                            solutionCache[selectedClue.getTitle()].forEach(
-                              (solution) => {
-                                if (
-                                  solution.explanation ===
-                                  solutionToIncrement.explanation
-                                ) {
-                                  return solutionToIncrement;
-                                }
-                                return solution;
-                              }
-                            );
-                            setSolutionCache({ ...solutionCache });
-                          }
+                          selectedClue.hintLevel += 1;
+                          forceUpdate();
                         }
                       }}
                       cypress-data="solve-cell"

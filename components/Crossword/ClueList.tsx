@@ -1,4 +1,4 @@
-import { MouseEvent, useState } from "react";
+import { MouseEvent, useState, useEffect } from "react";
 import { Clue } from "./model/Clue";
 import IconButton from "@mui/material/IconButton";
 import Edit from "@mui/icons-material/Edit";
@@ -15,8 +15,8 @@ export interface ClueListProps {
   clues: Clue[];
   selectedClue?: Clue;
   onClueClicked?: (clue: Clue) => void;
-  explainAnswer: (clue: Clue) => string;
-  getHints: (clue: Clue) => string[];
+  explainAnswer: (clue: Clue) => string | undefined;
+  getHints: (clue: Clue) => Promise<string[]>;
 }
 
 export default function ClueList(props: ClueListProps) {
@@ -26,6 +26,39 @@ export default function ClueList(props: ClueListProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editClueText, setEditClueText] = useState("");
   const [editClueError, setEditClueError] = useState<string>();
+  const [hintsCache, setHintsCache] = useState<{
+    [key: string]: string[];
+  }>(
+    clues.reduce(
+      (acc, c) => ({
+        ...acc,
+        [`${c.number}, ${c.direction}`]: ["Generating hints..."],
+      }),
+      {}
+    )
+  );
+
+  useEffect(() => {
+    async function fetchHints() {
+      const hints: {
+        [key: string]: string[];
+      } = clues.reduce(
+        (acc, c) => ({
+          ...acc,
+          [`${c.number}, ${c.direction}`]: ["Generating hints..."],
+        }),
+        {}
+      );
+
+      clues.map(async (c, index) => {
+        const hint = await getHints(c);
+        hints[`${c.number}, ${c.direction}`] = hint;
+        setHintsCache({ ...hints });
+      });
+    }
+
+    fetchHints();
+  }, []);
 
   function saveClueEdits() {
     const trimmed = editClueText.trim();
@@ -99,13 +132,12 @@ export default function ClueList(props: ClueListProps) {
                       </IconButton>
                     )}
                   </Typography>
-                  {selected && (
-                    <Typography variant="body2" sx={{ ml: 2 }}>
-                      {explainAnswer(c)}
-                    </Typography>
-                  )}
-                  {selected &&
-                    getHints(c).map((hint, index) => (
+                  <Typography variant="body2" sx={{ ml: 2 }}>
+                    {explainAnswer(c)}
+                  </Typography>
+                  {hintsCache[`${c.number}, ${c.direction}`]
+                    ?.slice(0, c.hintLevel)
+                    .map((hint, index) => (
                       <Typography key={index} variant="body2" sx={{ ml: 2 }}>
                         {hint}
                       </Typography>

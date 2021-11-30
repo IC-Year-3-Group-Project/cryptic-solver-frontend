@@ -17,9 +17,11 @@ async function post<T>(
     },
     body: JSON.stringify(data),
     signal: cancellation,
+  }).catch((err) => {
+    console.log(`Error in post ${err}`);
   });
 
-  const json = await response.json();
+  const json = await response?.json();
   return json as T;
 }
 
@@ -31,9 +33,11 @@ async function get<T>(endpoint: string, cancellation?: AbortSignal) {
       Accept: "application/json",
     },
     signal: cancellation,
+  }).catch((err) => {
+    console.log(`Error in get ${err}`);
   });
 
-  const json = await response.json();
+  const json = await response?.json();
   return json as T;
 }
 
@@ -253,7 +257,6 @@ export class Solution {
   answer: string = "";
   confidence: number = 0;
   explanation: string = "";
-  hintLevel: number = 0;
 
   get strippedAnswer(): string {
     return stripSolution(this.answer).toUpperCase();
