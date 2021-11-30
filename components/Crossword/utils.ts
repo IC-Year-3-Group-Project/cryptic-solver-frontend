@@ -19,7 +19,9 @@ async function post<T>(
     signal: cancellation,
   });
 
-  const json = await response.json();
+  const json = await response.json().catch((err) => {
+    console.log(`Error in post ${err}`);
+  });
   return json as T;
 }
 
@@ -33,7 +35,9 @@ async function get<T>(endpoint: string, cancellation?: AbortSignal) {
     signal: cancellation,
   });
 
-  const json = await response.json();
+  const json = await response.json().catch((err) => {
+    console.log(`Error in get ${err}`);
+  });
   return json as T;
 }
 
