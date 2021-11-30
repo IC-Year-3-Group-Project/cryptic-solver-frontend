@@ -482,6 +482,26 @@ export default function Crossword(props: CrosswordProps) {
     }
   }
 
+  function processHints(hints: string[], solution: string): string[] {
+    const hintSet = new Set();
+    let hintNumber = 0;
+    const newHints = [];
+    for (let hint of hints) {
+      const wordSet = new Set(
+        hint
+          .replace(/[^a-zA-Z ]/g, "")
+          .toLowerCase()
+          .split(" ")
+      );
+      if (!hintSet.has(hint) && !wordSet.has(solution.toLowerCase())) {
+        hintNumber += 1;
+        newHints.push(`Hint #${hintNumber}: ${hint}`);
+      }
+      hintSet.add(hint);
+    }
+    return newHints;
+  }
+
   async function getHintsFromExplanation(clue: Clue) {
     if (clue.solution) {
       let hints: string[] = [];
@@ -500,24 +520,18 @@ export default function Crossword(props: CrosswordProps) {
           }
           const sentences = clue.explanation.split(".");
           let hintNumber = 0;
-          hints = getHints(sentences).map((hint) => {
-            hintNumber += 1;
-            return `Hint #${hintNumber}: ${hint}.`;
-          });
+          hints = getHints(sentences);
         } else {
           let hintNumber = 0;
-          hints = parseExplanation(clue.explanation)
-            .toEnglish()
-            .map((hint) => {
-              hintNumber += 1;
-              return `Hint #${hintNumber}: ${hint}.`;
-            });
+          hints = parseExplanation(clue.explanation).toEnglish();
         }
       }
 
-      console.log(
-        `Generating hints from ${clue.explanation} at level ${clue.hintLevel}`
-      );
+      hints = processHints(hints, clue.solution);
+
+      // console.log(
+      //   `Generating hints from ${clue.explanation} at level ${clue.hintLevel}`
+      // );
 
       if (hints.length < 1) {
         return ["No hints available"];

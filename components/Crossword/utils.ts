@@ -17,11 +17,11 @@ async function post<T>(
     },
     body: JSON.stringify(data),
     signal: cancellation,
-  });
-
-  const json = await response.json().catch((err) => {
+  }).catch((err) => {
     console.log(`Error in post ${err}`);
   });
+
+  const json = await response?.json();
   return json as T;
 }
 
@@ -33,11 +33,11 @@ async function get<T>(endpoint: string, cancellation?: AbortSignal) {
       Accept: "application/json",
     },
     signal: cancellation,
-  });
-
-  const json = await response.json().catch((err) => {
+  }).catch((err) => {
     console.log(`Error in get ${err}`);
   });
+
+  const json = await response?.json();
   return json as T;
 }
 
