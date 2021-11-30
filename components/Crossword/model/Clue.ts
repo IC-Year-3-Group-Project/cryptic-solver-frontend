@@ -8,6 +8,7 @@ export class Clue {
   y: number = -1;
   solution?: string;
   showExplanation: boolean = false;
+  hintLevel: number = 0;
 
   contains(x: number, y: number) {
     if (this.direction == ClueDirection.Across) {

@@ -489,19 +489,19 @@ export default function Crossword(props: CrosswordProps) {
     const solution = getSolution(clue);
     if (solution) {
       console.log(
-        `Generating hints from ${solution.explanation} at level ${solution.hintLevel}`
+        `Generating hints from ${solution.explanation} at level ${clue.hintLevel}`
       );
 
       const sentences = solution.explanation.split(".");
       let hints = getHints(sentences);
 
-      if (hints.length < solution.hintLevel) {
+      if (hints.length < clue.hintLevel) {
         hints.push("No more hints available");
         return hints;
       }
-      return hints.slice(0, solution.hintLevel);
+      return hints.slice(0, clue.hintLevel);
     }
-    return ["No hints available"].slice(0, 1);
+    return ["No hints available"].slice(0, clue.hintLevel);
   }
 
   // Produce a hints array of all good hints from the sentences
@@ -1028,22 +1028,8 @@ export default function Crossword(props: CrosswordProps) {
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
                         } else if (index == 3) {
-                          const solutionToIncrement = getSolution(selectedClue);
-                          if (solutionToIncrement) {
-                            solutionToIncrement.hintLevel += 1;
-                            solutionCache[selectedClue.getTitle()].forEach(
-                              (solution) => {
-                                if (
-                                  solution.explanation ===
-                                  solutionToIncrement.explanation
-                                ) {
-                                  return solutionToIncrement;
-                                }
-                                return solution;
-                              }
-                            );
-                            setSolutionCache({ ...solutionCache });
-                          }
+                          selectedClue.hintLevel += 1;
+                          forceUpdate();
                         }
                       }}
                       cypress-data="solve-cell"
