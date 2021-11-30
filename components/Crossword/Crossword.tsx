@@ -485,14 +485,27 @@ export default function Crossword(props: CrosswordProps) {
     }
   }
 
-  function getHintsFromExplanation(clue: Clue) {
-    const solution = getSolution(clue);
-    if (solution) {
+  async function getHintsFromExplanation(clue: Clue) {
+    if (clue.solution) {
+      if (!clue.explanation) {
+        // clue.explanation = await getExplanation(clue.text, clue.solution);
+        const solutions = await solveWithPatternUnlikely(
+          clue.text,
+          clue.totalLength,
+          `(${clue.lengths.join()})`,
+          clue.solution
+        );
+        clue.explanation = solutions[0]?.explanation;
+        if (!clue.explanation) {
+          return ["No hints available"].slice(0, clue.hintLevel);
+        }
+      }
+
       console.log(
-        `Generating hints from ${solution.explanation} at level ${clue.hintLevel}`
+        `Generating hints from ${clue.explanation} at level ${clue.hintLevel}`
       );
 
-      const sentences = solution.explanation.split(".");
+      const sentences = clue.explanation.split(".");
       let hints = getHints(sentences);
 
       if (hints.length < clue.hintLevel) {
