@@ -671,6 +671,10 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   async function solveAllCluesAuto() {
+    puzzle.clues.forEach((clue) => {
+      clue.hintLevel = 0;
+      clue.showExplanation = true;
+    });
     const start = new Date().getTime();
     setIncorrect(undefined);
     setBacktrackProgress(undefined);
