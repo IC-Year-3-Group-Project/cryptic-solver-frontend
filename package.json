@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "yarn antlr4ts && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "updateSnapshot": "jest --updateSnapshot",
