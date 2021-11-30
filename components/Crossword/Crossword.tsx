@@ -529,10 +529,6 @@ export default function Crossword(props: CrosswordProps) {
 
       hints = processHints(hints, clue.solution);
 
-      // console.log(
-      //   `Generating hints from ${clue.explanation} at level ${clue.hintLevel}`
-      // );
-
       if (hints.length < 1) {
         return ["No hints available"];
       }
