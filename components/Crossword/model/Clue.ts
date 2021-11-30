@@ -9,7 +9,7 @@ export class Clue {
   solution?: string;
   explanation?: string;
   showExplanation: boolean = false;
-  hintLevel: number = 50;
+  hintLevel: number = 0;
 
   contains(x: number, y: number) {
     if (this.direction == ClueDirection.Across) {

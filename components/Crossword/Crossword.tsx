@@ -488,16 +488,18 @@ export default function Crossword(props: CrosswordProps) {
   async function getHintsFromExplanation(clue: Clue) {
     if (clue.solution) {
       if (!clue.explanation) {
-        // clue.explanation = await getExplanation(clue.text, clue.solution);
-        const solutions = await solveWithPatternUnlikely(
-          clue.text,
-          clue.totalLength,
-          `(${clue.lengths.join()})`,
-          clue.solution
-        );
-        clue.explanation = solutions[0]?.explanation;
+        clue.explanation = await getExplanation(clue.text, clue.solution);
         if (!clue.explanation) {
-          return ["No hints available"].slice(0, clue.hintLevel);
+          const solutions = await solveWithPatternUnlikely(
+            clue.text,
+            clue.totalLength,
+            `(${clue.lengths.join()})`,
+            clue.solution
+          );
+          clue.explanation = solutions[0]?.explanation;
+          if (!clue.explanation) {
+            return ["No hints available"];
+          }
         }
       }
 
@@ -507,14 +509,13 @@ export default function Crossword(props: CrosswordProps) {
 
       const sentences = clue.explanation.split(".");
       let hints = getHints(sentences);
-
-      if (hints.length < clue.hintLevel) {
-        hints.push("No more hints available");
-        return hints;
+      if (hints.length < 1) {
+        return ["No hints available"];
       }
-      return hints.slice(0, clue.hintLevel);
+      hints.push("No more hints available");
+      return hints;
     }
-    return ["No hints available"].slice(0, clue.hintLevel);
+    return ["No hints available"];
   }
 
   // Produce a hints array of all good hints from the sentences
