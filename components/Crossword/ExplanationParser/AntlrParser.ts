@@ -1,6 +1,6 @@
+import { MorseGrammarLexer } from "antlr/MorseGrammarLexer";
+import { MorseGrammarParser } from "antlr/MorseGrammarParser";
 import { CharStreams, CommonTokenStream } from "antlr4ts";
-import { MorseGrammarLexer } from "./antlr/MorseGrammarLexer";
-import { MorseGrammarParser } from "./antlr/MorseGrammarParser";
 import ExplanationVisitor from "./ExplanationVisitor";
 
 export function parseExplanation(explanation: string) {

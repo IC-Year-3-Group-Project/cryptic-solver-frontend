@@ -12,8 +12,8 @@ import {
   MultiWordContext,
   InsertContext,
   AnagramContext,
-} from "./antlr/MorseGrammarParser";
-import { MorseGrammarVisitor } from "./antlr/MorseGrammarVisitor";
+} from "antlr/MorseGrammarParser";
+import { MorseGrammarVisitor } from "antlr/MorseGrammarVisitor";
 import ComplexOperation from "./ast/ComplexOperation";
 import Duplicate from "./ast/Duplicate";
 import Explanation from "./ast/Explanation";
