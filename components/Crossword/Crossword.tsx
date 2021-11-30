@@ -484,6 +484,7 @@ export default function Crossword(props: CrosswordProps) {
 
   async function getHintsFromExplanation(clue: Clue) {
     if (clue.solution) {
+      let hints: string[] = [];
       if (!clue.explanation) {
         clue.explanation = await getExplanation(clue.text, clue.solution);
         if (!clue.explanation) {
@@ -497,6 +498,20 @@ export default function Crossword(props: CrosswordProps) {
           if (!clue.explanation) {
             return ["No hints available"];
           }
+          const sentences = clue.explanation.split(".");
+          let hintNumber = 0;
+          hints = getHints(sentences).map((hint) => {
+            hintNumber += 1;
+            return `Hint #${hintNumber}: ${hint}.`;
+          });
+        } else {
+          let hintNumber = 0;
+          hints = parseExplanation(clue.explanation)
+            .toEnglish()
+            .map((hint) => {
+              hintNumber += 1;
+              return `Hint #${hintNumber}: ${hint}.`;
+            });
         }
       }
 
@@ -504,8 +519,6 @@ export default function Crossword(props: CrosswordProps) {
         `Generating hints from ${clue.explanation} at level ${clue.hintLevel}`
       );
 
-      const sentences = clue.explanation.split(".");
-      let hints = getHints(sentences);
       if (hints.length < 1) {
         return ["No hints available"];
       }
@@ -519,12 +532,10 @@ export default function Crossword(props: CrosswordProps) {
   // in the explanation
   function getHints(sentences: string[]) {
     let hints = [];
-    let hintNumber = 0;
     let start = 0;
     let end = 0;
     for (let i = 0; i < sentences.length; i++) {
       let sentence = sentences[i];
-      hintNumber++;
 
       // Trim the additional explanation in brackets because
       // sometimes it expresses uncertainty e.g. "I am not sure"
@@ -539,31 +550,27 @@ export default function Crossword(props: CrosswordProps) {
       }
 
       if (sentence.indexOf("is a double definition") != -1) {
-        hints.push(`Hint #${hintNumber}: The clue has a double definition.`);
+        hints.push(`The clue has a double definition.`);
       } else if (sentence.indexOf("' is the first definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(
-          `Hint #${hintNumber}: The first definition is ${definitionHint}.`
-        );
+        hints.push(`The first definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the second definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(
-          `Hint #${hintNumber}: The second definition is ${definitionHint}.`
-        );
+        hints.push(`The second definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the definition") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let definitionHint = sentence.substring(start, end + 1);
-        hints.push(`Hint #${hintNumber}: The definition is ${definitionHint}.`);
+        hints.push(`The definition is ${definitionHint}.`);
       } else if (sentence.indexOf("' is the wordplay") != -1) {
         start = sentence.indexOf("'");
         end = sentence.lastIndexOf("'");
         let wordplayHint = sentence.substring(start, end + 1);
-        hints.push(`Hint #${hintNumber}: The wordplay is ${wordplayHint}.`);
+        hints.push(`The wordplay is ${wordplayHint}.`);
       } else if (
         sentence.indexOf("take the first letters") != -1 ||
         sentence.indexOf("taking the first letters") != -1 ||
@@ -585,17 +592,14 @@ export default function Crossword(props: CrosswordProps) {
         sentence.indexOf("' becomes '") != -1 ||
         sentence.indexOf("is a reversal indicator") != -1
       ) {
-        hints.push(`Hint #${hintNumber}: ${sentence}.`);
+        hints.push(`${sentence}.`);
       } else if (sentence.indexOf("is hidden in the letters of") != -1) {
         let rest = sentence.substring(2);
         let start = rest.indexOf("'");
         rest = rest.substring(start + 1);
-        hints.push(`Hint #${hintNumber}: The answer${rest}.`);
-      } else {
-        hintNumber--;
+        hints.push(`The answer${rest}.`);
       }
     }
-
     return hints;
   }
 
