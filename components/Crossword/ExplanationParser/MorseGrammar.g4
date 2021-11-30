@@ -26,7 +26,7 @@ COMPLEX_OPERATION:
 	| 'reversal'
 	| 'rotation';
 
-WORD: [a-zA-Z<>0-9]+;
+WORD: [a-zA-Z<>0-9\-]+;
 
 multiWord: WORD+;
 subject: '[' multiWord ']';
