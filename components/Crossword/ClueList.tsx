@@ -99,17 +99,14 @@ export default function ClueList(props: ClueListProps) {
                       </IconButton>
                     )}
                   </Typography>
-                  {selected && (
+                  <Typography variant="body2" sx={{ ml: 2 }}>
+                    {explainAnswer(c)}
+                  </Typography>
+                  {getHints(c)?.map((hint) => (
                     <Typography variant="body2" sx={{ ml: 2 }}>
-                      {explainAnswer(c)}
+                      {hint}
                     </Typography>
-                  )}
-                  {selected &&
-                    getHints(c).map((hint) => (
-                      <Typography variant="body2" sx={{ ml: 2 }}>
-                        {hint}
-                      </Typography>
-                    ))}
+                  ))}
                 </>
               </a>
             </Grid>

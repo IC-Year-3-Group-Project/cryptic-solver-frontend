@@ -75,6 +75,11 @@ const KeyDirections: {
 export const ClueSelectionColour = "#FFF7B2";
 export const CellSelectionColour = "#FFE500";
 
+function useForceUpdate() {
+  const [value, setValue] = useState(0);
+  return () => setValue((value) => 1 - value);
+}
+
 export default function Crossword(props: CrosswordProps) {
   const { puzzle, cellWidth, cellHeight } = props;
 
@@ -107,6 +112,7 @@ export default function Crossword(props: CrosswordProps) {
   );
   let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   let [gridContinuation, setGridContinuation] = useState<number>();
+  const forceUpdate = useForceUpdate();
 
   useEffect(() => {
     if (puzzle) {
@@ -468,13 +474,15 @@ export default function Crossword(props: CrosswordProps) {
   }
 
   function explainAnswerCached(clue: Clue) {
-    const solution = getSolution(clue);
-    if (solution) {
-      // setExplanation(solution.explanation);
-      return solution.explanation;
+    if (clue.showExplanation) {
+      const solution = getSolution(clue);
+      if (solution) {
+        // setExplanation(solution.explanation);
+        return solution.explanation;
+      }
+      // setSolveOverlayText("Could not explain solution.");
+      return "Could not explain solution.";
     }
-    // setSolveOverlayText("Could not explain solution.");
-    return "Could not explain solution.";
   }
 
   function getHintsFromExplanation(clue: Clue) {
@@ -493,7 +501,7 @@ export default function Crossword(props: CrosswordProps) {
       }
       return hints.slice(0, solution.hintLevel);
     }
-    return ["No hints available"];
+    return ["No hints available"].slice(0, 1);
   }
 
   // Produce a hints array of all good hints from the sentences
@@ -1014,7 +1022,9 @@ export default function Crossword(props: CrosswordProps) {
                         if (index == 0) {
                           await solveClue(selectedClue);
                         } else if (index == 1) {
+                          selectedClue.showExplanation = true;
                           explainAnswerCached(selectedClue);
+                          forceUpdate();
                         } else if (index == 2) {
                           await explainAnswerHaskell(selectedClue);
                         } else if (index == 3) {
