@@ -26,7 +26,9 @@ export default function ClueList(props: ClueListProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editClueText, setEditClueText] = useState("");
   const [editClueError, setEditClueError] = useState<string>();
-  const [hintArray, setHintArray] = useState(
+  const [hintsCache, setHintsCache] = useState<{
+    [key: string]: string[];
+  }>(
     clues.reduce(
       (acc, c) => ({
         ...acc,
@@ -38,7 +40,9 @@ export default function ClueList(props: ClueListProps) {
 
   useEffect(() => {
     async function fetchHints() {
-      const hints = clues.reduce(
+      const hints: {
+        [key: string]: string[];
+      } = clues.reduce(
         (acc, c) => ({
           ...acc,
           [`${c.number}, ${c.direction}`]: ["Generating hints..."],
@@ -49,7 +53,7 @@ export default function ClueList(props: ClueListProps) {
       clues.map(async (c, index) => {
         const hint = await getHints(c);
         hints[`${c.number}, ${c.direction}`] = hint;
-        setHintArray({ ...hints });
+        setHintsCache({ ...hints });
       });
     }
 
@@ -131,7 +135,7 @@ export default function ClueList(props: ClueListProps) {
                   <Typography variant="body2" sx={{ ml: 2 }}>
                     {explainAnswer(c)}
                   </Typography>
-                  {hintArray[`${c.number}, ${c.direction}`]
+                  {hintsCache[`${c.number}, ${c.direction}`]
                     ?.slice(0, c.hintLevel)
                     .map((hint) => (
                       <Typography variant="body2" sx={{ ml: 2 }}>

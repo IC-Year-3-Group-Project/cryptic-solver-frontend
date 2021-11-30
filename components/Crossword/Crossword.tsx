@@ -481,7 +481,7 @@ export default function Crossword(props: CrosswordProps) {
         return solution.explanation;
       }
       // setSolveOverlayText("Could not explain solution.");
-      return "Could not explain solution.";
+      return "Could not explain entered solution.";
     }
   }
 
