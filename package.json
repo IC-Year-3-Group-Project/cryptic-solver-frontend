@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "yarn antlr4ts && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "updateSnapshot": "jest --updateSnapshot",
     "cypress": "cypress run",
-    "ci": "yarn build && start-server-and-test start http://localhost:3000 cypress",
-    "antlr4ts": "antlr4ts -visitor ./components/Crossword/ExplanationParser/MorseGrammar.g4 -o ./components/Crossword/ExplanationParser/antlr"
+    "ci": "yarn antlr4ts && yarn build && start-server-and-test start http://localhost:3000 cypress",
+    "antlr4ts": "antlr4ts -visitor components/Crossword/ExplanationParser/MorseGrammar.g4 -o components/Crossword/ExplanationParser/antlr",
+    "antlrpl": "antlr4ts -visitor components/Crossword/ExplanationParser/MorseGrammar.g4 -o antlr"
   },
   "dependencies": {
     "@cypress/react": "^5.10.1",

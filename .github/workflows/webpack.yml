@@ -25,6 +25,7 @@ jobs:
       - name: Build
         run: |
           yarn -i
+          yarn antlrpl
           yarn build
 
       - name: Tests
