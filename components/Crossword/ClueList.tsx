@@ -137,8 +137,8 @@ export default function ClueList(props: ClueListProps) {
                   </Typography>
                   {hintsCache[`${c.number}, ${c.direction}`]
                     ?.slice(0, c.hintLevel)
-                    .map((hint) => (
-                      <Typography variant="body2" sx={{ ml: 2 }}>
+                    .map((hint, index) => (
+                      <Typography key={index} variant="body2" sx={{ ml: 2 }}>
                         {hint}
                       </Typography>
                     ))}

@@ -8,12 +8,9 @@ import { Puzzle, toIndex } from "./model/Puzzle";
 import {
   getExplainedSolutions,
   getExplanation,
-  getSolutions,
-  getUnlikelySolutions,
   Solution,
   solveWithPattern,
   solveWithPatternUnlikely,
-  stripSolution,
   gradient,
   rgbToHex,
 } from "./utils";
@@ -27,7 +24,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
-import { sortedUniqBy } from "cypress/types/lodash";
 import {
   ButtonGroup,
   ClickAwayListener,
@@ -46,6 +42,7 @@ import {
   BacktrackingOptions,
   DefaultBacktrackingOptions,
 } from "./Backtracking";
+import { parseExplanation } from "./ExplanationParser/AntlrParser";
 
 export interface CrosswordProps {
   puzzle: Puzzle;
