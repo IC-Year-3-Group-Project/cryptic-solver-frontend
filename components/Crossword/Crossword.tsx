@@ -597,9 +597,6 @@ export default function Crossword(props: CrosswordProps) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation);
-        const parsed = parseExplanation(explanation);
-        console.log(parsed);
-        console.log(parsed.toEnglish());
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
