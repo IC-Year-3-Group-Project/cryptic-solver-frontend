@@ -553,10 +553,10 @@ export default function Crossword(props: CrosswordProps) {
     if (clue.solution) {
       let hints: string[] = [];
       if (!clue.explanation) {
-        clue.explanation = await getExplanation(clue.text, clue.solution);
+        clue.explanation = await getExplanation(clue.getClueText(), clue.solution);
         if (!clue.explanation) {
           const solutions = await solveWithPatternUnlikely(
-            clue.text,
+            clue.getClueText(),
             clue.totalLength,
             `(${clue.lengths.join()})`,
             clue.solution
