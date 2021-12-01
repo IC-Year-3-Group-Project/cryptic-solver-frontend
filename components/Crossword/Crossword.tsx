@@ -22,11 +22,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import {
   ButtonGroup,
   ClickAwayListener,
+  Snackbar,
   FormControlLabel,
   Grid,
   LinearProgress,
@@ -35,8 +37,10 @@ import {
   Slider,
   Switch,
   Typography,
+  AlertColor,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Backtracker,
   BacktrackingOptions,
@@ -77,6 +81,13 @@ function useForceUpdate() {
   return () => setValue((value) => 1 - value);
 }
 
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
+  props,
+  ref
+) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
+
 export default function Crossword(props: CrosswordProps) {
   const { puzzle, cellWidth, cellHeight } = props;
 
@@ -109,6 +120,42 @@ export default function Crossword(props: CrosswordProps) {
   );
   let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   let [gridContinuation, setGridContinuation] = useState<number>();
+
+  const [openCheckAnswer, setOpenCheckAnswer] = useState(false);
+  const [severityCheckAnswer, setSeverityCheckAnswer] =
+    useState<AlertColor>("success");
+  const [messageCheckAnswer, setMessageCheckAnswer] = useState<string>(
+    "The correct answer is Markov Chains"
+  );
+  const handleClickCheckAnswer = (clue: Clue) => {
+    if (!clue.solution) {
+      setSeverityCheckAnswer("error");
+      setMessageCheckAnswer(
+        "Sorry, the true solution for this answer is not available."
+      );
+    } else {
+      const answer = getClueText(clue);
+      if (answer === clue.solution) {
+        setSeverityCheckAnswer("success");
+      } else {
+        setSeverityCheckAnswer("warning");
+      }
+      setMessageCheckAnswer(`The correct answer is ${clue.solution}.`);
+    }
+    setOpenCheckAnswer(true);
+  };
+
+  const handleCloseCheckAnswer = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpenCheckAnswer(false);
+  };
+
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
@@ -718,6 +765,19 @@ export default function Crossword(props: CrosswordProps) {
   const wordBreakHeight = cellHeight / 8;
   return (
     <div className="crossword-container">
+      <Snackbar
+        open={openCheckAnswer}
+        autoHideDuration={6000}
+        onClose={handleCloseCheckAnswer}
+      >
+        <Alert
+          onClose={handleCloseCheckAnswer}
+          severity={severityCheckAnswer}
+          sx={{ width: "100%" }}
+        >
+          {messageCheckAnswer}
+        </Alert>
+      </Snackbar>
       {puzzle && (
         <Grid container direction="row">
           <Grid
@@ -943,6 +1003,10 @@ export default function Crossword(props: CrosswordProps) {
                 variant="contained"
                 color="secondary"
                 onClick={() => {
+                  puzzle.clues.forEach((clue) => {
+                    clue.hintLevel = 0;
+                    clue.showExplanation = false;
+                  });
                   setIncorrect(undefined);
                   puzzle.clues.forEach(clearClueText);
                 }}
@@ -1046,6 +1110,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
                         `Get Hint ${selectedClue.getTitle()}`,
+                        `Check Answer ${selectedClue.getTitle()}`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -1059,6 +1124,9 @@ export default function Crossword(props: CrosswordProps) {
                         } else if (index == 3) {
                           selectedClue.hintLevel += 1;
                           forceUpdate();
+                        } else if (index == 4) {
+                          console.log("Check answer");
+                          handleClickCheckAnswer(selectedClue);
                         }
                       }}
                       cypress-data="solve-cell"

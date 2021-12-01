@@ -94,7 +94,7 @@ export async function getUnlikelySolutions(
       { clue, word_length, pattern },
       cancellation
     )
-  ).map((s) => Object.assign(new Solution(), s));
+  )?.map((s) => Object.assign(new Solution(), s));
 }
 
 export async function solveWithPattern(
@@ -110,7 +110,7 @@ export async function solveWithPattern(
       { clue, word_length, pattern, letter_pattern },
       cancellation
     )
-  ).map((s) => Object.assign(new Solution(), s));
+  )?.map((s) => Object.assign(new Solution(), s));
 }
 
 export async function solveWithPatternUnlikely(
@@ -126,7 +126,7 @@ export async function solveWithPatternUnlikely(
       { clue, word_length, pattern, letter_pattern },
       cancellation
     )
-  ).map((s) => Object.assign(new Solution(), s));
+  )?.map((s) => Object.assign(new Solution(), s));
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
