@@ -120,28 +120,39 @@ export default function Crossword(props: CrosswordProps) {
   let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   let [gridContinuation, setGridContinuation] = useState<number>();
 
-  const [openCheckAnswer, setOpenCheckAnswer] = useState(false);
-  const [severityCheckAnswer, setSeverityCheckAnswer] =
-    useState<AlertColor>("success");
-  const [messageCheckAnswer, setMessageCheckAnswer] = useState<string>(
+  const [open, setOpen] = useState(false);
+  const [severity, setSeverity] = useState<AlertColor>("success");
+  const [message, setMessage] = useState<string>(
     "The correct answer is Markov Chains"
   );
   const handleClickCheckAnswer = (clue: Clue) => {
     if (!clue.solution) {
-      setSeverityCheckAnswer("error");
-      setMessageCheckAnswer(
-        "Sorry, the true solution for this answer is not available."
-      );
+      setSeverity("error");
+      setMessage("Sorry, the true solution for this answer is not available.");
     } else {
       const answer = getClueText(clue);
       if (answer === clue.solution) {
-        setSeverityCheckAnswer("success");
+        setSeverity("success");
       } else {
-        setSeverityCheckAnswer("warning");
+        setSeverity("warning");
       }
-      setMessageCheckAnswer(`The correct answer is ${clue.solution}.`);
+      setMessage(`The correct answer is ${clue.solution}.`);
     }
-    setOpenCheckAnswer(true);
+    setOpen(true);
+  };
+
+  const handleClickCheckAllAnswer = (score: number, total: number) => {
+    if (score === 0) {
+      setSeverity("error");
+      setMessage(`${score}/${total}. Better luck next time.`);
+    } else if (score < total - 5) {
+      setSeverity("warning");
+      setMessage(`${score}/${total}. Not bad.`);
+    } else {
+      setSeverity("success");
+      setMessage(`${score}/${total}. Pretty good!`);
+    }
+    setOpen(true);
   };
 
   const handleCloseCheckAnswer = (
@@ -152,7 +163,7 @@ export default function Crossword(props: CrosswordProps) {
       return;
     }
 
-    setOpenCheckAnswer(false);
+    setOpen(false);
   };
 
   const forceUpdate = useForceUpdate();
@@ -766,16 +777,16 @@ export default function Crossword(props: CrosswordProps) {
   return (
     <div className="crossword-container">
       <Snackbar
-        open={openCheckAnswer}
+        open={open}
         autoHideDuration={6000}
         onClose={handleCloseCheckAnswer}
       >
         <Alert
           onClose={handleCloseCheckAnswer}
-          severity={severityCheckAnswer}
+          severity={severity}
           sx={{ width: "100%" }}
         >
-          {messageCheckAnswer}
+          {message}
         </Alert>
       </Snackbar>
       {puzzle && (
@@ -1000,8 +1011,20 @@ export default function Crossword(props: CrosswordProps) {
               <Button
                 sx={{ ml: 1 }}
                 variant="contained"
-                onClick={() => {
-                  console.log("Check all answers");
+                onClick={async () => {
+                  setCurrentCell(undefined);
+                  setSolveOverlayText(undefined);
+                  let score = 0;
+                  let total = 0;
+                  const startIndex = 0;
+                  for (let i = startIndex; i < puzzle.clues.length; i++) {
+                    const clue = puzzle.clues[i];
+                    if (getClueText(clue) === clue.solution) {
+                      score++;
+                    }
+                    total++;
+                  }
+                  handleClickCheckAllAnswer(score, total);
                 }}
               >
                 Check all
@@ -1017,9 +1040,10 @@ export default function Crossword(props: CrosswordProps) {
                   });
                   setIncorrect(undefined);
                   puzzle.clues.forEach(clearClueText);
+                  setSelectedClue(undefined);
                 }}
               >
-                Clear Grid
+                Clear All
               </Button>
               <IconButton
                 sx={{ ml: 1 }}
