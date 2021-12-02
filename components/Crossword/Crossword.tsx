@@ -77,7 +77,7 @@ export const CellSelectionColour = "#FFE500";
 
 function useForceUpdate() {
   const [value, setValue] = useState(0);
-  return () => setValue((value) => 1 - value);
+  return () => setValue((value) => value + 1);
 }
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
