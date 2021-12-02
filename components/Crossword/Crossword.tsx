@@ -40,7 +40,6 @@ import {
   AlertColor,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
-import CloseIcon from "@mui/icons-material/Close";
 import {
   Backtracker,
   BacktrackingOptions,
@@ -553,7 +552,10 @@ export default function Crossword(props: CrosswordProps) {
     if (clue.solution) {
       let hints: string[] = [];
       if (!clue.explanation) {
-        clue.explanation = await getExplanation(clue.getClueText(), clue.solution);
+        clue.explanation = await getExplanation(
+          clue.getClueText(),
+          clue.solution
+        );
         if (!clue.explanation) {
           const solutions = await solveWithPatternUnlikely(
             clue.getClueText(),
@@ -566,10 +568,8 @@ export default function Crossword(props: CrosswordProps) {
             return ["No hints available"];
           }
           const sentences = clue.explanation.split(".");
-          let hintNumber = 0;
           hints = getHints(sentences);
         } else {
-          let hintNumber = 0;
           hints = parseExplanation(clue.explanation).toEnglish();
         }
       }
@@ -685,7 +685,7 @@ export default function Crossword(props: CrosswordProps) {
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
         console.log("Error loading explanation", ex);
-        setSolveOverlayText("Error fetching explaination.");
+        setSolveOverlayText("Error fetching explanation.");
       }
     }
 
@@ -997,7 +997,15 @@ export default function Crossword(props: CrosswordProps) {
               >
                 Solve Grid (Auto)
               </Button>
-
+              <Button
+                sx={{ ml: 1 }}
+                variant="contained"
+                onClick={() => {
+                  console.log("Check all answers");
+                }}
+              >
+                Check all
+              </Button>
               <Button
                 sx={{ ml: 1 }}
                 variant="contained"
@@ -1124,8 +1132,16 @@ export default function Crossword(props: CrosswordProps) {
                         } else if (index == 3) {
                           selectedClue.hintLevel += 1;
                           forceUpdate();
+                          if (
+                            selectedClue.hintLevel > 0 &&
+                            selectedClue.hints[0] === "Generating hints..."
+                          ) {
+                            selectedClue.hints = await getHintsFromExplanation(
+                              selectedClue
+                            );
+                          }
+                          forceUpdate();
                         } else if (index == 4) {
-                          console.log("Check answer");
                           handleClickCheckAnswer(selectedClue);
                         }
                       }}
