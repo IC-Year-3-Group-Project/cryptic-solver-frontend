@@ -22,11 +22,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import {
   ButtonGroup,
   ClickAwayListener,
+  Snackbar,
   FormControlLabel,
   Grid,
   LinearProgress,
@@ -35,6 +37,7 @@ import {
   Slider,
   Switch,
   Typography,
+  AlertColor,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -74,8 +77,15 @@ export const CellSelectionColour = "#FFE500";
 
 function useForceUpdate() {
   const [value, setValue] = useState(0);
-  return () => setValue((value) => 1 - value);
+  return () => setValue((value) => value + 1);
 }
+
+const Alert = React.forwardRef<HTMLDivElement, AlertProps>(function Alert(
+  props,
+  ref
+) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 export default function Crossword(props: CrosswordProps) {
   const { puzzle, cellWidth, cellHeight } = props;
@@ -109,6 +119,53 @@ export default function Crossword(props: CrosswordProps) {
   );
   let [cancelSolveGrid, setCancelSolveGrid] = useState(false);
   let [gridContinuation, setGridContinuation] = useState<number>();
+
+  const [open, setOpen] = useState(false);
+  const [severity, setSeverity] = useState<AlertColor>("success");
+  const [message, setMessage] = useState<string>(
+    "The correct answer is Markov Chains"
+  );
+  const handleClickCheckAnswer = (clue: Clue) => {
+    if (!clue.solution) {
+      setSeverity("error");
+      setMessage("Sorry, the true solution for this answer is not available.");
+    } else {
+      const answer = getClueText(clue);
+      if (answer === clue.solution) {
+        setSeverity("success");
+      } else {
+        setSeverity("warning");
+      }
+      setMessage(`The correct answer is ${clue.solution}.`);
+    }
+    setOpen(true);
+  };
+
+  const handleClickCheckAllAnswer = (score: number, total: number) => {
+    if (score === 0) {
+      setSeverity("error");
+      setMessage(`${score}/${total}. Better luck next time.`);
+    } else if (score < total - 5) {
+      setSeverity("warning");
+      setMessage(`${score}/${total}. Not bad.`);
+    } else {
+      setSeverity("success");
+      setMessage(`${score}/${total}. Pretty good!`);
+    }
+    setOpen(true);
+  };
+
+  const handleCloseCheckAnswer = (
+    event?: React.SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
@@ -506,10 +563,13 @@ export default function Crossword(props: CrosswordProps) {
     if (clue.solution) {
       let hints: string[] = [];
       if (!clue.explanation) {
-        clue.explanation = await getExplanation(clue.text, clue.solution);
+        clue.explanation = await getExplanation(
+          clue.getClueText(),
+          clue.solution
+        );
         if (!clue.explanation) {
           const solutions = await solveWithPatternUnlikely(
-            clue.text,
+            clue.getClueText(),
             clue.totalLength,
             `(${clue.lengths.join()})`,
             clue.solution
@@ -519,10 +579,8 @@ export default function Crossword(props: CrosswordProps) {
             return ["No hints available"];
           }
           const sentences = clue.explanation.split(".");
-          let hintNumber = 0;
           hints = getHints(sentences);
         } else {
-          let hintNumber = 0;
           hints = parseExplanation(clue.explanation).toEnglish();
         }
       }
@@ -638,7 +696,7 @@ export default function Crossword(props: CrosswordProps) {
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
         console.log("Error loading explanation", ex);
-        setSolveOverlayText("Error fetching explaination.");
+        setSolveOverlayText("Error fetching explanation.");
       }
     }
 
@@ -718,6 +776,19 @@ export default function Crossword(props: CrosswordProps) {
   const wordBreakHeight = cellHeight / 8;
   return (
     <div className="crossword-container">
+      <Snackbar
+        open={open}
+        autoHideDuration={6000}
+        onClose={handleCloseCheckAnswer}
+      >
+        <Alert
+          onClose={handleCloseCheckAnswer}
+          severity={severity}
+          sx={{ width: "100%" }}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
       {puzzle && (
         <Grid container direction="row">
           <Grid
@@ -937,17 +1008,42 @@ export default function Crossword(props: CrosswordProps) {
               >
                 Solve Grid (Auto)
               </Button>
-
+              <Button
+                sx={{ ml: 1 }}
+                variant="contained"
+                onClick={async () => {
+                  setCurrentCell(undefined);
+                  setSolveOverlayText(undefined);
+                  let score = 0;
+                  let total = 0;
+                  const startIndex = 0;
+                  for (let i = startIndex; i < puzzle.clues.length; i++) {
+                    const clue = puzzle.clues[i];
+                    if (getClueText(clue) === clue.solution) {
+                      score++;
+                    }
+                    total++;
+                  }
+                  handleClickCheckAllAnswer(score, total);
+                }}
+              >
+                Check all
+              </Button>
               <Button
                 sx={{ ml: 1 }}
                 variant="contained"
                 color="secondary"
                 onClick={() => {
+                  puzzle.clues.forEach((clue) => {
+                    clue.hintLevel = 0;
+                    clue.showExplanation = false;
+                  });
                   setIncorrect(undefined);
                   puzzle.clues.forEach(clearClueText);
+                  setSelectedClue(undefined);
                 }}
               >
-                Clear Grid
+                Clear All
               </Button>
               <IconButton
                 sx={{ ml: 1 }}
@@ -1046,6 +1142,7 @@ export default function Crossword(props: CrosswordProps) {
                         `Explain ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()} (Haskell)`,
                         `Get Hint ${selectedClue.getTitle()}`,
+                        `Check Answer ${selectedClue.getTitle()}`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -1059,6 +1156,17 @@ export default function Crossword(props: CrosswordProps) {
                         } else if (index == 3) {
                           selectedClue.hintLevel += 1;
                           forceUpdate();
+                          if (
+                            selectedClue.hintLevel > 0 &&
+                            selectedClue.hints[0] === "Generating hints..."
+                          ) {
+                            selectedClue.hints = await getHintsFromExplanation(
+                              selectedClue
+                            );
+                          }
+                          forceUpdate();
+                        } else if (index == 4) {
+                          handleClickCheckAnswer(selectedClue);
                         }
                       }}
                       cypress-data="solve-cell"

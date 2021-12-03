@@ -88,13 +88,19 @@ export async function getUnlikelySolutions(
   pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return (
-    await post<Array<Solution>>(
-      "/unlikely-solve-clue",
-      { clue, word_length, pattern },
-      cancellation
-    )
-  ).map((s) => Object.assign(new Solution(), s));
+  try {
+    return (
+      await post<Array<Solution>>(
+        "/unlikely-solve-clue",
+        { clue, word_length, pattern },
+        cancellation
+      )
+        .then((res) => res)
+        .catch((err) => [])
+    ).map((s) => Object.assign(new Solution(), s));
+  } catch {
+    return [];
+  }
 }
 
 export async function solveWithPattern(
@@ -104,13 +110,19 @@ export async function solveWithPattern(
   letter_pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return (
-    await post<Array<Solution>>(
-      "/solve-with-pattern",
-      { clue, word_length, pattern, letter_pattern },
-      cancellation
-    )
-  ).map((s) => Object.assign(new Solution(), s));
+  try {
+    return (
+      await post<Array<Solution>>(
+        "/solve-with-pattern",
+        { clue, word_length, pattern, letter_pattern },
+        cancellation
+      )
+        .then((res) => res)
+        .catch((err) => [])
+    ).map((s) => Object.assign(new Solution(), s));
+  } catch {
+    return [];
+  }
 }
 
 export async function solveWithPatternUnlikely(
@@ -120,13 +132,19 @@ export async function solveWithPatternUnlikely(
   letter_pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  return (
-    await post<Array<Solution>>(
-      "/solve-with-pattern-unlikely",
-      { clue, word_length, pattern, letter_pattern },
-      cancellation
-    )
-  ).map((s) => Object.assign(new Solution(), s));
+  try {
+    return (
+      await post<Array<Solution>>(
+        "/solve-with-pattern-unlikely",
+        { clue, word_length, pattern, letter_pattern },
+        cancellation
+      )
+        .then((res) => res)
+        .catch((err) => [])
+    ).map((s) => Object.assign(new Solution(), s));
+  } catch {
+    return [];
+  }
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */

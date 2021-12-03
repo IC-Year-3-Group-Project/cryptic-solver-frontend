@@ -10,6 +10,7 @@ export class Clue {
   explanation?: string;
   showExplanation: boolean = false;
   hintLevel: number = 0;
+  hints: string[] = ["Generating hints..."];
 
   contains(x: number, y: number) {
     if (this.direction == ClueDirection.Across) {
