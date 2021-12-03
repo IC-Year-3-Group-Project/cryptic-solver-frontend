@@ -27,10 +27,10 @@ const Home: NextPage = () => {
   const [crosswordID, setCrosswordID] = useState<number>();
 
   useEffect(() => {
-    const fetchEveryman = async (): Promise<any> => {
+    async function fetchEveryman() {
       setEverymanUrls((await getEveryman()).urls);
       setLoadingEveryman(false);
-    };
+    }
 
     fetchEveryman();
   }, []);
