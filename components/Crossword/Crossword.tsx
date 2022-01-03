@@ -221,7 +221,10 @@ export default function Crossword(props: CrosswordProps) {
     setEntries(copy);
   }
 
-  function updateGridMulti(cells: { x: number; y: number }[], updated: any[]) {
+  function updateGridMulti(
+    cells: { x: number; y: number }[],
+    updated: Partial<GridEntry>[]
+  ) {
     const copy = [...entries];
     for (let i = 0; i < cells.length && i < updated.length; i++) {
       const cell = cells[i];
@@ -469,11 +472,11 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(true);
     try {
       const filledInAnswer = getClueText(clue).replace(/_/g, "?");
+      // Strip html tags and word length brackets from clue.
       const strippedClue = clue.getClueText();
       const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
       if (!solutions) {
-        // Strip html tags and word length brackets from clue.
         solutions = await getExplainedSolutions(
           strippedClue,
           clue.totalLength,
@@ -481,18 +484,21 @@ export default function Crossword(props: CrosswordProps) {
           solveCancelToken.signal
         );
       }
-      const patternSolutions = await solveWithPattern(
-        strippedClue,
-        clue.totalLength,
-        pattern,
-        filledInAnswer,
-        solveCancelToken.signal
-      );
-      patternSolutions.forEach((solution) => {
-        if (!checkExistingSolutionInArray(solution, solutions)) {
-          solutions.push(solution);
-        }
-      });
+      if ([...filledInAnswer].some((c) => c != "?")) {
+        const patternSolutions = await solveWithPattern(
+          strippedClue,
+          clue.totalLength,
+          pattern,
+          filledInAnswer,
+          solveCancelToken.signal
+        );
+        solutions = [
+          ...patternSolutions.filter(
+            (p) => !solutions.some((s) => s.answer == p.answer)
+          ),
+          ...solutions,
+        ];
+      }
       if (solutions.length > 0) {
         addToSolutionCache(clue, solutions);
         if (
@@ -758,7 +764,17 @@ export default function Crossword(props: CrosswordProps) {
     );
     backtrack.options = backtrackOptions;
     setBacktracker(backtrack);
-    await backtrack.solveAll();
+    const success = await backtrack.solveAll();
+    if (!success) {
+      const xy = Array.from(
+        { length: puzzle.columns * puzzle.rows },
+        (_, i) => ({
+          x: i % puzzle.columns,
+          y: Math.floor(i / puzzle.columns),
+        })
+      );
+      updateGridMulti(xy, backtrack.bestGridContent);
+    }
     setBacktrackProgress(undefined);
     setLoadingSolution(false);
     onCellClick(undefined);

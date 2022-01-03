@@ -37,8 +37,16 @@ export class Backtracker {
   private abortSignal!: AbortController;
   private solutions: { [key: string]: Solution[] } = {};
 
+  private bestGrid: Partial<GridEntry>[] = [];
+  private cellsSolved: number = 0;
+  private bestCellsSolved: number = 0;
+
   get cancelled(): boolean {
     return this.cancel;
+  }
+
+  get bestGridContent(): Partial<GridEntry>[] {
+    return this.bestGrid;
   }
 
   constructor(
@@ -171,17 +179,11 @@ export class Backtracker {
     this.abortSignal.abort();
   }
 
-  async solveAll() {
+  solveAll(): Promise<boolean> {
     this.cancel = false;
     this.abortSignal = new AbortController();
     const clues = [...this.puzzle.clues];
-    for (
-      let loops = 0;
-      loops < MaxClueLoops && clues.length > 0 && !this.cancel;
-      loops++
-    ) {
-      await this.backtrack(clues);
-    }
+    return this.backtrack(clues);
   }
 
   async backtrack(clues: Clue[]) {
@@ -211,11 +213,19 @@ export class Backtracker {
         this.onUpdate(clue, solution.strippedAnswer);
       }
 
+      this.cellsSolved += solution.strippedAnswer.length;
+
+      if (this.cellsSolved > this.bestCellsSolved) {
+        this.bestGrid = [...this.entries.map((e) => ({ content: e.content }))];
+        this.bestCellsSolved = this.cellsSolved;
+      }
+
       if (await this.backtrack(clues)) {
         return true;
       }
 
       // Undo change
+      this.cellsSolved -= solution.strippedAnswer.length;
       this.setClueText(clue, old);
       if (this.options.triggerUpdateOnClear && this.onUpdate) {
         this.onUpdate(clue, old.replaceAll("?", "_"));
