@@ -38,6 +38,7 @@ import {
   Switch,
   Typography,
   AlertColor,
+  TextField,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -767,7 +768,7 @@ export default function Crossword(props: CrosswordProps) {
     const success = await backtrack.solveAll();
     if (!success) {
       const xy = Array.from(
-        { length: puzzle.columns * puzzle.rows },
+        { length: backtrack.bestGridContent.length },
         (_, i) => ({
           x: i % puzzle.columns,
           y: Math.floor(i / puzzle.columns),
@@ -1125,7 +1126,58 @@ export default function Crossword(props: CrosswordProps) {
                     }
                     label="Clear Cells When Reversing Step"
                   />
-                  <Typography sx={{ pt: 1 }}>Max Solve Retires</Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.bestGridOnFailure}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            bestGridOnFailure: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Best Grid On Failure/Cancel"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        disabled={!backtrackOptions.bestGridOnFailure}
+                        checked={backtrackOptions.bestGridByCells}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            bestGridByCells: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Judge Best Grid by Total Cells"
+                  />
+                  <TextField
+                    label="Timeout (seconds)"
+                    type="number"
+                    value={
+                      (backtrackOptions.timeout ?? 0) > 0
+                        ? backtrackOptions.timeout
+                        : ""
+                    }
+                    onChange={(event) =>
+                      setBacktrackOptions({
+                        ...backtrackOptions,
+                        timeout: +event.target.value,
+                      })
+                    }
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    variant="standard"
+                    placeholder="None"
+                  />
+                  <Typography sx={{ pt: 1 }}>
+                    Max Solve Retires ({backtrackOptions.maxSolutionRetries})
+                  </Typography>
                   <Slider
                     value={backtrackOptions.maxSolutionRetries}
                     onChange={(_, val) =>
