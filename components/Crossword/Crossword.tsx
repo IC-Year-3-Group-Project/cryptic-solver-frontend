@@ -54,6 +54,12 @@ export interface CrosswordProps {
   cellHeight: number;
 }
 
+const ConfidenceGradient = [
+  { r: 255, g: 0, b: 0 },
+  { r: 255, g: 255, b: 0 },
+  { r: 0, g: 255, b: 0 },
+];
+
 const AllowedCharacters =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BackspaceKey = "Backspace";
@@ -458,13 +464,16 @@ export default function Crossword(props: CrosswordProps) {
     }
   }
 
-  function checkExistingSolutionInArray(
-    solution: Solution,
-    solutions: Solution[]
-  ) {
-    return solutions.some((existing) => {
-      return existing.answer === solution.answer;
+  function getConfidence(cell: GridEntry): number | undefined {
+    let confidence: number | undefined = undefined;
+    cell.clues.forEach((c) => {
+      const sol = getSolution(c);
+      if (sol) {
+        confidence = (confidence || 1) * sol.confidence;
+      }
     });
+
+    return confidence;
   }
 
   // Calls the solver and fills in the given clue on the grid.
@@ -791,6 +800,7 @@ export default function Crossword(props: CrosswordProps) {
   const horizontalWordBreaks = new Array<GridEntry>();
   const wordBreakWidth = cellWidth / 8;
   const wordBreakHeight = cellHeight / 8;
+  let currentConfidence = 0;
   return (
     <div className="crossword-container">
       <Snackbar
@@ -817,11 +827,44 @@ export default function Crossword(props: CrosswordProps) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              overflow: "auto",
+              justifyContent: "start",
               flexWrap: "wrap",
               p: 2,
+              maxHeight: svgHeight + cellHeight + 200,
             }}
           >
+            <div
+              style={{
+                display: "flex",
+                position: "relative",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "1rem",
+                width: svgWidth,
+                height: cellHeight,
+                backgroundImage: `linear-gradient(to right, ${rgbToHex(
+                  ConfidenceGradient[0]
+                )}, ${rgbToHex(ConfidenceGradient[1])}, ${rgbToHex(
+                  ConfidenceGradient[2]
+                )}`,
+              }}
+            >
+              <div>0%</div>
+              <div>Cell Confidence</div>
+              <div>100%</div>
+              {currentCell &&
+                (currentConfidence = getConfidence(currentCell) ?? 0) > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: cellHeight / 2,
+                      left: `${(currentConfidence - 0.016) * svgWidth}px`,
+                    }}
+                  >
+                    <span style={{ fontSize: "1rem" }}>&#9650;</span>
+                  </div>
+                )}
+            </div>
             <div
               className="crossword-svg-container"
               style={{ width: svgWidth, height: svgHeight }}
@@ -839,12 +882,8 @@ export default function Crossword(props: CrosswordProps) {
                       cell.y * cellHeight,
                     ];
 
-                    let confidence: number | undefined = undefined;
+                    let confidence = getConfidence(cell);
                     cell.clues.forEach((c) => {
-                      const sol = getSolution(c);
-                      if (sol) {
-                        confidence = (confidence || 1) * sol.confidence;
-                      }
                       if (c.isHorizontalWordBreak(cell.x, cell.y)) {
                         horizontalWordBreaks.push(cell);
                       }
@@ -872,11 +911,7 @@ export default function Crossword(props: CrosswordProps) {
                               : confidence
                               ? rgbToHex(
                                   gradient(
-                                    [
-                                      { r: 255, g: 0, b: 0 },
-                                      { r: 255, g: 255, b: 0 },
-                                      { r: 0, g: 255, b: 0 },
-                                    ],
+                                    ConfidenceGradient,
                                     confidence,
                                     (x) => x
                                   )
@@ -979,16 +1014,10 @@ export default function Crossword(props: CrosswordProps) {
                   paddingTop: "1rem",
                 }}
               >
-                <p>{`${puzzle.clues.length - incorrect.length}/${
-                  puzzle.clues.length
-                } correct!`}</p>
-                {incorrect.map((c, i) => (
-                  <a key={i} onClick={() => onClueSelectedFromList(c)}>
-                    {c.getTitle()}: {getClueText(c)} vs {c.solution}
-                  </a>
-                ))}
                 <p>
-                  Backtracking took {Math.round(backtrackTime * 10) / 10000}s.
+                  {`${puzzle.clues.length - incorrect.length}/${
+                    puzzle.clues.length
+                  } correct in ${Math.round(backtrackTime * 10) / 10000}s`}
                 </p>
               </div>
             )}
