@@ -788,10 +788,21 @@ export default function Crossword(props: CrosswordProps) {
     setBacktrackProgress(undefined);
     setLoadingSolution(false);
     onCellClick(undefined);
+    const btIncorrect = puzzle.clues.filter(
+      (c) => getClueText(c) != c.solution
+    );
     if (!backtrack.cancelled) {
-      setIncorrect(puzzle.clues.filter((c) => getClueText(c) != c.solution));
+      setIncorrect(btIncorrect);
       setBacktrackTime(new Date().getTime() - start);
     }
+
+    setSeverity("success");
+    setMessage(
+      `${puzzle.clues.length - btIncorrect.length}/${
+        puzzle.clues.length
+      } correct in ${Math.round(backtrackTime * 10) / 10000}s`
+    );
+    setOpen(true);
   }
 
   const svgWidth = cellWidth * puzzle.columns;
@@ -1005,22 +1016,6 @@ export default function Crossword(props: CrosswordProps) {
                 </div>
               )}
             </div>
-            {incorrect && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  paddingTop: "1rem",
-                }}
-              >
-                <p>
-                  {`${puzzle.clues.length - incorrect.length}/${
-                    puzzle.clues.length
-                  } correct in ${Math.round(backtrackTime * 10) / 10000}s`}
-                </p>
-              </div>
-            )}
             {(backtrackProgress || 0) > 0 && (
               <Box sx={{ width: `${svgWidth}px`, mt: 1 }}>
                 <LinearProgress
