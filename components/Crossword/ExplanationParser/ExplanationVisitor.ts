@@ -12,6 +12,7 @@ import {
   MultiWordContext,
   InsertContext,
   AnagramContext,
+  CharadeContext,
 } from "antlr/MorseGrammarParser";
 import { MorseGrammarVisitor } from "antlr/MorseGrammarVisitor";
 import ComplexOperation from "./ast/ComplexOperation";
@@ -26,6 +27,7 @@ import Subtract from "./ast/Subtract";
 import Synonym from "./ast/Synonym";
 import Word from "./ast/Word";
 import WordJoin from "./ast/WordJoin";
+import MultiNode from "./ast/MultiNode";
 
 export default class ExplanationVisitor
   extends AbstractParseTreeVisitor<ExplanationNode>
@@ -125,6 +127,14 @@ export default class ExplanationVisitor
   visitMultiWord(context: MultiWordContext): Word {
     const word = this.getMultiWordText(context);
     return new Word(word);
+  }
+
+  visitCharade(context: CharadeContext): MultiNode {
+    const indicator = this.getMultiWordText(context.subject().multiWord());
+    return new MultiNode([
+      new SimpleOperation("join", indicator),
+      new WordJoin(context.explanation().map((e) => this.visit(e))),
+    ]);
   }
 
   getMultiWordText(context: MultiWordContext): string {

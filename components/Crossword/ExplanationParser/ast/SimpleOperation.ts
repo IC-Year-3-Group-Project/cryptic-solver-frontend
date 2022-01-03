@@ -1,7 +1,7 @@
 import { articulate } from "../utils";
 import ExplanationNode from "./ExplanationNode";
 
-const Indicators = ["anagram"];
+const Indicators = ["anagram", "join"];
 
 export default class SimpleOperation implements ExplanationNode {
   operation: string;
