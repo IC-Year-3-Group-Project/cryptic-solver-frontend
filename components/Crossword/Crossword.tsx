@@ -38,6 +38,7 @@ import {
   Switch,
   Typography,
   AlertColor,
+  TextField,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {
@@ -52,6 +53,12 @@ export interface CrosswordProps {
   cellWidth: number;
   cellHeight: number;
 }
+
+const ConfidenceGradient = [
+  { r: 255, g: 0, b: 0 },
+  { r: 255, g: 255, b: 0 },
+  { r: 0, g: 255, b: 0 },
+];
 
 const AllowedCharacters =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -221,7 +228,10 @@ export default function Crossword(props: CrosswordProps) {
     setEntries(copy);
   }
 
-  function updateGridMulti(cells: { x: number; y: number }[], updated: any[]) {
+  function updateGridMulti(
+    cells: { x: number; y: number }[],
+    updated: Partial<GridEntry>[]
+  ) {
     const copy = [...entries];
     for (let i = 0; i < cells.length && i < updated.length; i++) {
       const cell = cells[i];
@@ -454,13 +464,16 @@ export default function Crossword(props: CrosswordProps) {
     }
   }
 
-  function checkExistingSolutionInArray(
-    solution: Solution,
-    solutions: Solution[]
-  ) {
-    return solutions.some((existing) => {
-      return existing.answer === solution.answer;
+  function getConfidence(cell: GridEntry): number | undefined {
+    let confidence: number | undefined = undefined;
+    cell.clues.forEach((c) => {
+      const sol = getSolution(c);
+      if (sol) {
+        confidence = (confidence || 1) * sol.confidence;
+      }
     });
+
+    return confidence;
   }
 
   // Calls the solver and fills in the given clue on the grid.
@@ -469,11 +482,11 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(true);
     try {
       const filledInAnswer = getClueText(clue).replace(/_/g, "?");
+      // Strip html tags and word length brackets from clue.
       const strippedClue = clue.getClueText();
       const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
       if (!solutions) {
-        // Strip html tags and word length brackets from clue.
         solutions = await getExplainedSolutions(
           strippedClue,
           clue.totalLength,
@@ -481,18 +494,21 @@ export default function Crossword(props: CrosswordProps) {
           solveCancelToken.signal
         );
       }
-      const patternSolutions = await solveWithPattern(
-        strippedClue,
-        clue.totalLength,
-        pattern,
-        filledInAnswer,
-        solveCancelToken.signal
-      );
-      patternSolutions.forEach((solution) => {
-        if (!checkExistingSolutionInArray(solution, solutions)) {
-          solutions.push(solution);
-        }
-      });
+      if ([...filledInAnswer].some((c) => c != "?")) {
+        const patternSolutions = await solveWithPattern(
+          strippedClue,
+          clue.totalLength,
+          pattern,
+          filledInAnswer,
+          solveCancelToken.signal
+        );
+        solutions = [
+          ...patternSolutions.filter(
+            (p) => !solutions.some((s) => s.answer == p.answer)
+          ),
+          ...solutions,
+        ];
+      }
       if (solutions.length > 0) {
         addToSolutionCache(clue, solutions);
         if (
@@ -758,14 +774,35 @@ export default function Crossword(props: CrosswordProps) {
     );
     backtrack.options = backtrackOptions;
     setBacktracker(backtrack);
-    await backtrack.solveAll();
+    const success = await backtrack.solveAll();
+    if (!success) {
+      const xy = Array.from(
+        { length: backtrack.bestGridContent.length },
+        (_, i) => ({
+          x: i % puzzle.columns,
+          y: Math.floor(i / puzzle.columns),
+        })
+      );
+      updateGridMulti(xy, backtrack.bestGridContent);
+    }
     setBacktrackProgress(undefined);
     setLoadingSolution(false);
     onCellClick(undefined);
+    const btIncorrect = puzzle.clues.filter(
+      (c) => getClueText(c) != c.solution
+    );
     if (!backtrack.cancelled) {
-      setIncorrect(puzzle.clues.filter((c) => getClueText(c) != c.solution));
+      setIncorrect(btIncorrect);
       setBacktrackTime(new Date().getTime() - start);
     }
+
+    setSeverity("success");
+    setMessage(
+      `${puzzle.clues.length - btIncorrect.length}/${
+        puzzle.clues.length
+      } correct in ${Math.round(backtrackTime * 10) / 10000}s`
+    );
+    setOpen(true);
   }
 
   const svgWidth = cellWidth * puzzle.columns;
@@ -774,6 +811,7 @@ export default function Crossword(props: CrosswordProps) {
   const horizontalWordBreaks = new Array<GridEntry>();
   const wordBreakWidth = cellWidth / 8;
   const wordBreakHeight = cellHeight / 8;
+  let currentConfidence = 0;
   return (
     <div className="crossword-container">
       <Snackbar
@@ -800,11 +838,44 @@ export default function Crossword(props: CrosswordProps) {
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              overflow: "auto",
+              justifyContent: "start",
               flexWrap: "wrap",
               p: 2,
+              maxHeight: svgHeight + cellHeight + 200,
             }}
           >
+            <div
+              style={{
+                display: "flex",
+                position: "relative",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "1rem",
+                width: svgWidth,
+                height: cellHeight,
+                backgroundImage: `linear-gradient(to right, ${rgbToHex(
+                  ConfidenceGradient[0]
+                )}, ${rgbToHex(ConfidenceGradient[1])}, ${rgbToHex(
+                  ConfidenceGradient[2]
+                )}`,
+              }}
+            >
+              <div>0%</div>
+              <div>Cell Confidence</div>
+              <div>100%</div>
+              {currentCell &&
+                (currentConfidence = getConfidence(currentCell) ?? 0) > 0 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: cellHeight / 2,
+                      left: `${(currentConfidence - 0.016) * svgWidth}px`,
+                    }}
+                  >
+                    <span style={{ fontSize: "1rem" }}>&#9650;</span>
+                  </div>
+                )}
+            </div>
             <div
               className="crossword-svg-container"
               style={{ width: svgWidth, height: svgHeight }}
@@ -822,12 +893,8 @@ export default function Crossword(props: CrosswordProps) {
                       cell.y * cellHeight,
                     ];
 
-                    let confidence: number | undefined = undefined;
+                    let confidence = getConfidence(cell);
                     cell.clues.forEach((c) => {
-                      const sol = getSolution(c);
-                      if (sol) {
-                        confidence = (confidence || 1) * sol.confidence;
-                      }
                       if (c.isHorizontalWordBreak(cell.x, cell.y)) {
                         horizontalWordBreaks.push(cell);
                       }
@@ -855,11 +922,7 @@ export default function Crossword(props: CrosswordProps) {
                               : confidence
                               ? rgbToHex(
                                   gradient(
-                                    [
-                                      { r: 255, g: 0, b: 0 },
-                                      { r: 255, g: 255, b: 0 },
-                                      { r: 0, g: 255, b: 0 },
-                                    ],
+                                    ConfidenceGradient,
                                     confidence,
                                     (x) => x
                                   )
@@ -953,28 +1016,6 @@ export default function Crossword(props: CrosswordProps) {
                 </div>
               )}
             </div>
-            {incorrect && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  paddingTop: "1rem",
-                }}
-              >
-                <p>{`${puzzle.clues.length - incorrect.length}/${
-                  puzzle.clues.length
-                } correct!`}</p>
-                {incorrect.map((c, i) => (
-                  <a key={i} onClick={() => onClueSelectedFromList(c)}>
-                    {c.getTitle()}: {getClueText(c)} vs {c.solution}
-                  </a>
-                ))}
-                <p>
-                  Backtracking took {Math.round(backtrackTime * 10) / 10000}s.
-                </p>
-              </div>
-            )}
             {(backtrackProgress || 0) > 0 && (
               <Box sx={{ width: `${svgWidth}px`, mt: 1 }}>
                 <LinearProgress
@@ -1109,7 +1150,58 @@ export default function Crossword(props: CrosswordProps) {
                     }
                     label="Clear Cells When Reversing Step"
                   />
-                  <Typography sx={{ pt: 1 }}>Max Solve Retires</Typography>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.bestGridOnFailure}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            bestGridOnFailure: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Best Grid On Failure/Cancel"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        disabled={!backtrackOptions.bestGridOnFailure}
+                        checked={backtrackOptions.bestGridByCells}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            bestGridByCells: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Judge Best Grid by Total Cells"
+                  />
+                  <TextField
+                    label="Timeout (seconds)"
+                    type="number"
+                    value={
+                      (backtrackOptions.timeout ?? 0) > 0
+                        ? backtrackOptions.timeout
+                        : ""
+                    }
+                    onChange={(event) =>
+                      setBacktrackOptions({
+                        ...backtrackOptions,
+                        timeout: +event.target.value,
+                      })
+                    }
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    variant="standard"
+                    placeholder="None"
+                  />
+                  <Typography sx={{ pt: 1 }}>
+                    Max Solve Retires ({backtrackOptions.maxSolutionRetries})
+                  </Typography>
                   <Slider
                     value={backtrackOptions.maxSolutionRetries}
                     onChange={(_, val) =>

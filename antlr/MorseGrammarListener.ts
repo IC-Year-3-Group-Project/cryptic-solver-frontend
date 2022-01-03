@@ -5,6 +5,7 @@ import { ParseTreeListener } from "antlr4ts/tree/ParseTreeListener";
 
 import { SynonymContext } from "./MorseGrammarParser";
 import { WordJoinContext } from "./MorseGrammarParser";
+import { CharadeContext } from "./MorseGrammarParser";
 import { AnagramContext } from "./MorseGrammarParser";
 import { SimpleOperationContext } from "./MorseGrammarParser";
 import { ComplexOperationContext } from "./MorseGrammarParser";
@@ -50,6 +51,19 @@ export interface MorseGrammarListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	exitWordJoin?: (ctx: WordJoinContext) => void;
+
+	/**
+	 * Enter a parse tree produced by the `charade`
+	 * labeled alternative in `MorseGrammarParser.explanation`.
+	 * @param ctx the parse tree
+	 */
+	enterCharade?: (ctx: CharadeContext) => void;
+	/**
+	 * Exit a parse tree produced by the `charade`
+	 * labeled alternative in `MorseGrammarParser.explanation`.
+	 * @param ctx the parse tree
+	 */
+	exitCharade?: (ctx: CharadeContext) => void;
 
 	/**
 	 * Enter a parse tree produced by the `anagram`

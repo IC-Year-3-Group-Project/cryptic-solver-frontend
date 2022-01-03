@@ -4,10 +4,6 @@ import { CharStreams, CommonTokenStream } from "antlr4ts";
 import ExplanationVisitor from "./ExplanationVisitor";
 
 export function parseExplanation(explanation: string) {
-  explanation = explanation.replaceAll(
-    /\+\[(.*?)\]/g,
-    (_, g) => `charade[${g}]`
-  );
   const lexer = new MorseGrammarLexer(CharStreams.fromString(explanation));
   const parser = new MorseGrammarParser(new CommonTokenStream(lexer));
 

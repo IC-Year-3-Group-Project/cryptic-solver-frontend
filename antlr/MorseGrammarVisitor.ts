@@ -5,6 +5,7 @@ import { ParseTreeVisitor } from "antlr4ts/tree/ParseTreeVisitor";
 
 import { SynonymContext } from "./MorseGrammarParser";
 import { WordJoinContext } from "./MorseGrammarParser";
+import { CharadeContext } from "./MorseGrammarParser";
 import { AnagramContext } from "./MorseGrammarParser";
 import { SimpleOperationContext } from "./MorseGrammarParser";
 import { ComplexOperationContext } from "./MorseGrammarParser";
@@ -43,6 +44,14 @@ export interface MorseGrammarVisitor<Result> extends ParseTreeVisitor<Result> {
 	 * @return the visitor result
 	 */
 	visitWordJoin?: (ctx: WordJoinContext) => Result;
+
+	/**
+	 * Visit a parse tree produced by the `charade`
+	 * labeled alternative in `MorseGrammarParser.explanation`.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	visitCharade?: (ctx: CharadeContext) => Result;
 
 	/**
 	 * Visit a parse tree produced by the `anagram`

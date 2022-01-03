@@ -15,6 +15,8 @@ export const DefaultBacktrackingOptions: BacktrackingOptions = {
   useHaskellPartial: false,
   triggerUpdateOnClear: false,
   maxSolutionRetries: 0,
+  bestGridOnFailure: true,
+  bestGridByCells: false,
 };
 
 export interface BacktrackingOptions {
@@ -22,6 +24,9 @@ export interface BacktrackingOptions {
   useHaskellPartial: boolean;
   triggerUpdateOnClear: boolean;
   maxSolutionRetries: number;
+  bestGridOnFailure: boolean;
+  bestGridByCells: boolean;
+  timeout?: number;
 }
 
 export class Backtracker {
@@ -37,8 +42,18 @@ export class Backtracker {
   private abortSignal!: AbortController;
   private solutions: { [key: string]: Solution[] } = {};
 
+  private bestGrid: Partial<GridEntry>[] = [];
+  private cellsSolved: number = 0;
+  private bestCellsSolved: number = 0;
+
+  private startTime: number = 0;
+
   get cancelled(): boolean {
     return this.cancel;
+  }
+
+  get bestGridContent(): Partial<GridEntry>[] {
+    return this.options.bestGridOnFailure ? this.bestGrid : [];
   }
 
   constructor(
@@ -171,17 +186,17 @@ export class Backtracker {
     this.abortSignal.abort();
   }
 
-  async solveAll() {
+  solveAll(): Promise<boolean> {
     this.cancel = false;
     this.abortSignal = new AbortController();
-    const clues = [...this.puzzle.clues];
-    for (
-      let loops = 0;
-      loops < MaxClueLoops && clues.length > 0 && !this.cancel;
-      loops++
-    ) {
-      await this.backtrack(clues);
+    if (this.options.timeout && this.options.timeout > 0) {
+      setTimeout(() => {
+        this.cancelSolve();
+      }, this.options.timeout * 1000);
     }
+    const clues = [...this.puzzle.clues];
+    this.startTime = new Date().getTime();
+    return this.backtrack(clues);
   }
 
   async backtrack(clues: Clue[]) {
@@ -211,11 +226,20 @@ export class Backtracker {
         this.onUpdate(clue, solution.strippedAnswer);
       }
 
+      const solveScore = this.options.bestGridByCells ? clue.totalLength : 1;
+      this.cellsSolved += solveScore;
+
+      if (this.cellsSolved > this.bestCellsSolved) {
+        this.bestGrid = [...this.entries.map((e) => ({ content: e.content }))];
+        this.bestCellsSolved = this.cellsSolved;
+      }
+
       if (await this.backtrack(clues)) {
         return true;
       }
 
       // Undo change
+      this.cellsSolved -= solveScore;
       this.setClueText(clue, old);
       if (this.options.triggerUpdateOnClear && this.onUpdate) {
         this.onUpdate(clue, old.replaceAll("?", "_"));

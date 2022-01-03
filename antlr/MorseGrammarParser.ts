@@ -352,7 +352,7 @@ export class MorseGrammarParser extends Parser {
 				break;
 			}
 			this._ctx._stop = this._input.tryLT(-1);
-			this.state = 79;
+			this.state = 84;
 			this._errHandler.sync(this);
 			_alt = this.interpreter.adaptivePredict(this._input, 6, this._ctx);
 			while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER) {
@@ -362,7 +362,7 @@ export class MorseGrammarParser extends Parser {
 					}
 					_prevctx = _localctx;
 					{
-					this.state = 77;
+					this.state = 82;
 					this._errHandler.sync(this);
 					switch ( this.interpreter.adaptivePredict(this._input, 5, this._ctx) ) {
 					case 1:
@@ -370,25 +370,42 @@ export class MorseGrammarParser extends Parser {
 						_localctx = new SynonymContext(new ExplanationContext(_parentctx, _parentState));
 						this.pushNewRecursionContext(_localctx, _startState, MorseGrammarParser.RULE_explanation);
 						this.state = 67;
-						if (!(this.precpred(this._ctx, 11))) {
-							throw this.createFailedPredicateException("this.precpred(this._ctx, 11)");
+						if (!(this.precpred(this._ctx, 12))) {
+							throw this.createFailedPredicateException("this.precpred(this._ctx, 12)");
 						}
 						this.state = 68;
 						this.match(MorseGrammarParser.EQUALS);
 						this.state = 69;
-						this.explanation(12);
+						this.explanation(13);
 						}
 						break;
 
 					case 2:
 						{
-						_localctx = new WordJoinContext(new ExplanationContext(_parentctx, _parentState));
+						_localctx = new CharadeContext(new ExplanationContext(_parentctx, _parentState));
 						this.pushNewRecursionContext(_localctx, _startState, MorseGrammarParser.RULE_explanation);
 						this.state = 70;
 						if (!(this.precpred(this._ctx, 10))) {
 							throw this.createFailedPredicateException("this.precpred(this._ctx, 10)");
 						}
+						this.state = 71;
+						this.match(MorseGrammarParser.WORD_JOIN);
+						this.state = 72;
+						this.subject();
 						this.state = 73;
+						this.explanation(11);
+						}
+						break;
+
+					case 3:
+						{
+						_localctx = new WordJoinContext(new ExplanationContext(_parentctx, _parentState));
+						this.pushNewRecursionContext(_localctx, _startState, MorseGrammarParser.RULE_explanation);
+						this.state = 75;
+						if (!(this.precpred(this._ctx, 11))) {
+							throw this.createFailedPredicateException("this.precpred(this._ctx, 11)");
+						}
+						this.state = 78;
 						this._errHandler.sync(this);
 						_alt = 1;
 						do {
@@ -396,9 +413,9 @@ export class MorseGrammarParser extends Parser {
 							case 1:
 								{
 								{
-								this.state = 71;
+								this.state = 76;
 								this.match(MorseGrammarParser.WORD_JOIN);
-								this.state = 72;
+								this.state = 77;
 								this.explanation(0);
 								}
 								}
@@ -406,7 +423,7 @@ export class MorseGrammarParser extends Parser {
 							default:
 								throw new NoViableAltException(this);
 							}
-							this.state = 75;
+							this.state = 80;
 							this._errHandler.sync(this);
 							_alt = this.interpreter.adaptivePredict(this._input, 4, this._ctx);
 						} while (_alt !== 2 && _alt !== ATN.INVALID_ALT_NUMBER);
@@ -415,7 +432,7 @@ export class MorseGrammarParser extends Parser {
 					}
 					}
 				}
-				this.state = 81;
+				this.state = 86;
 				this._errHandler.sync(this);
 				_alt = this.interpreter.adaptivePredict(this._input, 6, this._ctx);
 			}
@@ -443,21 +460,21 @@ export class MorseGrammarParser extends Parser {
 		try {
 			this.enterOuterAlt(_localctx, 1);
 			{
-			this.state = 82;
+			this.state = 87;
 			this.multiWord();
-			this.state = 83;
+			this.state = 88;
 			this.match(MorseGrammarParser.DEFINITION_SPLIT);
-			this.state = 85;
+			this.state = 90;
 			this._errHandler.sync(this);
 			_la = this._input.LA(1);
 			if (_la === MorseGrammarParser.T__0) {
 				{
-				this.state = 84;
+				this.state = 89;
 				this.subject();
 				}
 			}
 
-			this.state = 87;
+			this.state = 92;
 			this.explanation(0);
 			}
 		}
@@ -486,16 +503,19 @@ export class MorseGrammarParser extends Parser {
 	private explanation_sempred(_localctx: ExplanationContext, predIndex: number): boolean {
 		switch (predIndex) {
 		case 0:
-			return this.precpred(this._ctx, 11);
+			return this.precpred(this._ctx, 12);
 
 		case 1:
 			return this.precpred(this._ctx, 10);
+
+		case 2:
+			return this.precpred(this._ctx, 11);
 		}
 		return true;
 	}
 
 	public static readonly _serializedATN: string =
-		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x14\\\x04\x02" +
+		"\x03\uC91D\uCABA\u058D\uAFBA\u4F53\u0607\uEA8B\uC241\x03\x14a\x04\x02" +
 		"\t\x02\x04\x03\t\x03\x04\x04\t\x04\x04\x05\t\x05\x03\x02\x06\x02\f\n\x02" +
 		"\r\x02\x0E\x02\r\x03\x03\x03\x03\x03\x03\x03\x03\x03\x04\x03\x04\x03\x04" +
 		"\x03\x04\x05\x04\x18\n\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03" +
@@ -503,37 +523,40 @@ export class MorseGrammarParser extends Parser {
 		"\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03" +
 		"\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03" +
 		"\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03" +
-		"\x04\x05\x04D\n\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x06" +
-		"\x04L\n\x04\r\x04\x0E\x04M\x07\x04P\n\x04\f\x04\x0E\x04S\v\x04\x03\x05" +
-		"\x03\x05\x03\x05\x05\x05X\n\x05\x03\x05\x03\x05\x03\x05\x02\x02\x03\x06" +
-		"\x06\x02\x02\x04\x02\x06\x02\b\x02\x02\x02\x02f\x02\v\x03\x02\x02\x02" +
-		"\x04\x0F\x03\x02\x02\x02\x06C\x03\x02\x02\x02\bT\x03\x02\x02\x02\n\f\x07" +
-		"\x14\x02\x02\v\n\x03\x02\x02\x02\f\r\x03\x02\x02\x02\r\v\x03\x02\x02\x02" +
-		"\r\x0E\x03\x02\x02\x02\x0E\x03\x03\x02\x02\x02\x0F\x10\x07\x03\x02\x02" +
-		"\x10\x11\x05\x02\x02\x02\x11\x12\x07\x04\x02\x02\x12\x05\x03\x02\x02\x02" +
-		"\x13\x14\b\x04\x01\x02\x14\x15\x07\r\x02\x02\x15\x17\x05\x04\x03\x02\x16" +
-		"\x18\x05\x06\x04\x02\x17\x16\x03\x02\x02\x02\x17\x18\x03\x02\x02\x02\x18" +
-		"D\x03\x02\x02\x02\x19\x1A\x07\x12\x02\x02\x1AD\x05\x04\x03\x02\x1B\x1C" +
-		"\x07\x13\x02\x02\x1C\x1D\x05\x04\x03\x02\x1D\x1E\x05\x06\x04\t\x1ED\x03" +
-		"\x02\x02\x02\x1F \x05\x02\x02\x02 \"\x07\x07\x02\x02!#\x05\x06\x04\x02" +
-		"\"!\x03\x02\x02\x02#$\x03\x02\x02\x02$\"\x03\x02\x02\x02$%\x03\x02\x02" +
-		"\x02%&\x03\x02\x02\x02&\'\x07\b\x02\x02\'D\x03\x02\x02\x02()\x07\x0E\x02" +
-		"\x02)*\x05\x04\x03\x02*+\x05\x06\x04\x02+,\x07\n\x02\x02,-\x05\x06\x04" +
-		"\x07-D\x03\x02\x02\x02./\x07\x0F\x02\x02/0\x05\x04\x03\x0201\x07\x07\x02" +
-		"\x0212\x05\x06\x04\x0223\x07\t\x02\x0234\x05\x06\x04\x0245\x07\b\x02\x02" +
-		"5D\x03\x02\x02\x0267\x07\x10\x02\x0278\x05\x04\x03\x0289\x05\x06\x04\x02" +
-		"9:\x07\v\x02\x02:;\x05\x06\x04\x05;D\x03\x02\x02\x02<=\x07\x11\x02\x02" +
-		"=>\x05\x04\x03\x02>?\x05\x06\x04\x02?@\x07\f\x02\x02@A\x05\x06\x04\x04" +
-		"AD\x03\x02\x02\x02BD\x05\x02\x02\x02C\x13\x03\x02\x02\x02C\x19\x03\x02" +
-		"\x02\x02C\x1B\x03\x02\x02\x02C\x1F\x03\x02\x02\x02C(\x03\x02\x02\x02C" +
-		".\x03\x02\x02\x02C6\x03\x02\x02\x02C<\x03\x02\x02\x02CB\x03\x02\x02\x02" +
-		"DQ\x03\x02\x02\x02EF\f\r\x02\x02FG\x07\n\x02\x02GP\x05\x06\x04\x0EHK\f" +
-		"\f\x02\x02IJ\x07\t\x02\x02JL\x05\x06\x04\x02KI\x03\x02\x02\x02LM\x03\x02" +
-		"\x02\x02MK\x03\x02\x02\x02MN\x03\x02\x02\x02NP\x03\x02\x02\x02OE\x03\x02" +
-		"\x02\x02OH\x03\x02\x02\x02PS\x03\x02\x02\x02QO\x03\x02\x02\x02QR\x03\x02" +
-		"\x02\x02R\x07\x03\x02\x02\x02SQ\x03\x02\x02\x02TU\x05\x02\x02\x02UW\x07" +
-		"\x06\x02\x02VX\x05\x04\x03\x02WV\x03\x02\x02\x02WX\x03\x02\x02\x02XY\x03" +
-		"\x02\x02\x02YZ\x05\x06\x04\x02Z\t\x03\x02\x02\x02\n\r\x17$CMOQW";
+		"\x04\x05\x04D\n\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03\x04\x03" +
+		"\x04\x03\x04\x03\x04\x03\x04\x03\x04\x06\x04Q\n\x04\r\x04\x0E\x04R\x07" +
+		"\x04U\n\x04\f\x04\x0E\x04X\v\x04\x03\x05\x03\x05\x03\x05\x05\x05]\n\x05" +
+		"\x03\x05\x03\x05\x03\x05\x02\x02\x03\x06\x06\x02\x02\x04\x02\x06\x02\b" +
+		"\x02\x02\x02\x02l\x02\v\x03\x02\x02\x02\x04\x0F\x03\x02\x02\x02\x06C\x03" +
+		"\x02\x02\x02\bY\x03\x02\x02\x02\n\f\x07\x14\x02\x02\v\n\x03\x02\x02\x02" +
+		"\f\r\x03\x02\x02\x02\r\v\x03\x02\x02\x02\r\x0E\x03\x02\x02\x02\x0E\x03" +
+		"\x03\x02\x02\x02\x0F\x10\x07\x03\x02\x02\x10\x11\x05\x02\x02\x02\x11\x12" +
+		"\x07\x04\x02\x02\x12\x05\x03\x02\x02\x02\x13\x14\b\x04\x01\x02\x14\x15" +
+		"\x07\r\x02\x02\x15\x17\x05\x04\x03\x02\x16\x18\x05\x06\x04\x02\x17\x16" +
+		"\x03\x02\x02\x02\x17\x18\x03\x02\x02\x02\x18D\x03\x02\x02\x02\x19\x1A" +
+		"\x07\x12\x02\x02\x1AD\x05\x04\x03\x02\x1B\x1C\x07\x13\x02\x02\x1C\x1D" +
+		"\x05\x04\x03\x02\x1D\x1E\x05\x06\x04\t\x1ED\x03\x02\x02\x02\x1F \x05\x02" +
+		"\x02\x02 \"\x07\x07\x02\x02!#\x05\x06\x04\x02\"!\x03\x02\x02\x02#$\x03" +
+		"\x02\x02\x02$\"\x03\x02\x02\x02$%\x03\x02\x02\x02%&\x03\x02\x02\x02&\'" +
+		"\x07\b\x02\x02\'D\x03\x02\x02\x02()\x07\x0E\x02\x02)*\x05\x04\x03\x02" +
+		"*+\x05\x06\x04\x02+,\x07\n\x02\x02,-\x05\x06\x04\x07-D\x03\x02\x02\x02" +
+		"./\x07\x0F\x02\x02/0\x05\x04\x03\x0201\x07\x07\x02\x0212\x05\x06\x04\x02" +
+		"23\x07\t\x02\x0234\x05\x06\x04\x0245\x07\b\x02\x025D\x03\x02\x02\x026" +
+		"7\x07\x10\x02\x0278\x05\x04\x03\x0289\x05\x06\x04\x029:\x07\v\x02\x02" +
+		":;\x05\x06\x04\x05;D\x03\x02\x02\x02<=\x07\x11\x02\x02=>\x05\x04\x03\x02" +
+		">?\x05\x06\x04\x02?@\x07\f\x02\x02@A\x05\x06\x04\x04AD\x03\x02\x02\x02" +
+		"BD\x05\x02\x02\x02C\x13\x03\x02\x02\x02C\x19\x03\x02\x02\x02C\x1B\x03" +
+		"\x02\x02\x02C\x1F\x03\x02\x02\x02C(\x03\x02\x02\x02C.\x03\x02\x02\x02" +
+		"C6\x03\x02\x02\x02C<\x03\x02\x02\x02CB\x03\x02\x02\x02DV\x03\x02\x02\x02" +
+		"EF\f\x0E\x02\x02FG\x07\n\x02\x02GU\x05\x06\x04\x0FHI\f\f\x02\x02IJ\x07" +
+		"\t\x02\x02JK\x05\x04\x03\x02KL\x05\x06\x04\rLU\x03\x02\x02\x02MP\f\r\x02" +
+		"\x02NO\x07\t\x02\x02OQ\x05\x06\x04\x02PN\x03\x02\x02\x02QR\x03\x02\x02" +
+		"\x02RP\x03\x02\x02\x02RS\x03\x02\x02\x02SU\x03\x02\x02\x02TE\x03\x02\x02" +
+		"\x02TH\x03\x02\x02\x02TM\x03\x02\x02\x02UX\x03\x02\x02\x02VT\x03\x02\x02" +
+		"\x02VW\x03\x02\x02\x02W\x07\x03\x02\x02\x02XV\x03\x02\x02\x02YZ\x05\x02" +
+		"\x02\x02Z\\\x07\x06\x02\x02[]\x05\x04\x03\x02\\[\x03\x02\x02\x02\\]\x03" +
+		"\x02\x02\x02]^\x03\x02\x02\x02^_\x05\x06\x04\x02_\t\x03\x02\x02\x02\n" +
+		"\r\x17$CRTV\\";
 	public static __ATN: ATN;
 	public static get _ATN(): ATN {
 		if (!MorseGrammarParser.__ATN) {
@@ -700,6 +723,45 @@ export class WordJoinContext extends ExplanationContext {
 	public accept<Result>(visitor: MorseGrammarVisitor<Result>): Result {
 		if (visitor.visitWordJoin) {
 			return visitor.visitWordJoin(this);
+		} else {
+			return visitor.visitChildren(this);
+		}
+	}
+}
+export class CharadeContext extends ExplanationContext {
+	public explanation(): ExplanationContext[];
+	public explanation(i: number): ExplanationContext;
+	public explanation(i?: number): ExplanationContext | ExplanationContext[] {
+		if (i === undefined) {
+			return this.getRuleContexts(ExplanationContext);
+		} else {
+			return this.getRuleContext(i, ExplanationContext);
+		}
+	}
+	public WORD_JOIN(): TerminalNode { return this.getToken(MorseGrammarParser.WORD_JOIN, 0); }
+	public subject(): SubjectContext {
+		return this.getRuleContext(0, SubjectContext);
+	}
+	constructor(ctx: ExplanationContext) {
+		super(ctx.parent, ctx.invokingState);
+		this.copyFrom(ctx);
+	}
+	// @Override
+	public enterRule(listener: MorseGrammarListener): void {
+		if (listener.enterCharade) {
+			listener.enterCharade(this);
+		}
+	}
+	// @Override
+	public exitRule(listener: MorseGrammarListener): void {
+		if (listener.exitCharade) {
+			listener.exitCharade(this);
+		}
+	}
+	// @Override
+	public accept<Result>(visitor: MorseGrammarVisitor<Result>): Result {
+		if (visitor.visitCharade) {
+			return visitor.visitCharade(this);
 		} else {
 			return visitor.visitChildren(this);
 		}

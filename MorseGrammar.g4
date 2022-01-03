@@ -15,7 +15,7 @@ DUPLICATE: 'duplicate';
 INSERT: 'insert';
 SUBTRACT: 'subtract';
 
-SIMPLE_OPERATION: 'charade' | 'odd letters' | 'even letters';
+SIMPLE_OPERATION: 'odd letters' | 'even letters';
 COMPLEX_OPERATION:
 	'abbreviation'
 	| 'first letters'
@@ -34,6 +34,7 @@ subject: '[' multiWord ']';
 explanation:
 	explanation EQUALS explanation														# synonym
 	| explanation (WORD_JOIN explanation)+												# wordJoin
+	| explanation WORD_JOIN subject explanation											# charade
 	| ANAGRAM subject explanation?														# anagram
 	| SIMPLE_OPERATION subject															# simpleOperation
 	| COMPLEX_OPERATION subject explanation												# complexOperation
