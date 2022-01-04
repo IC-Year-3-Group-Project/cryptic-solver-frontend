@@ -114,6 +114,9 @@ export default function Crossword(props: CrosswordProps) {
     DefaultBacktrackingOptions
   );
   const [backtrackProgress, setBacktrackProgress] = useState<number>();
+  const [backtrackCache, setBacktrackCache] = useState<{
+    [key: string]: Solution[];
+  }>({});
   const [incorrect, setIncorrect] = useState<Clue[]>();
   const [backtrackTime, setBacktrackTime] = useState(0);
   const [showBacktrackOptions, setShowBacktrackOptions] = useState(false);
@@ -770,7 +773,8 @@ export default function Crossword(props: CrosswordProps) {
       setClueText,
       setBacktrackProgress,
       (c, s) => addToSolutionCache(c, s, true),
-      onClueSelectedFromList
+      onClueSelectedFromList,
+      backtrackCache
     );
     backtrack.options = backtrackOptions;
     setBacktracker(backtrack);
@@ -785,6 +789,7 @@ export default function Crossword(props: CrosswordProps) {
       );
       updateGridMulti(xy, backtrack.bestGridContent);
     }
+    setBacktrackCache(backtrack.solutions);
     setBacktrackProgress(undefined);
     setLoadingSolution(false);
     onCellClick(undefined);
@@ -793,14 +798,15 @@ export default function Crossword(props: CrosswordProps) {
     );
     if (!backtrack.cancelled) {
       setIncorrect(btIncorrect);
-      setBacktrackTime(new Date().getTime() - start);
     }
 
+    const localBacktrackTime = new Date().getTime() - start;
+    setBacktrackTime(localBacktrackTime);
     setSeverity("success");
     setMessage(
       `${puzzle.clues.length - btIncorrect.length}/${
         puzzle.clues.length
-      } correct in ${Math.round(backtrackTime * 10) / 10000}s`
+      } correct in ${Math.round(localBacktrackTime * 10) / 10000}s`
     );
     setOpen(true);
   }
@@ -1178,6 +1184,34 @@ export default function Crossword(props: CrosswordProps) {
                       />
                     }
                     label="Judge Best Grid by Total Cells"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.useStaticCache}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            useStaticCache: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Maintain Clue Cache"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={backtrackOptions.delayBetweenInsert}
+                        onChange={(event) =>
+                          setBacktrackOptions({
+                            ...backtrackOptions,
+                            delayBetweenInsert: event.target.checked,
+                          })
+                        }
+                      />
+                    }
+                    label="Delay Between Solution Inserts"
                   />
                   <TextField
                     label="Timeout (seconds)"

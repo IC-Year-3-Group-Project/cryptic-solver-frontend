@@ -1,7 +1,7 @@
 import { Clue, ClueDirection } from "./model/Clue";
 import { Puzzle } from "./model/Puzzle";
 
-export const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
+export const apiUrl = "https://cryptic-solver-backend.herokuapp.com/";
 
 /** Performs a post request sending the given data as json to the given endpoint. */
 async function post<T>(
@@ -17,8 +17,6 @@ async function post<T>(
     },
     body: JSON.stringify(data),
     signal: cancellation,
-  }).catch((err) => {
-    console.log(`Error in post ${err}`);
   });
 
   const json = await response?.json();
@@ -33,8 +31,6 @@ async function get<T>(endpoint: string, cancellation?: AbortSignal) {
       Accept: "application/json",
     },
     signal: cancellation,
-  }).catch((err) => {
-    console.log(`Error in get ${err}`);
   });
 
   const json = await response?.json();
@@ -88,19 +84,13 @@ export async function getUnlikelySolutions(
   pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  try {
-    return (
-      await post<Array<Solution>>(
-        "/unlikely-solve-clue",
-        { clue, word_length, pattern },
-        cancellation
-      )
-        .then((res) => res)
-        .catch((err) => [])
-    ).map((s) => Object.assign(new Solution(), s));
-  } catch {
-    return [];
-  }
+  return (
+    await post<Array<Solution>>(
+      "/unlikely-solve-clue",
+      { clue, word_length, pattern },
+      cancellation
+    )
+  ).map((s) => Object.assign(new Solution(), s));
 }
 
 export async function solveWithPattern(
@@ -110,19 +100,13 @@ export async function solveWithPattern(
   letter_pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  try {
-    return (
-      await post<Array<Solution>>(
-        "/solve-with-pattern",
-        { clue, word_length, pattern, letter_pattern },
-        cancellation
-      )
-        .then((res) => res)
-        .catch((err) => [])
-    ).map((s) => Object.assign(new Solution(), s));
-  } catch {
-    return [];
-  }
+  return (
+    await post<Array<Solution>>(
+      "/solve-with-pattern",
+      { clue, word_length, pattern, letter_pattern },
+      cancellation
+    )
+  ).map((s) => Object.assign(new Solution(), s));
 }
 
 export async function solveWithPatternUnlikely(
@@ -132,19 +116,13 @@ export async function solveWithPatternUnlikely(
   letter_pattern: string,
   cancellation?: AbortSignal
 ): Promise<Array<Solution>> {
-  try {
-    return (
-      await post<Array<Solution>>(
-        "/solve-with-pattern-unlikely",
-        { clue, word_length, pattern, letter_pattern },
-        cancellation
-      )
-        .then((res) => res)
-        .catch((err) => [])
-    ).map((s) => Object.assign(new Solution(), s));
-  } catch {
-    return [];
-  }
+  return (
+    await post<Array<Solution>>(
+      "/solve-with-pattern-unlikely",
+      { clue, word_length, pattern, letter_pattern },
+      cancellation
+    )
+  ).map((s) => Object.assign(new Solution(), s));
 }
 
 /** Calls the backend to process 3 puzzle images (grid, across, down clues). */
@@ -264,6 +242,10 @@ export function classify(crossword: any): Puzzle {
 
 export function stripSolution(solution: string): string {
   return solution.replaceAll(/[^A-z]/g, "");
+}
+
+export function delay(time: number) {
+  return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 export interface CrosswordUploadResponse {
