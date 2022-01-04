@@ -2,6 +2,7 @@ import { Clue } from "./model/Clue";
 import { GridEntry } from "./model/GridEntry";
 import { Puzzle, toIndex } from "./model/Puzzle";
 import {
+  delay,
   getExplainedSolutions,
   getUnlikelySolutions,
   Solution,
@@ -9,7 +10,6 @@ import {
   solveWithPatternUnlikely,
 } from "./utils";
 
-const MaxClueLoops = 20;
 export const DefaultBacktrackingOptions: BacktrackingOptions = {
   useHaskellBase: true,
   useHaskellPartial: false,
@@ -17,6 +17,8 @@ export const DefaultBacktrackingOptions: BacktrackingOptions = {
   maxSolutionRetries: 0,
   bestGridOnFailure: true,
   bestGridByCells: false,
+  useStaticCache: true,
+  delayBetweenInsert: true,
 };
 
 export interface BacktrackingOptions {
@@ -27,12 +29,15 @@ export interface BacktrackingOptions {
   bestGridOnFailure: boolean;
   bestGridByCells: boolean;
   timeout?: number;
+  useStaticCache: boolean;
+  delayBetweenInsert: boolean;
 }
 
 export class Backtracker {
   puzzle: Puzzle;
   entries: GridEntry[];
   options: BacktrackingOptions = DefaultBacktrackingOptions;
+  solutions: { [key: string]: Solution[] } = {};
   onUpdate?: (clue: Clue, answer: string) => void;
   onSolveCountUpdate?: (count: number) => void;
   setCache?: (clue: Clue, solutions: Solution[]) => void;
@@ -40,13 +45,10 @@ export class Backtracker {
 
   private cancel: boolean = false;
   private abortSignal!: AbortController;
-  private solutions: { [key: string]: Solution[] } = {};
 
   private bestGrid: Partial<GridEntry>[] = [];
   private cellsSolved: number = 0;
   private bestCellsSolved: number = 0;
-
-  private startTime: number = 0;
 
   get cancelled(): boolean {
     return this.cancel;
@@ -62,7 +64,8 @@ export class Backtracker {
     onUpdate?: (clue: Clue, answer: string) => void,
     onSolveCountUpdate?: (count: number) => void,
     setCache?: (clue: Clue, solutions: Solution[]) => void,
-    setSolving?: (clue: Clue) => void
+    setSolving?: (clue: Clue) => void,
+    solutions?: { [key: string]: Solution[] }
   ) {
     this.puzzle = puzzle;
     this.entries = entries.map((e) => Object.assign(new GridEntry(), e));
@@ -70,6 +73,7 @@ export class Backtracker {
     this.onSolveCountUpdate = onSolveCountUpdate;
     this.setCache = setCache;
     this.setSolving = setSolving;
+    this.solutions = solutions ?? {};
   }
 
   private getExistingPattern(clue: Clue): string | undefined {
@@ -186,7 +190,11 @@ export class Backtracker {
     this.abortSignal.abort();
   }
 
-  solveAll(): Promise<boolean> {
+  async solveAll(): Promise<boolean> {
+    if (!this.options.useStaticCache) {
+      this.solutions = {};
+    }
+
     this.cancel = false;
     this.abortSignal = new AbortController();
     if (this.options.timeout && this.options.timeout > 0) {
@@ -195,8 +203,13 @@ export class Backtracker {
       }, this.options.timeout * 1000);
     }
     const clues = [...this.puzzle.clues];
-    this.startTime = new Date().getTime();
-    return this.backtrack(clues);
+    for (let retries = 0; retries < clues.length; retries++) {
+      if (await this.backtrack(clues)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   async backtrack(clues: Clue[]) {
@@ -232,6 +245,10 @@ export class Backtracker {
       if (this.cellsSolved > this.bestCellsSolved) {
         this.bestGrid = [...this.entries.map((e) => ({ content: e.content }))];
         this.bestCellsSolved = this.cellsSolved;
+      }
+
+      if (this.options.delayBetweenInsert) {
+        await delay(1);
       }
 
       if (await this.backtrack(clues)) {
