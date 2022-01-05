@@ -143,10 +143,11 @@ export default function Crossword(props: CrosswordProps) {
       const answer = getClueText(clue);
       if (answer === clue.solution) {
         setSeverity("success");
+        setMessage(`The answer ${answer} is correct!`);
       } else {
         setSeverity("warning");
+        setMessage(`The answer ${answer} is not correct.`);
       }
-      setMessage(`The correct answer is ${clue.solution}.`);
     }
     setOpen(true);
   };
