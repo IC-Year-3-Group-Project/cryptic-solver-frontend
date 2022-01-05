@@ -1266,8 +1266,8 @@ export default function Crossword(props: CrosswordProps) {
                     <SplitButton
                       options={[
                         `Solve ${selectedClue.getTitle()}`,
-                        `Explain ${selectedClue.getTitle()}`,
-                        `Explain ${selectedClue.getTitle()} (Haskell)`,
+                        `Explain ${selectedClue.getTitle()} (Unlikely AI)`,
+                        `Explain ${selectedClue.getTitle()} (Morse)`,
                         `Get Hint ${selectedClue.getTitle()}`,
                         `Check Answer ${selectedClue.getTitle()}`,
                       ]}
