@@ -8,6 +8,7 @@ import { Puzzle, toIndex } from "./model/Puzzle";
 import {
   getExplainedSolutions,
   getExplanation,
+  getUnlikelySolutions,
   Solution,
   solveWithPattern,
   solveWithPatternUnlikely,
@@ -26,8 +27,6 @@ import MuiAlert, { AlertProps } from "@mui/material/Alert";
 import { SolutionMenu } from "./SolutionMenu";
 import Box from "@mui/system/Box";
 import {
-  ButtonGroup,
-  ClickAwayListener,
   Snackbar,
   FormControlLabel,
   Grid,
@@ -551,11 +550,9 @@ export default function Crossword(props: CrosswordProps) {
     if (clue.showExplanation) {
       const solution = getSolution(clue);
       if (solution) {
-        // setExplanation(solution.explanation);
         return solution.explanation;
       }
-      // setSolveOverlayText("Could not explain solution.");
-      return "Could not explain entered solution.";
+      return "Could not explain solution.";
     }
   }
 
@@ -712,6 +709,39 @@ export default function Crossword(props: CrosswordProps) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation);
+      }
+    } catch (ex: any) {
+      if (!ex.message?.includes("aborted")) {
+        console.log("Error loading explanation", ex);
+        setSolveOverlayText("Error fetching explanation.");
+      }
+    }
+
+    setLoadingSolution(false);
+  }
+
+  async function explainAnswerUnlikely(clue: Clue) {
+    const answer = getClueText(clue);
+    if (answer.includes("_")) {
+      setSolveOverlayText("Cannot explain incomplete solution.");
+      return;
+    }
+
+    setSolveOverlayText(undefined);
+    setLoadingSolution(true);
+
+    try {
+      const strippedClue = clue.getClueText();
+      const explanation = await getUnlikelySolutions(
+        strippedClue,
+        answer.length,
+        answer,
+        solveCancelToken.signal
+      );
+      if (!explanation || !explanation[0] || explanation[0].explanation.length == 0) {
+        setSolveOverlayText("Could not explain solution.");
+      } else {
+        setExplanation(explanation[0].explanation);
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
@@ -1267,9 +1297,10 @@ export default function Crossword(props: CrosswordProps) {
                       options={[
                         `Solve ${selectedClue.getTitle()}`,
                         `Explain ${selectedClue.getTitle()}`,
-                        `Explain ${selectedClue.getTitle()} (Morse)`,
                         `Get Hint ${selectedClue.getTitle()}`,
                         `Check Answer ${selectedClue.getTitle()}`,
+                        `Explain ${selectedClue.getTitle()} (Morse)`,
+                        `Explain ${selectedClue.getTitle()} (Unlikely)`,
                       ]}
                       onClick={async (index) => {
                         if (index == 0) {
@@ -1279,8 +1310,6 @@ export default function Crossword(props: CrosswordProps) {
                           explainAnswerCached(selectedClue);
                           forceUpdate();
                         } else if (index == 2) {
-                          await explainAnswerHaskell(selectedClue);
-                        } else if (index == 3) {
                           selectedClue.hintLevel += 1;
                           forceUpdate();
                           if (
@@ -1292,9 +1321,13 @@ export default function Crossword(props: CrosswordProps) {
                             );
                           }
                           forceUpdate();
-                        } else if (index == 4) {
+                        } else if (index == 3) {
                           handleClickCheckAnswer(selectedClue);
-                        }
+                        } else if (index == 4) {
+                          await explainAnswerHaskell(selectedClue);
+                        } else if (index == 5) {
+                          await explainAnswerUnlikely(selectedClue);
+                        } 
                       }}
                       cypress-data="solve-cell"
                     />
