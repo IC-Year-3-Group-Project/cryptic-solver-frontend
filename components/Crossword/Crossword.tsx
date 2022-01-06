@@ -1352,6 +1352,8 @@ export default function Crossword(props: CrosswordProps) {
                     color="secondary"
                     onClick={() => {
                       clearClueText(selectedClue);
+                      selectedClue.hintLevel = 0;
+                      selectedClue.showExplanation = false;
                       onCellClick(
                         entries[
                           toIndex(puzzle, selectedClue.x, selectedClue.y)
