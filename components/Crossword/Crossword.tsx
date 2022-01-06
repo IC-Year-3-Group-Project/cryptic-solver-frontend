@@ -105,6 +105,7 @@ export default function Crossword(props: CrosswordProps) {
   const [loadingSolution, setLoadingSolution] = useState(false);
   const [solutions, setSolutions] = useState<Array<Solution>>();
   const [explanation, setExplanation] = useState<string>();
+  const [isMorseExplanation, setIsMorseExplanation] = useState(false);
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const [solutionCache, setSolutionCache] = useState<{
     [key: string]: Solution[];
@@ -552,7 +553,7 @@ export default function Crossword(props: CrosswordProps) {
           ...solutions,
         ];
       }
-      
+
       // Remove duplicate solutions
       const solutionSet = new Set();
       solutions = solutions.filter((solution) => {
@@ -768,6 +769,7 @@ export default function Crossword(props: CrosswordProps) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation);
+        setIsMorseExplanation(true);
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
@@ -1486,6 +1488,9 @@ export default function Crossword(props: CrosswordProps) {
         <DialogContent>
           <p>Clue: {selectedClue?.text}</p>
           <p>Explanation: {explanation}</p>
+          {selectedClue && explanation && isMorseExplanation && (
+            <p>{parseExplanation(explanation).toEnglish().join(". ")}</p>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setExplanation(undefined)}>Ok</Button>
