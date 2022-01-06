@@ -511,6 +511,17 @@ export default function Crossword(props: CrosswordProps) {
           ...solutions,
         ];
       }
+      
+      // Remove duplicate solutions
+      const solutionSet = new Set();
+      solutions = solutions.filter((solution) => {
+        if (!solutionSet.has(solution.strippedAnswer)) {
+          solutionSet.add(solution.strippedAnswer);
+          return true;
+        }
+        return false;
+      });
+
       if (solutions.length > 0) {
         addToSolutionCache(clue, solutions);
         if (
