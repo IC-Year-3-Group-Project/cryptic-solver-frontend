@@ -731,14 +731,18 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(true);
 
     try {
-      const strippedClue = clue.getClueText();
-      const explanation = await getUnlikelySolutions(
-        strippedClue,
+      const explanation = await solveWithPatternUnlikely(
+        clue.getClueText(),
         answer.length,
+        `(${clue.lengths.join()})`,
         answer,
         solveCancelToken.signal
       );
-      if (!explanation || !explanation[0] || explanation[0].explanation.length == 0) {
+      if (
+        !explanation ||
+        !explanation[0] ||
+        explanation[0].explanation.length == 0
+      ) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation[0].explanation);
@@ -1327,7 +1331,7 @@ export default function Crossword(props: CrosswordProps) {
                           await explainAnswerHaskell(selectedClue);
                         } else if (index == 5) {
                           await explainAnswerUnlikely(selectedClue);
-                        } 
+                        }
                       }}
                       cypress-data="solve-cell"
                     />
