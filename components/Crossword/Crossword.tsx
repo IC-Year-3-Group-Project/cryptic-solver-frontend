@@ -8,7 +8,6 @@ import { Puzzle, toIndex } from "./model/Puzzle";
 import {
   getExplainedSolutions,
   getExplanation,
-  getUnlikelySolutions,
   Solution,
   solveWithPattern,
   solveWithPatternUnlikely,
