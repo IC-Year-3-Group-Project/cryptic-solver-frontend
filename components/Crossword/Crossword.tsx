@@ -807,6 +807,7 @@ export default function Crossword(props: CrosswordProps) {
         setSolveOverlayText("Could not explain solution.");
       } else {
         setExplanation(explanation[0].explanation);
+        setIsMorseExplanation(false);
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
