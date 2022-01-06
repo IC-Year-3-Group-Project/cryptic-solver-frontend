@@ -12,7 +12,7 @@ import {
 
 export const DefaultBacktrackingOptions: BacktrackingOptions = {
   useHaskellBase: true,
-  useHaskellPartial: false,
+  useHaskellPartial: true,
   triggerUpdateOnClear: false,
   maxSolutionRetries: 0,
   bestGridOnFailure: true,

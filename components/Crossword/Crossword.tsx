@@ -52,6 +52,8 @@ export interface CrosswordProps {
   cellHeight: number;
 }
 
+const TriedMorseExplanation = "_TRIED_";
+
 const ConfidenceGradient = [
   { r: 255, g: 0, b: 0 },
   { r: 255, g: 255, b: 0 },
@@ -106,6 +108,9 @@ export default function Crossword(props: CrosswordProps) {
   const [solveOverlayText, setSolveOverlayText] = useState<string>();
   const [solutionCache, setSolutionCache] = useState<{
     [key: string]: Solution[];
+  }>({});
+  const [morseExplanations, setMorseExplanations] = useState<{
+    [key: string]: string;
   }>({});
   const [backtracker, setBacktracker] = useState<Backtracker>();
   const [backtrackOptions, setBacktrackOptions] = useState<BacktrackingOptions>(
@@ -414,6 +419,42 @@ export default function Crossword(props: CrosswordProps) {
         content: s == "_" ? undefined : s.toUpperCase(),
       }))
     );
+
+    // If complete solution, lazy load explanation from haskell.
+    const key = text.toUpperCase();
+    const solutions = solutionCache[clue.getTitle()];
+    if (solutions) {
+      const solution = solutions.find(
+        (s) => s.strippedAnswer.toUpperCase() == key && s.source == "morse"
+      );
+      if (solution) {
+        morseExplanations[key] = solution.explanation;
+        setMorseExplanations(morseExplanations);
+        return;
+      }
+    }
+
+    if (text.length == clue.totalLength && ![...text].some((c) => c == "_")) {
+      if (!morseExplanations[key]) {
+        morseExplanations[key] = TriedMorseExplanation;
+        setMorseExplanations(morseExplanations);
+
+        async function tryLoadMorseExplanation() {
+          try {
+            const explanation = await getExplanation(
+              clue.getClueText(),
+              text.toUpperCase()
+            );
+            if (explanation.trim().length > 0) {
+              morseExplanations[key] = explanation;
+              setMorseExplanations(morseExplanations);
+            }
+          } catch (ex) {}
+        }
+
+        tryLoadMorseExplanation();
+      }
+    }
   }
 
   function clearClueText(clue: Clue) {
@@ -558,6 +599,14 @@ export default function Crossword(props: CrosswordProps) {
 
   function explainAnswerCached(clue: Clue) {
     if (clue.showExplanation) {
+      const enteredSolution = getClueText(clue);
+      if (enteredSolution) {
+        const morseExplanation = morseExplanations[enteredSolution];
+        if (morseExplanation != TriedMorseExplanation) {
+          return morseExplanation;
+        }
+      }
+
       const solution = getSolution(clue);
       if (solution) {
         return solution.explanation;

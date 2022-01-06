@@ -1,7 +1,7 @@
 import { Clue, ClueDirection } from "./model/Clue";
 import { Puzzle } from "./model/Puzzle";
 
-export const apiUrl = "https://cryptic-solver-backend.herokuapp.com";
+export const apiUrl = "http://localhost:8080";
 
 /** Performs a post request sending the given data as json to the given endpoint. */
 async function post<T>(
@@ -257,6 +257,7 @@ export class Solution {
   answer: string = "";
   confidence: number = 0;
   explanation: string = "";
+  source: "unlikely" | "morse" = "unlikely";
 
   get strippedAnswer(): string {
     return stripSolution(this.answer).toUpperCase();
