@@ -768,8 +768,8 @@ export default function Crossword(props: CrosswordProps) {
       if (explanation.length == 0) {
         setSolveOverlayText("Could not explain solution.");
       } else {
-        setExplanation(explanation);
         setIsMorseExplanation(true);
+        setExplanation(explanation);
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
@@ -806,8 +806,8 @@ export default function Crossword(props: CrosswordProps) {
       ) {
         setSolveOverlayText("Could not explain solution.");
       } else {
-        setExplanation(explanation[0].explanation);
         setIsMorseExplanation(false);
+        setExplanation(explanation[0].explanation);
       }
     } catch (ex: any) {
       if (!ex.message?.includes("aborted")) {
