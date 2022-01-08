@@ -196,15 +196,15 @@ const Home: NextPage = () => {
               <ButtonGroup orientation="vertical">
                 <Button
                   variant="contained"
-                  onClick={() => router.push("/upload")}
+                  onClick={() => router.push("/upload-backend")}
                 >
                   Upload a crossword
                 </Button>
                 <Button
                   variant="contained"
-                  onClick={() => router.push("/upload-backend")}
+                  onClick={() => router.push("/upload")}
                 >
-                  Upload a crossword (Backend)
+                  Upload a crossword (Frontend)
                 </Button>
               </ButtonGroup>
             </Paper>
