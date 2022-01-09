@@ -449,6 +449,7 @@ export default function Crossword(props: CrosswordProps) {
             if (explanation.trim().length > 0) {
               morseExplanations[key] = explanation;
               setMorseExplanations(morseExplanations);
+              forceUpdate();
             }
           } catch (ex) {}
         }
