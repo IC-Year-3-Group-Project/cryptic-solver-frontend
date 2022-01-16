@@ -22,7 +22,8 @@ async function getExplanation(explanationSearch: {
     ),
     {}
   );
-  lowerCaseExplanationSearch["word_length"] = explanationSearch.answer.length;
+  lowerCaseExplanationSearch["answer"] = lowerCaseExplanationSearch["answer"].toUpperCase().replace(/[^\w]|_/g, "")
+  lowerCaseExplanationSearch["word_length"] = lowerCaseExplanationSearch["answer"].length;
   const response = await fetch(`${apiUrl}/explain_answer`, {
     method: "POST",
     headers: {

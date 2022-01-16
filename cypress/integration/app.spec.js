@@ -233,7 +233,7 @@ describe("Homepage should support answer entry", () => {
     cy.get("[data-cy=find-explanation-button").click();
 
     cy.wait("@getExplanation").its("request.body").should("include", {
-      answer: answer.toLowerCase(),
+      answer: answer.toUpperCase(),
       clue: clue.toLowerCase(),
       word_length: answer.length,
     });
