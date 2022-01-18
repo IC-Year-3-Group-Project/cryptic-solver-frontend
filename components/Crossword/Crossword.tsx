@@ -1483,7 +1483,7 @@ export default function Crossword(props: CrosswordProps) {
         solutions={solutions}
         currentText={getClueText()}
         anchor={solveOverlayTarget?.current ?? solutionMenuTarget?.current}
-        onSolutionSelected={onSolutionSelected}.
+        onSolutionSelected={onSolutionSelected}
       />
       <Dialog open={explanation != undefined}>
         <DialogTitle>Explanation for {selectedClue?.getTitle()}</DialogTitle>
