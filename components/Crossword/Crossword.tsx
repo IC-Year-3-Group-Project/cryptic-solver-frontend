@@ -443,7 +443,7 @@ export default function Crossword(props: CrosswordProps) {
         async function tryLoadMorseExplanation() {
           try {
             const explanation = await getExplanation(
-              clue.getClueText(),
+              clue.getClueText().replace(/\\\//g, ""),
               text.toUpperCase()
             );
             if (explanation.trim().length > 0) {
@@ -528,7 +528,7 @@ export default function Crossword(props: CrosswordProps) {
     try {
       const filledInAnswer = getClueText(clue).replace(/_/g, "?");
       // Strip html tags and word length brackets from clue.
-      const strippedClue = clue.getClueText();
+      const strippedClue = clue.getClueText().replace(/\\\//g, "");
       const pattern = clue.getSolutionPattern();
       let solutions = solutionCache[clue.getTitle()];
       if (!solutions) {
@@ -642,7 +642,7 @@ export default function Crossword(props: CrosswordProps) {
       let hints: string[] = [];
       if (!clue.explanation) {
         clue.explanation = await getExplanation(
-          clue.getClueText(),
+          clue.getClueText().replace(/\\\//g, ""),
           clue.solution
         );
         if (!clue.explanation) {
@@ -760,7 +760,7 @@ export default function Crossword(props: CrosswordProps) {
     setLoadingSolution(true);
 
     try {
-      const strippedClue = clue.getClueText();
+      const strippedClue = clue.getClueText().replace(/\\\//g, "");
       const explanation = await getExplanation(
         strippedClue,
         answer,
