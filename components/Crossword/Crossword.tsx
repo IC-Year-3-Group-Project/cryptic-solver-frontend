@@ -822,6 +822,10 @@ export default function Crossword(props: CrosswordProps) {
 
   // Loops through clues and calls the solver on all of them, filling in the grid along the way.
   async function solveAllClues(startIndex: number = 0) {
+    puzzle.clues.forEach((clue) => {
+      clue.hintLevel = 0;
+      clue.showExplanation = true;
+    });
     setGridContinuation((gridContinuation = undefined));
     setCancelSolveGrid((cancelSolveGrid = false));
     setCurrentCell(undefined);
