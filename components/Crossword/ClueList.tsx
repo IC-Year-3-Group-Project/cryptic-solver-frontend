@@ -54,7 +54,7 @@ export default function ClueList(props: ClueListProps) {
         alignItems="flex-start"
         xs={6}
         md={6}
-        spacing={2}
+        spacing={1}
         className="clue-list"
       >
         <Grid item container>
